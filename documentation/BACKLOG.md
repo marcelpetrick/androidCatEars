@@ -26,7 +26,7 @@ user decision before proceeding).
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 0.0 | DONE | Repo hygiene files | `.gitignore` (Android/Gradle/Studio) and `.editorconfig` present; junk paths ignored. |
-| 0.1 | TODO | GPLv3 LICENSE + SPDX convention | Full `LICENSE` (GPLv3) in root; SPDX header convention documented for source files. |
+| 0.1 | DONE | GPLv3 LICENSE + SPDX convention | Full `LICENSE` (GPLv3) in root; SPDX header convention documented for source files. |
 | 0.2 | TODO | Gradle build foundation | Gradle wrapper, `settings.gradle.kts`, root `build.gradle.kts`, `gradle/libs.versions.toml`; latest **stable** Gradle/AGP/Kotlin (Q6). `./gradlew tasks` runs. |
 | 0.3 | TODO | Version single source of truth | `version.properties` (`major=0,minor=1,patch=0`) read by Gradle into `versionName`/`versionCode`. |
 | 0.4 | TODO | `:app` module scaffolding | `:app` `build.gradle.kts`, `AndroidManifest.xml` (minSdk 34), base theme + resources; package `it.marcelpetrick.catears`. |
