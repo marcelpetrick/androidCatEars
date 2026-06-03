@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
@@ -39,9 +40,19 @@ class MainViewModel @Inject constructor(
     private val _overlayPlacement = MutableStateFlow<OverlayPlacement?>(null)
     val overlayPlacement: StateFlow<OverlayPlacement?> = _overlayPlacement.asStateFlow()
 
+    private val _earStyle = MutableStateFlow(EarStyle.CLASSIC)
+    val earStyle: StateFlow<EarStyle> = _earStyle.asStateFlow()
+
+    /** Advances to the next [EarStyle] in cycle order, wrapping from last back to first. */
+    fun onCycleEarStyle() {
+        val styles = EarStyle.entries
+        _earStyle.value = styles[(_earStyle.value.ordinal + 1) % styles.size]
+        _overlayPlacement.value = _overlayPlacement.value?.copy(earStyle = _earStyle.value)
+    }
+
     /** Called from the face-detection callback with the smoothed placement, or null if no face. */
     fun onFaceDetected(placement: OverlayPlacement?) {
-        _overlayPlacement.value = placement
+        _overlayPlacement.value = placement?.copy(earStyle = _earStyle.value)
     }
 
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)

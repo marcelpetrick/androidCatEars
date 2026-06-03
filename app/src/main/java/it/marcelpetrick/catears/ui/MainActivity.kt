@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
                 val lens by viewModel.lens.collectAsStateWithLifecycle()
                 val overlayPlacement by viewModel.overlayPlacement.collectAsStateWithLifecycle()
                 val captureState by viewModel.captureState.collectAsStateWithLifecycle()
+                val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -84,6 +85,8 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     onFaceDetected = viewModel::onFaceDetected,
+                    earStyle = earStyle,
+                    onCycleEarStyle = viewModel::onCycleEarStyle,
                     captureRequested = captureState is CaptureState.Capturing,
                     captureEnabled = captureState !is CaptureState.Capturing,
                     onComposited = viewModel::onCompositedBitmap,

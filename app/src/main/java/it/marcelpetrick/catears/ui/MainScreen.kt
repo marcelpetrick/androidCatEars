@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,6 +27,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
+import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
@@ -59,6 +62,8 @@ fun MainScreen(
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
     onFaceDetected: (OverlayPlacement?) -> Unit,
+    earStyle: EarStyle,
+    onCycleEarStyle: () -> Unit,
     captureRequested: Boolean,
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
@@ -80,6 +85,8 @@ fun MainScreen(
                     lens = lens,
                     overlayPlacement = overlayPlacement,
                     onFaceDetected = onFaceDetected,
+                    earStyle = earStyle,
+                    onCycleEarStyle = onCycleEarStyle,
                     captureRequested = captureRequested,
                     captureEnabled = captureEnabled,
                     onComposited = onComposited,
@@ -205,6 +212,8 @@ private fun CameraContent(
     lens: LensSelector,
     overlayPlacement: OverlayPlacement?,
     onFaceDetected: (OverlayPlacement?) -> Unit,
+    earStyle: EarStyle,
+    onCycleEarStyle: () -> Unit,
     captureRequested: Boolean,
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
@@ -228,13 +237,23 @@ private fun CameraContent(
         // FAB row lives inside a nav-bar-inset container so buttons stay visible
         // above the gesture navigation bar on edge-to-edge layouts.
         Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-            FloatingActionButton(
-                onClick = onToggleLens,
+            // Style switcher stacked above camera-switch FAB on the end side
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                    .padding(end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.End,
             ) {
-                Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
+                SmallFloatingActionButton(onClick = onCycleEarStyle) {
+                    Icon(
+                        imageVector = Icons.Filled.Pets,
+                        contentDescription = "Cycle ear style: ${earStyle.name}",
+                    )
+                }
+                FloatingActionButton(onClick = onToggleLens) {
+                    Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
+                }
             }
             FloatingActionButton(
                 onClick = { if (captureEnabled) onCapture() },
@@ -280,6 +299,8 @@ private fun MainScreenReadyPreview() {
             onCapture = {},
             onShare = {},
             onFaceDetected = {},
+            earStyle = EarStyle.CLASSIC,
+            onCycleEarStyle = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},
@@ -304,6 +325,8 @@ private fun MainScreenPermissionRequiredPreview() {
             onCapture = {},
             onShare = {},
             onFaceDetected = {},
+            earStyle = EarStyle.CLASSIC,
+            onCycleEarStyle = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},
@@ -328,6 +351,8 @@ private fun MainScreenPermissionDeniedPreview() {
             onCapture = {},
             onShare = {},
             onFaceDetected = {},
+            earStyle = EarStyle.CLASSIC,
+            onCycleEarStyle = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},

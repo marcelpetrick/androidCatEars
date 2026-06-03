@@ -11,6 +11,7 @@ import io.mockk.mockk
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.EarAnchor
+import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import kotlinx.coroutines.CoroutineDispatcher
@@ -198,6 +199,69 @@ class MainViewModelTest {
             assertEquals(placement, awaitItem())
             vm.onFaceDetected(null)
             assertNull(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `initial earStyle is CLASSIC`() = runTest {
+        viewModel().earStyle.test {
+            assertEquals(EarStyle.CLASSIC, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCycleEarStyle advances to SHARP_FELINE`() = runTest {
+        val vm = viewModel()
+        vm.earStyle.test {
+            assertEquals(EarStyle.CLASSIC, awaitItem())
+            vm.onCycleEarStyle()
+            assertEquals(EarStyle.SHARP_FELINE, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCycleEarStyle wraps from last style back to CLASSIC`() = runTest {
+        val vm = viewModel()
+        vm.earStyle.test {
+            awaitItem() // CLASSIC
+            repeat(EarStyle.entries.size) { vm.onCycleEarStyle() }
+            // After full cycle, back to CLASSIC
+            val last = cancelAndConsumeRemainingEvents().lastOrNull()
+            assertEquals(EarStyle.CLASSIC, (last as? app.cash.turbine.Event.Item)?.value)
+        }
+    }
+
+    @Test
+    fun `onFaceDetected injects current earStyle into placement`() = runTest {
+        val vm = viewModel()
+        vm.onCycleEarStyle() // advance to SHARP_FELINE
+        val raw = OverlayPlacement(
+            leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
+            rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
+        )
+        vm.overlayPlacement.test {
+            assertNull(awaitItem())
+            vm.onFaceDetected(raw)
+            assertEquals(EarStyle.SHARP_FELINE, awaitItem()?.earStyle)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCycleEarStyle updates active placement immediately`() = runTest {
+        val vm = viewModel()
+        val raw = OverlayPlacement(
+            leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
+            rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
+        )
+        vm.onFaceDetected(raw)
+        vm.overlayPlacement.test {
+            awaitItem() // current CLASSIC placement
+            vm.onCycleEarStyle()
+            assertEquals(EarStyle.SHARP_FELINE, awaitItem()?.earStyle)
             cancelAndIgnoreRemainingEvents()
         }
     }
