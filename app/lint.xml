@@ -20,9 +20,11 @@
     <issue id="GradleDependency" severity="ignore" />
 
     <!--
-      NewerVersionAvailable (Kotlin 2.4.0):
-      Intentionally pinned to 2.3.21 for KSP 2.3.9 compatibility.
-      Upgrade both together when a KSP version for 2.4.x is published.
+      NewerVersionAvailable:
+      - Kotlin 2.4.0: blocked by Hilt 2.59.2 — its kotlin-metadata-jvm only
+        supports metadata up to 2.3.0. Upgrade Kotlin + Hilt together.
+      - core-ktx 1.19.0: blocked by compileSdk — requires SDK 37, not yet
+        installed. Upgrade after sdkmanager provides platforms;android-37.
     -->
     <issue id="NewerVersionAvailable" severity="ignore" />
 </lint>
