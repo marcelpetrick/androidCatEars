@@ -15,7 +15,7 @@ exploitable remote vulnerabilities.
    unsigned AAB while the docs imply release signing exists. **Status: fixed.**
 3. The manifest does not explicitly disable Android backup. The
    `dataExtractionRules` file excludes data on Android 12+, but the app should
-   make the no-backup policy explicit at the manifest level.
+   make the no-backup policy explicit at the manifest level. **Status: fixed.**
 4. The project has no dependency vulnerability gate. Dependency updates and CVE
    checks rely on manual review.
 5. The project has no CodeQL or equivalent static security analysis workflow.
