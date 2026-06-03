@@ -1,6 +1,6 @@
 # GitHub Actions
 
-This project has two workflows under [`.github/workflows/`](../.github/workflows/).
+This project has several workflows under [`.github/workflows/`](../.github/workflows/).
 
 ---
 
@@ -65,3 +65,12 @@ be verified, the workflow fails before publishing.
 - `softprops/action-gh-release@v2` for publishing releases.
 - Least-privilege `permissions: contents: write` (only what's needed to create a release/tag).
 - The release reuses the exact same quality gate as CI before building artefacts.
+
+---
+
+## 3. Dependency Review — `dependency-review.yml`
+
+**Trigger:** automatically on pull requests to `master` / `main`.
+
+It uses GitHub's dependency review action to fail the PR when a changed dependency introduces a
+known vulnerability at **moderate** severity or above.
