@@ -12,10 +12,6 @@ See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
 4. Add README screenshots (14.4) once the app is captured on a device or webcam-backed emulator.
 5. GitHub Actions release workflow exists (release.yml); verify it runs once pushed to GitHub.
 6. WP 18.0: Robolectric host-side tests — **blocked on JDK 26** (Robolectric 4.14.1 / ASM 9.7 only supports up to Java 24 class files). Install JDK 21 and configure Gradle toolchains, or wait for Robolectric with ASM 9.9+.
-7. Restore the visible git commit stamp in the main UI; `BuildConfig.GIT_COMMIT` and `VersionLabel` exist, but `MainScreen` currently renders only the version.
-8. Show the current ear-style name in the style switcher UI; WP 21.2 and `EAR_STYLES.md` describe a visible label, but the shipped button is icon-only.
-9. Document the WP 21 style switcher in README usage once the visible style label is restored.
-10. Update `DEVELOPMENT_PLAN.md` architecture notes to acknowledge the post-MVP `:domain` module extraction from WP 17.
 
 ## Resolved (recent reviews)
 
@@ -29,3 +25,7 @@ See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
 - ~~WP 17.0 :domain module extraction~~ DONE (0.1.84): pure domain moved to standalone JVM module.
 - ~~WP 17.1 golden-fixture tests~~ DONE (0.1.85): 8 parameterized cases for computeOverlayPlacement.
 - ~~WP 18.4 supply chain~~ DONE (0.1.87): Dependabot weekly Gradle + Actions PRs configured.
+- ~~Git commit stamp in title bar~~ DONE (v0.1.101): `BuildConfig.GIT_COMMIT` shown alongside version.
+- ~~Ear-style label on switcher FAB~~ DONE (v0.1.101): `ExtendedFloatingActionButton` shows style name.
+- ~~README usage updated for style switcher~~ DONE (v0.1.101).
+- ~~`DEVELOPMENT_PLAN.md` Q2 updated for `:domain` extraction~~ DONE (v0.1.101).

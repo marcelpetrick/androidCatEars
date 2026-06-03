@@ -103,9 +103,12 @@ re-litigate them, but must still raise *new* decisions not covered here.
   industry-standard, officially recommended DI for Android and directly serves the project's
   "learn modern Android" goal. Define collaborators behind interfaces so they remain swappable with
   fakes in unit tests.
-- **Q2 — Module structure: single module.** Build the MVP as a single `:app` module organised
-  package-by-feature (see 1.3). Splitting into `:core`/`:feature` modules remains a documented
-  future option, not MVP work.
+- **Q2 — Module structure: single module for MVP; `:domain` extracted post-MVP.** The MVP was
+  built as a single `:app` module organised package-by-feature (see 1.3). After MVP completion
+  (WP 17.0, v0.1.84), the pure geometry/state layer was extracted into a standalone `:domain`
+  Kotlin JVM library module — no Android dependencies, fully testable on the JVM. `:app` depends
+  on `:domain` via `project(":domain")`; package names are unchanged. Further feature/core
+  modularisation remains a documented future option.
 - **Q3 — Coverage scope: domain/logic, exclude UI & generated code.** The 95% gate is enforced on
   the `domain` layer and other non-UI logic. Compose UI, DI wiring, and generated code are
   **excluded** via Kover rules rather than chasing 95% across the whole APK.

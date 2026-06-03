@@ -134,13 +134,17 @@ Install on a connected device or running emulator:
 
 1. On first launch, grant the **camera** permission when prompted (if denied
    permanently, the app links you to system settings to re-enable it).
-2. The live preview fills the screen. A small `v<version> (<commit>)` build
-   stamp is shown at the top to identify exactly which build is running.
-3. Tap the **switch** button (bottom-right) to flip between front and rear
-   cameras. Cat ears track a detected face in real time.
-4. Tap the **capture** button (bottom-centre) to take a photo with the ears
+2. The live preview fills the screen. A title bar at the top shows the version
+   and git commit stamp so you can always identify the running build.
+3. Tap the **style** button (bottom-right, labelled with the current style name
+   and a paw icon) to cycle through all 10 ear styles — Classic, Sharp Feline,
+   Rounded Feline, Lynx Tufted, Dense Fluffy, Canine Floppy, Canine Perky,
+   Rabbit, Fox, Bear. Each tap advances to the next; it wraps back to Classic.
+4. Tap the **switch** button (bottom-right, below the style button) to flip
+   between front and rear cameras. Cat ears track a detected face in real time.
+5. Tap the **capture** button (bottom-centre) to take a photo with the ears
    baked in; it is saved to your gallery and a status banner confirms it.
-5. Tap the **share** button (bottom-left, appears after a capture) to send the
+6. Tap the **share** button (bottom-left, appears after a capture) to send the
    saved photo via the Android share sheet.
 
 > Face tracking needs a real face in view. The emulator can use a host webcam

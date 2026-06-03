@@ -23,11 +23,11 @@ import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -119,7 +119,7 @@ fun MainScreen(
 @Composable
 private fun AppTitleBar(modifier: Modifier = Modifier) {
     Text(
-        text = "AndroidCatEars  v${BuildConfig.VERSION_NAME}",
+        text = "AndroidCatEars  v${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_COMMIT})",
         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
         color = Color.White,
         textAlign = TextAlign.Center,
@@ -245,12 +245,11 @@ private fun CameraContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.End,
             ) {
-                SmallFloatingActionButton(onClick = onCycleEarStyle) {
-                    Icon(
-                        imageVector = Icons.Filled.Pets,
-                        contentDescription = "Cycle ear style: ${earStyle.name}",
-                    )
-                }
+                ExtendedFloatingActionButton(
+                    onClick = onCycleEarStyle,
+                    icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
+                    text = { Text(earStyle.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }) },
+                )
                 FloatingActionButton(onClick = onToggleLens) {
                     Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
                 }
