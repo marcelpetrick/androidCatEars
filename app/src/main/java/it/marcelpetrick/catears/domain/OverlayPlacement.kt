@@ -51,6 +51,10 @@ fun computeOverlayPlacement(
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
 ): OverlayPlacement {
     val earSize = viewBox.width * widthRatio
+    // Positive yaw (head turning right) → right ear nearer, left ear farther.
+    val yawFraction = (headEulerAngleY / MAX_YAW_DEGREES).coerceIn(-1f, 1f)
+    val leftXScale = (1f - yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
+    val rightXScale = (1f + yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
 
     return if (leftEarAnchor != null && rightEarAnchor != null) {
         OverlayPlacement(
@@ -59,12 +63,14 @@ fun computeOverlayPlacement(
                 y = leftEarAnchor.y - earSize,
                 size = earSize,
                 tiltDegrees = headEulerAngleZ,
+                xScale = leftXScale,
             ),
             rightEar = EarAnchor(
                 x = rightEarAnchor.x,
                 y = rightEarAnchor.y - earSize,
                 size = earSize,
                 tiltDegrees = headEulerAngleZ,
+                xScale = rightXScale,
             ),
             headEulerAngleY = headEulerAngleY,
         )
@@ -78,12 +84,14 @@ fun computeOverlayPlacement(
                 y = topY,
                 size = earSize,
                 tiltDegrees = headEulerAngleZ,
+                xScale = leftXScale,
             ),
             rightEar = EarAnchor(
                 x = viewBox.centerX + halfSpacing,
                 y = topY,
                 size = earSize,
                 tiltDegrees = headEulerAngleZ,
+                xScale = rightXScale,
             ),
             headEulerAngleY = headEulerAngleY,
         )
@@ -142,3 +150,7 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
 private const val DEFAULT_EAR_WIDTH_RATIO = 0.65f
 private const val DEFAULT_EAR_HEIGHT_RATIO = 0.1f
 private const val EAR_HALF_SPACING_RATIO = 0.35f
+private const val MAX_YAW_DEGREES = 45f
+private const val PERSPECTIVE_STRENGTH = 0.5f
+private const val MIN_SCALE = 0.4f
+private const val MAX_SCALE = 1.6f

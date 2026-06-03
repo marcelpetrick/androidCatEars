@@ -62,6 +62,35 @@ class OverlayPlacementTest {
         assertEquals(20f, p.headEulerAngleY, DELTA)
     }
 
+    @Test
+    fun `zero yaw produces symmetric xScale of 1 on both ears`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 0f)
+        assertEquals(1f, p.leftEar.xScale, DELTA)
+        assertEquals(1f, p.rightEar.xScale, DELTA)
+    }
+
+    @Test
+    fun `positive yaw makes right ear wider and left ear narrower`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 30f)
+        assertTrue(p.rightEar.xScale > 1f) { "Near ear should be wider than 1" }
+        assertTrue(p.leftEar.xScale < 1f) { "Far ear should be narrower than 1" }
+    }
+
+    @Test
+    fun `xScale is symmetric for equal and opposite yaw`() {
+        val right = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 30f)
+        val left = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = -30f)
+        assertEquals(right.rightEar.xScale, left.leftEar.xScale, DELTA)
+        assertEquals(right.leftEar.xScale, left.rightEar.xScale, DELTA)
+    }
+
+    @Test
+    fun `xScale is clamped and never below minimum`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 90f)
+        assertTrue(p.leftEar.xScale >= 0.4f) { "xScale must not go below 0.4" }
+        assertTrue(p.rightEar.xScale <= 1.6f) { "xScale must not exceed 1.6" }
+    }
+
     // ---- computeOverlayPlacement — ear-landmark anchor path ----
 
     @Test
