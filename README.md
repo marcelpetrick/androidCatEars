@@ -1,7 +1,7 @@
 # Android Cat Ears 😼🐾
 
-A real-time augmented reality camera application for Android.
-Point the camera at your face and get cat ears — instantly, on-device, no cloud required.
+> **The camera app that makes your face furry** — point it at yourself and watch
+> animated cat ears spring to life in real time, on-device, no cloud, no lag.
 
 <p align="center">
   <img src="media/logo.svg" alt="androidCatEars logo" width="160"/>
@@ -17,15 +17,47 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 
 ---
 
+## ✨ What makes it special
+
+### 10 ear styles, one tap away
+Cycle through **Classic Cat · Sharp Feline · Rounded Feline · Lynx Tufted ·
+Dense Fluffy · Canine Floppy · Canine Perky · Rabbit · Fox · Bear** with a
+single tap on the paw-icon button. Every style renders in real time — no
+loading, no lag.
+
+### Ears that actually feel alive
+Each ear style is procedurally animated on every frame:
+- **Fur strands sway** at 1.25 Hz with randomised phases — no two strands move the same.
+- **Ear-tip twitches** fire periodically, like a real cat listening to something.
+- **Spring tilt** follows your head roll with elastic overshoot — rapid head snaps make the ears wobble comically.
+- **Perspective squeeze** narrows the far ear and widens the near one as you turn, giving genuine 3-D depth.
+
+### Ears that react to your expressions
+ML Kit reads your face every frame and the ears respond:
+- **Broad smile** → both ears perk upward with a spring pop.
+- **Wide eyes** → ears shoot up for a surprised look.
+- **Wink or blink** → the ear on the closing-eye side flattens and recovers.
+
+### Up to 4 faces at once
+Point the camera at a group — every detected face gets its own independently
+animated ears, each smoothed and tracked separately so they don't jump when
+faces overlap.
+
+### Baked-in capture
+Tap the shutter to save a photo with the ears composited directly onto the
+frame. The same procedural geometry used in the live preview is applied at
+full resolution — what you see is exactly what you get. Share via any Android
+app with one more tap.
+
+---
+
 ## What It Does
 
 - Live camera preview with front/rear camera switching
-- On-device face detection via ML Kit (ear landmarks, head pose)
-- Animated 3D-look cat-ear overlay: procedural Compose Canvas ears anchored to
-  detected human ear positions, with swaying fur strands, spring-animated tilt,
-  and perspective X-squash for a comical depth illusion
-- Still photo capture with the animated overlay baked in
-- Save to local storage and share via Android sharing intents
+- On-device face detection via ML Kit (ear landmarks, head pose, expressions)
+- Animated 3D-look procedural ears — 10 styles, expression-reactive, multi-face
+- Still photo capture with the overlay baked in at full resolution
+- Save to gallery and share via the Android share sheet
 
 ## Tech Stack
 
@@ -155,6 +187,17 @@ Install on a connected device or running emulator:
    baked in; it is saved to your gallery and a status banner confirms it.
 6. Tap the **share** button (bottom-left, appears after a capture) to send the
    saved photo via the Android share sheet.
+
+### Make the ears react
+
+The ears don't just sit there — they respond to your face. Try it:
+
+- **Tilt your head** → the ears tilt with it, lagging slightly for a springy, comical wobble.
+- **Turn left or right** → the ears squeeze in perspective, the far one narrowing as if seen at an angle.
+- **Smile big** → both ears perk up.
+- **Open your eyes wide** → the ears shoot up in surprise.
+- **Wink** → the ear on that side flattens, then springs back.
+- **Bring in a friend** → up to four faces each get their own animated ears at the same time.
 
 > Face tracking needs a real face in view. The emulator can use a host webcam
 > (`-camera-front webcam0`) for local testing, but a physical Android 14+
