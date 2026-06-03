@@ -3,6 +3,7 @@
 
 package it.marcelpetrick.catears.capture
 
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -44,23 +45,26 @@ class ImageSaver @Inject constructor(private val context: Context) {
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
             ?: return null
 
-        return try {
-            val saved = resolver.openOutputStream(uri)?.use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)
-            } == true
-            if (!saved) {
-                resolver.delete(uri, null, null)
-                return null
-            }
+        return writeBitmap(resolver, uri, bitmap, values)
+    }
+
+    private fun writeBitmap(resolver: ContentResolver, uri: Uri, bitmap: Bitmap, values: ContentValues): Uri? = try {
+        val saved = resolver.openOutputStream(uri)?.use { stream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)
+        } == true
+        if (saved) {
             values.clear()
             values.put(MediaStore.Images.Media.IS_PENDING, PENDING_FALSE)
             resolver.update(uri, values, null, null)
             uri
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to write image to MediaStore", e)
+        } else {
             resolver.delete(uri, null, null)
             null
         }
+    } catch (e: IOException) {
+        Log.e(TAG, "Failed to write image to MediaStore", e)
+        resolver.delete(uri, null, null)
+        null
     }
 
     companion object {

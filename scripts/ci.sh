@@ -7,7 +7,7 @@
 #
 # Usage: ./scripts/ci.sh
 
-set -euo pipefail
+set -Eeuo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
