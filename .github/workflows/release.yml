@@ -83,6 +83,10 @@ jobs:
       - name: Build release bundle (AAB)
         run: ./gradlew bundleRelease
         env:
+          # RELEASE_STORE_FILE is only written to GITHUB_ENV by the signing step
+          # when secrets are present; it is absent (not "") when unsigned, so Gradle
+          # receives no value and skips signing. The isNotBlank() guard in build.gradle.kts
+          # is the second line of defence against an empty-string crash.
           RELEASE_STORE_FILE: ${{ env.RELEASE_STORE_FILE }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}

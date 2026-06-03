@@ -44,19 +44,28 @@ The build reads signing credentials from **either** source, checked in this orde
    export RELEASE_KEY_PASSWORD=…
    ```
 
-   In GitHub Actions, store the keystore contents as a base64 secret instead of
-   a path:
+   **In GitHub Actions** — store the keystore as a base64 secret so it never
+   touches the filesystem as a plain file. Go to
+   **Settings → Secrets and variables → Actions → New repository secret** and
+   add all four:
 
-   ```bash
-   base64 -w 0 release.jks
-   # save output as RELEASE_KEYSTORE_BASE64
-   ```
+   | Secret | Value |
+   |--------|-------|
+   | `RELEASE_KEYSTORE_BASE64` | `base64 -w 0 release.jks` (the full base64 output) |
+   | `RELEASE_STORE_PASSWORD` | keystore password |
+   | `RELEASE_KEY_ALIAS` | key alias (e.g. `catears`) |
+   | `RELEASE_KEY_PASSWORD` | key password |
 
-   The release workflow decodes it into a runner-local file and exports
-   `RELEASE_STORE_FILE` for Gradle.
+   The release workflow detects these secrets, decodes the keystore into a
+   runner-local file, and passes `RELEASE_STORE_FILE` to Gradle for signing.
 
-If neither is present, the release build still succeeds but emits an **unsigned**
-artifact (`androidCatEars-release-unsigned.apk`).
+   **Signing is optional.** If none of the four secrets are set, the workflow
+   still builds and publishes an unsigned AAB with a ⚠️ label. You can trigger
+   a release at any time and add the secrets later to switch to signed builds.
+
+If neither `keystore.properties` nor the env vars are present, the local build
+also still succeeds but emits an **unsigned** artifact
+(`androidCatEars-release-unsigned.apk`).
 
 ## 3. Build the release artifacts
 

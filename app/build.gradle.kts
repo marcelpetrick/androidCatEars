@@ -50,7 +50,11 @@ val signingProps: Map<String, String?> =
             "keyPassword" to System.getenv("RELEASE_KEY_PASSWORD"),
         )
     }
-val hasReleaseSigning = signingProps["storeFile"]?.let { file(it).exists() } == true
+// Treat blank strings (empty env vars from CI) the same as absent; file("") crashes Gradle.
+val hasReleaseSigning =
+    signingProps["storeFile"]
+        ?.takeIf { it.isNotBlank() }
+        ?.let { runCatching { file(it).exists() }.getOrDefault(false) } == true
 
 android {
     namespace = "it.marcelpetrick.catears"
