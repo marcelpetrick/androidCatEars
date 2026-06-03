@@ -23,6 +23,7 @@ data class EarAnchor(val x: Float, val y: Float, val size: Float, val tiltDegree
  * @param earStyle Visual rendering style to apply to both ears.
  * @param smilingProbability Smoothed smile probability [0..1]; 0 when unknown.
  * @param eyeOpennessMean Smoothed mean eye-openness [0..1]; 1 when unknown.
+ * @param trackingId ML Kit face-tracking ID propagated from [FaceModel]; used as a stable Compose key.
  */
 data class OverlayPlacement(
     val leftEar: EarAnchor,
@@ -31,6 +32,7 @@ data class OverlayPlacement(
     val earStyle: EarStyle = EarStyle.CLASSIC,
     val smilingProbability: Float = 0f,
     val eyeOpennessMean: Float = 1f,
+    val trackingId: Int? = null,
 )
 
 /**
@@ -52,6 +54,7 @@ data class OverlayPlacement(
  * @param earHeightRatio Fallback only: gap between box top and ear bottom (fraction of height).
  * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
  * @param eyeOpennessMean Mean of left+right eye-open probabilities [0..1]; 1 when absent.
+ * @param trackingId Stable face-tracking ID for Compose keying; null when unavailable.
  */
 fun computeOverlayPlacement(
     viewBox: BoundingBox,
@@ -63,6 +66,7 @@ fun computeOverlayPlacement(
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
     smilingProbability: Float = 0f,
     eyeOpennessMean: Float = 1f,
+    trackingId: Int? = null,
 ): OverlayPlacement {
     val earSize = viewBox.width * widthRatio
     // Positive yaw (head turning right) → right ear nearer, left ear farther.
@@ -89,6 +93,7 @@ fun computeOverlayPlacement(
             headEulerAngleY = headEulerAngleY,
             smilingProbability = smilingProbability,
             eyeOpennessMean = eyeOpennessMean,
+            trackingId = trackingId,
         )
     } else {
         val earBottomY = viewBox.top - viewBox.height * earHeightRatio
@@ -112,6 +117,7 @@ fun computeOverlayPlacement(
             headEulerAngleY = headEulerAngleY,
             smilingProbability = smilingProbability,
             eyeOpennessMean = eyeOpennessMean,
+            trackingId = trackingId,
         )
     }
 }
@@ -164,6 +170,38 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
         private const val DEFAULT_ALPHA = 0.3f
         private const val HALF_CIRCLE = 180f
         private const val FULL_CIRCLE = 360f
+    }
+}
+
+/**
+ * Smooths a list of per-face [OverlayPlacement]s using one [PlacementSmoother] per tracking ID.
+ *
+ * Smoothers for faces no longer present are discarded each frame so memory is bounded
+ * by the number of simultaneously visible faces.
+ */
+class MultiFaceSmoother(private val alpha: Float = DEFAULT_MULTI_ALPHA) {
+
+    private val smoothers = LinkedHashMap<Int, PlacementSmoother>()
+
+    /** Smooth [entries]: pairs of (trackingId, placement). Returns the smoothed placements in order. */
+    fun smooth(entries: List<Pair<Int?, OverlayPlacement>>): List<OverlayPlacement> {
+        val activeIds = entries.mapNotNull { it.first }.toSet()
+        smoothers.keys.retainAll(activeIds)
+        return entries.map { (id, placement) ->
+            if (id != null) {
+                smoothers.getOrPut(id) { PlacementSmoother(alpha) }.smooth(placement)
+            } else {
+                placement
+            }
+        }
+    }
+
+    fun reset() {
+        smoothers.clear()
+    }
+
+    companion object {
+        private const val DEFAULT_MULTI_ALPHA = 0.3f
     }
 }
 

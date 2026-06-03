@@ -37,8 +37,8 @@ class MainViewModel @Inject constructor(
         _lens.value = _lens.value.toggled()
     }
 
-    private val _overlayPlacement = MutableStateFlow<OverlayPlacement?>(null)
-    val overlayPlacement: StateFlow<OverlayPlacement?> = _overlayPlacement.asStateFlow()
+    private val _overlayPlacements = MutableStateFlow<List<OverlayPlacement>>(emptyList())
+    val overlayPlacements: StateFlow<List<OverlayPlacement>> = _overlayPlacements.asStateFlow()
 
     private val _earStyle = MutableStateFlow(EarStyle.CLASSIC)
     val earStyle: StateFlow<EarStyle> = _earStyle.asStateFlow()
@@ -47,12 +47,12 @@ class MainViewModel @Inject constructor(
     fun onCycleEarStyle() {
         val styles = EarStyle.entries
         _earStyle.value = styles[(_earStyle.value.ordinal + 1) % styles.size]
-        _overlayPlacement.value = _overlayPlacement.value?.copy(earStyle = _earStyle.value)
+        _overlayPlacements.value = _overlayPlacements.value.map { it.copy(earStyle = _earStyle.value) }
     }
 
-    /** Called from the face-detection callback with the smoothed placement, or null if no face. */
-    fun onFaceDetected(placement: OverlayPlacement?) {
-        _overlayPlacement.value = placement?.copy(earStyle = _earStyle.value)
+    /** Called from the face-detection callback with all smoothed placements for the frame. */
+    fun onFaceDetected(placements: List<OverlayPlacement>) {
+        _overlayPlacements.value = placements.map { it.copy(earStyle = _earStyle.value) }
     }
 
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)

@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
             CatEarsTheme {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val lens by viewModel.lens.collectAsStateWithLifecycle()
-                val overlayPlacement by viewModel.overlayPlacement.collectAsStateWithLifecycle()
+                val overlayPlacements by viewModel.overlayPlacements.collectAsStateWithLifecycle()
                 val captureState by viewModel.captureState.collectAsStateWithLifecycle()
                 val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
 
@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     uiState = uiState,
                     lens = lens,
-                    overlayPlacement = overlayPlacement,
+                    overlayPlacements = overlayPlacements,
                     onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                     onOpenSettings = { openAppSettings() },
                     onToggleLens = viewModel::onToggleLens,

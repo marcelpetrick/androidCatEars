@@ -102,24 +102,24 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `initial overlayPlacement is null`() = runTest {
-        viewModel().overlayPlacement.test {
-            assertNull(awaitItem())
+    fun `initial overlayPlacements is empty`() = runTest {
+        viewModel().overlayPlacements.test {
+            assertEquals(emptyList<OverlayPlacement>(), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `onFaceDetected updates overlayPlacement`() = runTest {
+    fun `onFaceDetected updates overlayPlacements`() = runTest {
         val vm = viewModel()
         val placement = OverlayPlacement(
             leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
             rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
         )
-        vm.overlayPlacement.test {
-            assertNull(awaitItem())
-            vm.onFaceDetected(placement)
-            assertEquals(placement, awaitItem())
+        vm.overlayPlacements.test {
+            assertEquals(emptyList<OverlayPlacement>(), awaitItem())
+            vm.onFaceDetected(listOf(placement))
+            assertEquals(listOf(placement), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -187,18 +187,18 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onFaceDetected null clears placement`() = runTest {
+    fun `onFaceDetected empty list clears placements`() = runTest {
         val vm = viewModel()
         val placement = OverlayPlacement(
             leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
             rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
         )
-        vm.overlayPlacement.test {
-            assertNull(awaitItem())
-            vm.onFaceDetected(placement)
-            assertEquals(placement, awaitItem())
-            vm.onFaceDetected(null)
-            assertNull(awaitItem())
+        vm.overlayPlacements.test {
+            assertEquals(emptyList<OverlayPlacement>(), awaitItem())
+            vm.onFaceDetected(listOf(placement))
+            assertEquals(1, awaitItem().size)
+            vm.onFaceDetected(emptyList())
+            assertEquals(emptyList<OverlayPlacement>(), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -235,33 +235,33 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onFaceDetected injects current earStyle into placement`() = runTest {
+    fun `onFaceDetected injects current earStyle into placements`() = runTest {
         val vm = viewModel()
         vm.onCycleEarStyle() // advance to SHARP_FELINE
         val raw = OverlayPlacement(
             leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
             rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
         )
-        vm.overlayPlacement.test {
-            assertNull(awaitItem())
-            vm.onFaceDetected(raw)
-            assertEquals(EarStyle.SHARP_FELINE, awaitItem()?.earStyle)
+        vm.overlayPlacements.test {
+            assertEquals(emptyList<OverlayPlacement>(), awaitItem())
+            vm.onFaceDetected(listOf(raw))
+            assertEquals(EarStyle.SHARP_FELINE, awaitItem().first().earStyle)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `onCycleEarStyle updates active placement immediately`() = runTest {
+    fun `onCycleEarStyle updates active placements immediately`() = runTest {
         val vm = viewModel()
         val raw = OverlayPlacement(
             leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
             rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
         )
-        vm.onFaceDetected(raw)
-        vm.overlayPlacement.test {
-            awaitItem() // current CLASSIC placement
+        vm.onFaceDetected(listOf(raw))
+        vm.overlayPlacements.test {
+            awaitItem() // current CLASSIC placements
             vm.onCycleEarStyle()
-            assertEquals(EarStyle.SHARP_FELINE, awaitItem()?.earStyle)
+            assertEquals(EarStyle.SHARP_FELINE, awaitItem().first().earStyle)
             cancelAndIgnoreRemainingEvents()
         }
     }

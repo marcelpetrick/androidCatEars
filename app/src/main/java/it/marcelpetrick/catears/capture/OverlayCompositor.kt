@@ -44,16 +44,17 @@ object OverlayCompositor {
     }
 
     /**
-     * Draws [overlayPlacement] cat ears onto [frame] and returns the composited result.
-     * Returns a copy of [frame] when [overlayPlacement] is null.
+     * Draws cat ears for every placement in [placements] onto [frame] and returns the result.
+     * Returns a copy of [frame] unchanged when [placements] is empty.
      */
-    fun composite(frame: Bitmap, overlayPlacement: OverlayPlacement?): Bitmap {
+    fun composite(frame: Bitmap, placements: List<OverlayPlacement>): Bitmap {
         val result = frame.copy(Bitmap.Config.ARGB_8888, true)
-        if (overlayPlacement == null) return result
+        if (placements.isEmpty()) return result
         val canvas = Canvas(result)
-        val style = overlayPlacement.earStyle
-        drawEarOnCanvas(canvas, overlayPlacement.leftEar, style)
-        drawEarOnCanvas(canvas, overlayPlacement.rightEar, style)
+        for (p in placements) {
+            drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
+            drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
+        }
         return result
     }
 

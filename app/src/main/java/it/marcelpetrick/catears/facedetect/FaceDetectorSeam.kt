@@ -18,9 +18,14 @@ interface FaceDetectorSeam {
      *
      * @param imageProxy The current camera frame (caller must close it when done).
      * @param onResult Called on the calling thread once detection completes;
-     *   receives the best single [FaceModel] found, or null if no face detected.
+     *   receives all detected [FaceModel]s (empty list when no face found, up to [MAX_FACES]).
      */
-    fun process(imageProxy: androidx.camera.core.ImageProxy, onResult: (FaceModel?) -> Unit)
+    fun process(imageProxy: androidx.camera.core.ImageProxy, onResult: (List<FaceModel>) -> Unit)
+
+    companion object {
+        /** Maximum number of faces tracked simultaneously. */
+        const val MAX_FACES = 4
+    }
 
     /** Release any held ML Kit resources. */
     fun close()

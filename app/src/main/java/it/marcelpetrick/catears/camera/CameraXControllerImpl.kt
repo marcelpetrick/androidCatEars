@@ -34,8 +34,8 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     /** Optional face detector; when set, an ImageAnalysis use case is bound. */
     var faceDetector: FaceDetectorSeam? = null
 
-    /** Receives (face, uprightImageWidth, uprightImageHeight) on each analysed frame. */
-    var onFaceResult: ((FaceModel?, Int, Int) -> Unit)? = null
+    /** Receives (faces, uprightImageWidth, uprightImageHeight) on each analysed frame. */
+    var onFaceResult: ((List<FaceModel>, Int, Int) -> Unit)? = null
 
     private val analysisExecutor = Executors.newSingleThreadExecutor()
 

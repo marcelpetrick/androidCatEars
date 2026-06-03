@@ -55,13 +55,13 @@ import it.marcelpetrick.catears.ui.theme.CatEarsTheme
 fun MainScreen(
     uiState: MainUiState,
     lens: LensSelector,
-    overlayPlacement: OverlayPlacement?,
+    overlayPlacements: List<OverlayPlacement>,
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
-    onFaceDetected: (OverlayPlacement?) -> Unit,
+    onFaceDetected: (List<OverlayPlacement>) -> Unit,
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
     captureRequested: Boolean,
@@ -83,7 +83,7 @@ fun MainScreen(
 
                 MainUiState.Ready -> CameraContent(
                     lens = lens,
-                    overlayPlacement = overlayPlacement,
+                    overlayPlacements = overlayPlacements,
                     onFaceDetected = onFaceDetected,
                     earStyle = earStyle,
                     onCycleEarStyle = onCycleEarStyle,
@@ -210,8 +210,8 @@ private fun PermissionDeniedContent(onOpenSettings: () -> Unit) {
 @Composable
 private fun CameraContent(
     lens: LensSelector,
-    overlayPlacement: OverlayPlacement?,
-    onFaceDetected: (OverlayPlacement?) -> Unit,
+    overlayPlacements: List<OverlayPlacement>,
+    onFaceDetected: (List<OverlayPlacement>) -> Unit,
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
     captureRequested: Boolean,
@@ -233,7 +233,7 @@ private fun CameraContent(
             faceDetectorFactory = faceDetectorFactory,
             modifier = Modifier.fillMaxSize(),
         )
-        CatEarOverlay(placement = overlayPlacement)
+        CatEarOverlay(placements = overlayPlacements)
         // FAB row lives inside a nav-bar-inset container so buttons stay visible
         // above the gesture navigation bar on edge-to-edge layouts.
         Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
@@ -291,13 +291,13 @@ private fun MainScreenReadyPreview() {
         MainScreen(
             uiState = MainUiState.Ready,
             lens = LensSelector.Front,
-            overlayPlacement = null,
+            overlayPlacements = emptyList(),
             onRequestPermission = {},
             onOpenSettings = {},
             onToggleLens = {},
             onCapture = {},
             onShare = {},
-            onFaceDetected = {},
+            onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
             captureRequested = false,
@@ -317,13 +317,13 @@ private fun MainScreenPermissionRequiredPreview() {
         MainScreen(
             uiState = MainUiState.PermissionRequired,
             lens = LensSelector.Front,
-            overlayPlacement = null,
+            overlayPlacements = emptyList(),
             onRequestPermission = {},
             onOpenSettings = {},
             onToggleLens = {},
             onCapture = {},
             onShare = {},
-            onFaceDetected = {},
+            onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
             captureRequested = false,
@@ -343,13 +343,13 @@ private fun MainScreenPermissionDeniedPreview() {
         MainScreen(
             uiState = MainUiState.PermissionPermanentlyDenied,
             lens = LensSelector.Front,
-            overlayPlacement = null,
+            overlayPlacements = emptyList(),
             onRequestPermission = {},
             onOpenSettings = {},
             onToggleLens = {},
             onCapture = {},
             onShare = {},
-            onFaceDetected = {},
+            onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
             captureRequested = false,
@@ -366,9 +366,9 @@ private const val TITLE_BG_ALPHA = 0.4f
 private const val TITLE_CORNER_DP = 12
 
 private object PreviewFaceDetector : FaceDetectorSeam {
-    override fun process(imageProxy: ImageProxy, onResult: (it.marcelpetrick.catears.domain.FaceModel?) -> Unit) {
+    override fun process(imageProxy: ImageProxy, onResult: (List<it.marcelpetrick.catears.domain.FaceModel>) -> Unit) {
         imageProxy.close()
-        onResult(null)
+        onResult(emptyList())
     }
 
     override fun close() = Unit

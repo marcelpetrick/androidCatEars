@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -90,40 +91,50 @@ private fun rememberEarAnimState(placement: OverlayPlacement?): EarAnimState {
 }
 
 /**
- * Transparent overlay that draws two animated procedural cat ears at the positions described by
- * [placement]. When [placement] is null (no face detected) nothing is rendered.
+ * Transparent overlay that draws animated procedural cat ears for every placement in [placements].
+ * Each face gets independently spring-animated ears keyed by its tracking ID.
+ * Renders nothing when [placements] is empty.
  */
 @Composable
-fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
+fun CatEarOverlay(placements: List<OverlayPlacement>, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize()) {
+        placements.forEachIndexed { index, placement ->
+            key(placement.trackingId ?: index) {
+                SingleFaceEarOverlay(placement)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SingleFaceEarOverlay(placement: OverlayPlacement) {
     val anim = rememberEarAnimState(placement)
-    val style = placement?.earStyle ?: EarStyle.CLASSIC
+    val style = placement.earStyle
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .drawWithContent {
                 drawContent()
-                if (placement != null) {
-                    drawEar(
-                        placement.leftEar.copy(
-                            tiltDegrees = anim.leftTilt,
-                            y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
-                            xScale = placement.leftEar.xScale * anim.leftWinkScale,
-                        ),
-                        style,
-                        anim.swayTime,
-                        anim.twitchTime,
-                    )
-                    drawEar(
-                        placement.rightEar.copy(
-                            tiltDegrees = anim.rightTilt,
-                            y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
-                            xScale = placement.rightEar.xScale * anim.rightWinkScale,
-                        ),
-                        style,
-                        anim.swayTime,
-                        anim.twitchTime,
-                    )
-                }
+                drawEar(
+                    placement.leftEar.copy(
+                        tiltDegrees = anim.leftTilt,
+                        y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
+                        xScale = placement.leftEar.xScale * anim.leftWinkScale,
+                    ),
+                    style,
+                    anim.swayTime,
+                    anim.twitchTime,
+                )
+                drawEar(
+                    placement.rightEar.copy(
+                        tiltDegrees = anim.rightTilt,
+                        y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
+                        xScale = placement.rightEar.xScale * anim.rightWinkScale,
+                    ),
+                    style,
+                    anim.swayTime,
+                    anim.twitchTime,
+                )
             },
     )
 }

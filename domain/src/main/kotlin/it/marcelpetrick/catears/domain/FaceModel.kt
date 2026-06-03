@@ -19,6 +19,7 @@ package it.marcelpetrick.catears.domain
  * @param smilingProbability Probability [0..1] that the face is smiling; null if classification disabled.
  * @param leftEyeOpenProbability Probability [0..1] that the left eye is open; null if classification disabled.
  * @param rightEyeOpenProbability Probability [0..1] that the right eye is open; null if classification disabled.
+ * @param trackingId ML Kit face-tracking ID; stable across frames for the same physical face; null if not available.
  */
 data class FaceModel(
     val boundingBox: BoundingBox,
@@ -31,6 +32,7 @@ data class FaceModel(
     val smilingProbability: Float? = null,
     val leftEyeOpenProbability: Float? = null,
     val rightEyeOpenProbability: Float? = null,
+    val trackingId: Int? = null,
 )
 
 /** Axis-aligned rectangle in pixel coordinates. */

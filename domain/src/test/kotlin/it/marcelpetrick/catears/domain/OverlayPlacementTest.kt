@@ -214,6 +214,54 @@ class OverlayPlacementTest {
         assertTrue(result.leftEar.tiltDegrees >= -180f && result.leftEar.tiltDegrees <= 180f)
     }
 
+    // ---- MultiFaceSmoother ----
+
+    @Test
+    fun `MultiFaceSmoother first entry returned as-is`() {
+        val smoother = MultiFaceSmoother()
+        val p = makePlacement()
+        val result = smoother.smooth(listOf(Pair(1, p)))
+        assertEquals(p, result.first())
+    }
+
+    @Test
+    fun `MultiFaceSmoother smooths second value`() {
+        val smoother = MultiFaceSmoother()
+        val p1 = makePlacement(lx = 0f, ly = 0f, rx = 0f, ry = 0f, size = 100f)
+        val p2 = makePlacement(lx = 100f, ly = 100f, rx = 100f, ry = 100f, size = 200f)
+        smoother.smooth(listOf(Pair(1, p1)))
+        val result = smoother.smooth(listOf(Pair(1, p2)))
+        // 0.3 alpha: lerp(0, 100, 0.3) = 30
+        assertTrue(result.first().leftEar.x > 0f && result.first().leftEar.x < 100f)
+    }
+
+    @Test
+    fun `MultiFaceSmoother discards stale face smoothers`() {
+        val smoother = MultiFaceSmoother()
+        smoother.smooth(listOf(Pair(1, makePlacement()), Pair(2, makePlacement())))
+        // Only face 1 present in next frame
+        val result = smoother.smooth(listOf(Pair(1, makePlacement(lx = 50f))))
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `MultiFaceSmoother reset clears all smoothers`() {
+        val smoother = MultiFaceSmoother()
+        smoother.smooth(listOf(Pair(1, makePlacement(lx = 0f))))
+        smoother.reset()
+        val p = makePlacement(lx = 100f)
+        val result = smoother.smooth(listOf(Pair(1, p)))
+        assertEquals(p, result.first())
+    }
+
+    @Test
+    fun `MultiFaceSmoother handles null tracking id`() {
+        val smoother = MultiFaceSmoother()
+        val p = makePlacement()
+        val result = smoother.smooth(listOf(Pair(null, p)))
+        assertEquals(p, result.first())
+    }
+
     // ---- helpers ----
 
     private fun makePlacement(

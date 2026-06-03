@@ -277,9 +277,9 @@ Each task keeps all quality gates green.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 22.0 | TODO | Expose expression probabilities in `FaceModel` | Add `smilingProbability: Float?`, `leftEyeOpenProbability: Float?`, `rightEyeOpenProbability: Float?` to `FaceModel` (default `null` for backward compat). Enable `CLASSIFICATION_MODE_ALL` in `MlKitFaceDetectorImpl` and populate the new fields. Unit-test new fields; all gates green. |
-| 22.1 | TODO | Surface expressions in `OverlayPlacement` | Add `smilingProbability: Float = 0f` and `eyeOpennessMean: Float = 1f` to `OverlayPlacement`. `computeOverlayPlacement` derives them from the new `FaceModel` fields. `PlacementSmoother` smooths both. Unit-tested; all gates green. |
-| 22.2 | TODO | Expression-driven ear animations in `CatEarOverlay` | Map expressions to ear behaviour: broad smile (>0.85) → both ears perk upward (tip-Y offset −20% with spring); wide eyes (>0.90) → ears shoot up briefly via `animateFloatAsState`; low eye-openness (<0.20, wink or blink) → ipsilateral ear flattens (xScale → 0.5 with spring). All animations layered on top of existing tilt/sway; no visible change when face is neutral. |
+| 22.0 | DONE | Expose expression probabilities in `FaceModel` | Add `smilingProbability: Float?`, `leftEyeOpenProbability: Float?`, `rightEyeOpenProbability: Float?` to `FaceModel` (default `null` for backward compat). Enable `CLASSIFICATION_MODE_ALL` in `MlKitFaceDetectorImpl` and populate the new fields. Unit-test new fields; all gates green. |
+| 22.1 | DONE | Surface expressions in `OverlayPlacement` | Add `smilingProbability: Float = 0f` and `eyeOpennessMean: Float = 1f` to `OverlayPlacement`. `computeOverlayPlacement` derives them from the new `FaceModel` fields. `PlacementSmoother` smooths both. Unit-tested; all gates green. |
+| 22.2 | DONE | Expression-driven ear animations in `CatEarOverlay` | Map expressions to ear behaviour: broad smile (>0.85) → both ears perk upward (tip-Y offset −20% with spring); wide eyes (>0.90) → ears shoot up briefly via `animateFloatAsState`; low eye-openness (<0.20, wink or blink) → ipsilateral ear flattens (xScale → 0.5 with spring). All animations layered on top of existing tilt/sway; no visible change when face is neutral. |
 
 ---
 

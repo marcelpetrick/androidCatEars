@@ -20,8 +20,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import it.marcelpetrick.catears.capture.OverlayCompositor
 import it.marcelpetrick.catears.domain.LensSelector
+import it.marcelpetrick.catears.domain.MultiFaceSmoother
 import it.marcelpetrick.catears.domain.OverlayPlacement
-import it.marcelpetrick.catears.domain.PlacementSmoother
 import it.marcelpetrick.catears.domain.TransformContext
 import it.marcelpetrick.catears.domain.computeOverlayPlacement
 import it.marcelpetrick.catears.domain.imageToViewBoundingBox
@@ -43,7 +43,7 @@ private const val TAG = "CatEars"
 @Composable
 fun CameraPreview(
     lens: LensSelector,
-    onFaceDetected: (OverlayPlacement?) -> Unit,
+    onFaceDetected: (List<OverlayPlacement>) -> Unit,
     captureRequested: Boolean,
     onComposited: (Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
@@ -53,14 +53,14 @@ fun CameraPreview(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val detector = remember { faceDetectorFactory() }
-    val smoother = remember { PlacementSmoother() }
+    val smoother = remember { MultiFaceSmoother() }
     val controller = remember { cameraControllerFactory() }
-    val latestPlacement = remember { AtomicReference<OverlayPlacement?>(null) }
+    val latestPlacements = remember { AtomicReference<List<OverlayPlacement>>(emptyList()) }
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
 
     LaunchedEffect(captureRequested) {
         if (captureRequested) {
-            onComposited(captureComposited(previewViewRef.get(), latestPlacement.get()))
+            onComposited(captureComposited(previewViewRef.get(), latestPlacements.get()))
         }
     }
 
@@ -70,7 +70,7 @@ fun CameraPreview(
                 implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             }
             previewViewRef.set(previewView)
-            wireController(controller, previewView, lifecycleOwner, detector) { face, w, h ->
+            wireController(controller, previewView, lifecycleOwner, detector) { faces, w, h ->
                 val transform = TransformContext(
                     imageWidth = w,
                     imageHeight = h,
@@ -78,9 +78,9 @@ fun CameraPreview(
                     viewHeight = previewView.height.coerceAtLeast(1),
                     isFrontCamera = lens == LensSelector.Front,
                 )
-                val placement = facePlacement(face, transform, smoother)
-                latestPlacement.set(placement)
-                onFaceDetected(placement)
+                val placements = facePlacements(faces, transform, smoother)
+                latestPlacements.set(placements)
+                onFaceDetected(placements)
             }
             startCamera(ctx, controller, lens)
             previewView
@@ -104,56 +104,64 @@ fun CameraPreview(
  * gracefully); if no face was detected ([placement] is null), returns the plain frame and
  * applies **no** ears; if compositing itself fails, falls back to the plain frame. Never throws.
  */
-private fun captureComposited(previewView: PreviewView?, placement: OverlayPlacement?): Bitmap? {
+private fun captureComposited(previewView: PreviewView?, placements: List<OverlayPlacement>): Bitmap? {
     val frame = previewView?.bitmap
     if (frame == null) {
         Log.w(TAG, "Capture skipped: preview frame not ready")
         return null
     }
-    return when (placement) {
-        null -> {
-            Log.d(TAG, "Capturing without ears: no face detected")
-            frame
-        }
-
-        else -> compositeEarsOrFrame(frame, placement)
+    return if (placements.isEmpty()) {
+        Log.d(TAG, "Capturing without ears: no face detected")
+        frame
+    } else {
+        compositeEarsOrFrame(frame, placements)
     }
 }
 
 /** Draws procedural ears onto [frame]; any failure yields the plain frame. */
 @Suppress("TooGenericExceptionCaught")
-private fun compositeEarsOrFrame(frame: Bitmap, placement: OverlayPlacement): Bitmap = try {
-    OverlayCompositor.composite(frame, placement)
+private fun compositeEarsOrFrame(frame: Bitmap, placements: List<OverlayPlacement>): Bitmap = try {
+    OverlayCompositor.composite(frame, placements)
 } catch (e: Exception) {
     Log.e(TAG, "Compositing ears failed; saving plain frame", e)
     frame
 }
 
-/** Transforms a detected face to a smoothed view-space [OverlayPlacement]. */
-private fun facePlacement(
-    face: it.marcelpetrick.catears.domain.FaceModel?,
+/** Transforms all detected faces to smoothed view-space [OverlayPlacement]s. */
+private fun facePlacements(
+    faces: List<it.marcelpetrick.catears.domain.FaceModel>,
     transform: TransformContext,
-    smoother: PlacementSmoother,
-): OverlayPlacement? {
-    if (face == null) {
+    smoother: MultiFaceSmoother,
+): List<OverlayPlacement> {
+    if (faces.isEmpty()) {
         smoother.reset()
-        return null
+        return emptyList()
     }
+    val entries = faces.mapNotNull { face ->
+        val placement = singleFacePlacement(face, transform) ?: return@mapNotNull null
+        Pair(face.trackingId, placement)
+    }
+    return if (entries.isEmpty()) emptyList() else smoother.smooth(entries)
+}
+
+private fun singleFacePlacement(
+    face: it.marcelpetrick.catears.domain.FaceModel,
+    transform: TransformContext,
+): OverlayPlacement? {
     val viewBox = imageToViewBoundingBox(face.boundingBox, transform)
     val leftEar = face.leftEarPosition?.let { imageToViewCoordinates(it, transform) }
     val rightEar = face.rightEarPosition?.let { imageToViewCoordinates(it, transform) }
     val eyeOpennessMean = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
         .takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 1f
-    return smoother.smooth(
-        computeOverlayPlacement(
-            viewBox = viewBox,
-            headEulerAngleZ = face.headEulerAngleZ,
-            headEulerAngleY = face.headEulerAngleY,
-            leftEarAnchor = leftEar,
-            rightEarAnchor = rightEar,
-            smilingProbability = face.smilingProbability ?: 0f,
-            eyeOpennessMean = eyeOpennessMean,
-        ),
+    return computeOverlayPlacement(
+        viewBox = viewBox,
+        headEulerAngleZ = face.headEulerAngleZ,
+        headEulerAngleY = face.headEulerAngleY,
+        leftEarAnchor = leftEar,
+        rightEarAnchor = rightEar,
+        smilingProbability = face.smilingProbability ?: 0f,
+        eyeOpennessMean = eyeOpennessMean,
+        trackingId = face.trackingId,
     )
 }
 
@@ -163,7 +171,7 @@ private fun wireController(
     previewView: PreviewView,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     detector: FaceDetectorSeam,
-    onFace: (it.marcelpetrick.catears.domain.FaceModel?, Int, Int) -> Unit,
+    onFace: (List<it.marcelpetrick.catears.domain.FaceModel>, Int, Int) -> Unit,
 ) {
     controller.previewView = previewView
     controller.lifecycleOwner = lifecycleOwner

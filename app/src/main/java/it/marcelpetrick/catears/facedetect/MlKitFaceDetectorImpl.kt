@@ -28,24 +28,24 @@ class MlKitFaceDetectorImpl @Inject constructor() : FaceDetectorSeam {
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
             .setMinFaceSize(MINIMUM_FACE_SIZE)
+            .enableTracking()
             .build(),
     )
 
-    override fun process(imageProxy: ImageProxy, onResult: (FaceModel?) -> Unit) {
+    override fun process(imageProxy: ImageProxy, onResult: (List<FaceModel>) -> Unit) {
         val mediaImage = imageProxy.image
         if (mediaImage == null) {
             imageProxy.close()
-            onResult(null)
+            onResult(emptyList())
             return
         }
 
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
         detector.process(image)
             .addOnSuccessListener { faces ->
-                val largest = faces.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }
-                onResult(largest?.toFaceModel())
+                onResult(faces.take(FaceDetectorSeam.MAX_FACES).map { it.toFaceModel() })
             }
-            .addOnFailureListener { onResult(null) }
+            .addOnFailureListener { onResult(emptyList()) }
             .addOnCompleteListener { imageProxy.close() }
     }
 
@@ -78,5 +78,6 @@ private fun com.google.mlkit.vision.face.Face.toFaceModel(): FaceModel {
         smilingProbability = smilingProbability,
         leftEyeOpenProbability = leftEyeOpenProbability,
         rightEyeOpenProbability = rightEyeOpenProbability,
+        trackingId = trackingId,
     )
 }
