@@ -31,7 +31,7 @@ user decision before proceeding).
 | 0.3 | DONE | Version single source of truth | `version.properties` (`major=0,minor=1,patch=0`) read by Gradle into `versionName`/`versionCode`. |
 | 0.4 | DONE | `:app` module scaffolding | `:app` `build.gradle.kts`, `AndroidManifest.xml` (minSdk 34), base theme + resources; package `it.marcelpetrick.catears`. |
 | 0.5 | DONE | Compose placeholder screen | `MainActivity` renders a Compose placeholder ("Cat Ears — coming soon"). |
-| 0.6 | TODO | Verify build + README | `./gradlew assembleDebug` produces an installable APK that launches; README build section matches real tasks. |
+| 0.6 | DONE | Verify build + README | `./gradlew assembleDebug` produces an installable APK that launches; README build section matches real tasks. |
 
 ### WP 1 — Versioning automation
 
