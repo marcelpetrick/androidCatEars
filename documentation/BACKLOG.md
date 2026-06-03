@@ -132,7 +132,7 @@ user decision before proceeding).
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 11.0 | DONE | Capture use case + UI | Capture button + CameraX `ImageCapture` produces a still frame. |
-| 11.1 | TODO | Composite overlay | Camera frame + overlay composited into one bitmap; testable parts factored and tested. |
+| 11.1 | DONE | Composite overlay | Camera frame + overlay composited into one bitmap; testable parts factored and tested. |
 
 ### WP 12 — Save captured image
 

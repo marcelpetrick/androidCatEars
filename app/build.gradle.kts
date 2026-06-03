@@ -128,6 +128,8 @@ kover {
                     "it.marcelpetrick.catears.camera.CameraXControllerImpl",
                     "it.marcelpetrick.catears.camera.CameraXControllerImpl*",
                     "it.marcelpetrick.catears.camera.CameraPreviewComposableKt",
+                    // Compositor composite() method — requires real Android Bitmap/Canvas
+                    "it.marcelpetrick.catears.capture.OverlayCompositor",
                     // ML Kit face detector implementation — device-only
                     "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl",
                     "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl*",
