@@ -30,6 +30,7 @@ exploitable remote vulnerabilities.
    saved photo. **Status: fixed.**
 9. Release docs still describe the AAB as unsigned after signing support landed,
    so operators can ship with a false understanding of artifact security.
+   **Status: fixed.**
 10. Play Store compliance work is only in backlog. There is no committed privacy
     policy template covering camera processing and gallery writes.
 
