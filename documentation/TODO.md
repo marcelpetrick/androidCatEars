@@ -12,6 +12,7 @@ See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
 4. Add README screenshots (14.4) once the app is captured on a device or webcam-backed emulator.
 5. GitHub Actions release workflow exists (release.yml); verify it runs once pushed to GitHub.
 6. WP 18.0: Robolectric host-side tests — **blocked on JDK 26** (Robolectric 4.14.1 / ASM 9.7 only supports up to Java 24 class files). Install JDK 21 and configure Gradle toolchains, or wait for Robolectric with ASM 9.9+.
+7. `actions/checkout` is still at v4 in all workflows — Dependabot did not flag it, but bump to v5 once it is released and stable.
 
 ## Resolved (recent reviews)
 
