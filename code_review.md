@@ -63,3 +63,4 @@ exploitable remote vulnerabilities.
    fixed.**
 10. `TODO.md` and emulator docs are stale relative to `BACKLOG.md` and the local
     webcam-capable emulator setup, so agents get contradictory project state.
+    **Status: fixed.**

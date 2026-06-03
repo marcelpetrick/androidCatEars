@@ -42,7 +42,7 @@ The AVD is named **CatEars34**, uses a Pixel 6 skin, and targets API 34 (Android
 export ANDROID_HOME="$HOME/Android/Sdk"
 export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
 
-emulator -avd CatEars34 -memory 2048 -no-audio &
+emulator -avd CatEars34 -accel on -gpu host -camera-front webcam0 -memory 4096 -no-audio &
 ```
 
 Wait for it to fully boot (30–90 seconds with KVM; longer without):
@@ -70,13 +70,19 @@ adb -s emulator-5554 install -r app/build/outputs/apk/debug/androidCatEars-debug
 
 ---
 
-## Known limitations of the emulator
+## Camera and ML Kit behavior
 
-- **Camera**: the emulator provides a virtual camera (fake webcam feed) — not a real camera. Face detection will not produce real results; the overlay will not track a face.
-- **ML Kit**: runs on the emulator but receives no real face data from the virtual camera.
+- **Hardware acceleration**: use KVM (`-accel on`) for a stable local loop.
+- **Host webcam**: pass `-camera-front webcam0` (or another webcam from
+  `emulator -webcam-list`) to feed a real face into the front camera.
+- **ML Kit**: runs on the emulator and can detect faces from a webcam feed, but
+  camera orientation, mirroring, frame timing, and sensor metadata still differ
+  from a real phone.
 - **Performance**: depends heavily on KVM (see below).
 
-Use a physical device running Android 14+ (API 34+) for full end-to-end testing of the camera and overlay features. The target device is the Xiaomi Pro (Android 16) specified in `VISION.md`.
+Use a physical device running Android 14+ (API 34+) as the final authority for
+camera behavior and overlay alignment. The target device is the Xiaomi Pro
+(Android 16) specified in `VISION.md`.
 
 ---
 
@@ -88,13 +94,17 @@ Use a physical device running Android 14+ (API 34+) for full end-to-end testing 
 
 **Cause:** VirtualBox kernel modules (`vboxdrv`, `vboxnetflt`) can conflict with KVM on the same system.
 
-**Fix:** Reload the KVM module to clear the conflict:
+**Fix:** first stop any running VirtualBox VMs. If the conflict remains, reload
+the KVM module:
 ```bash
 sudo modprobe -r kvm_intel
 sudo modprobe kvm_intel
 ```
 
-If VirtualBox VMs need to keep running, start the Android emulator first, then launch VirtualBox — they can coexist once KVM is initialised.
+If VirtualBox VMs need to keep running, start the Android emulator first, then
+launch VirtualBox — they can coexist once KVM is initialised. Do not unload
+`kvm_intel` while another KVM user is active; `emulator -accel-check` should
+report whether KVM is usable.
 
 ### Crash with exit code 139 (segfault) when using `-gpu host`
 
@@ -134,7 +144,7 @@ avdmanager create avd -n CatEars34 -k "system-images;android-34;google_apis;x86_
 # Every session
 export ANDROID_HOME="$HOME/Android/Sdk"
 export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
-emulator -avd CatEars34 -memory 2048 -no-audio &
+emulator -avd CatEars34 -accel on -gpu host -camera-front webcam0 -memory 4096 -no-audio &
 # wait for boot, then:
 ./gradlew installDebug
 ```
