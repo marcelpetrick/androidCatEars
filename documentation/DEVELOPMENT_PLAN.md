@@ -38,7 +38,7 @@ A work package is complete only when **all** of the following hold:
 
 1. **Buildable** — `./gradlew assembleDebug` (and `build`) succeeds from a clean checkout.
 2. **Tested** — new logic has unit tests; the suite passes; coverage stays **≥ 95%** of the
-   instrumented scope (see open question Q3 on what scope coverage applies to).
+   instrumented scope — see decision Q3: 95% on `domain`/logic, UI and generated code excluded).
 3. **Linted** — formatter and static analysis report zero violations.
 4. **Documented** — `README.md` / relevant docs updated; public APIs have KDoc where non-trivial.
 5. **Versioned** — patch version incremented (single source of truth, see 1.4).
@@ -47,7 +47,7 @@ A work package is complete only when **all** of the following hold:
 ### 1.3 Target architecture
 
 A single-module Android app (modularisation into `:core` / `:feature` modules is a documented
-future option, not MVP — see Q2), organised **package-by-feature** with a clean separation:
+future option, not MVP — decision Q2), organised **package-by-feature** with a clean separation:
 
 ```
 it.marcelpetrick.catears
@@ -85,27 +85,36 @@ of logic — especially overlay placement geometry — is unit-testable on the J
 | Static analysis    | detekt + Android Lint         | Catches smells and Android-specific issues |
 | Unit testing       | JUnit5 + kotlin.test + Turbine (Flows) + MockK | Standard, Kotlin-friendly |
 | Coverage           | Kover                         | Kotlin-native, Compose-aware, simpler than JaCoCo |
-| Dependency injection | Hilt (proposed — see Q1)    | Standard Android DI; testability |
+| Dependency injection | Hilt (decided — Q1)         | Standard Android DI; testability |
 | CI                 | GitHub Actions workflow + a local `./gradlew check`-equivalent | Mirrors local gate; runnable offline |
 
 > These are **proposals**. Where flagged with a Q-number, confirm with the user before adopting.
 
-### 1.6 Open questions for the user (resolve before/at the relevant package)
+### 1.6 Resolved decisions
 
-- **Q1 — Dependency injection:** Adopt Hilt now (cleaner testing, more boilerplate) or start with
-  manual/constructor injection and add Hilt only if needed? *Recommendation: Hilt.*
-- **Q2 — Module structure:** Single module for the MVP (simplest) or multi-module from the start
-  (cleaner boundaries, more setup)? *Recommendation: single module, split later if it earns its keep.*
-- **Q3 — Coverage scope for the 95% gate:** UI/Compose and framework glue are expensive to test to
-  95%. Proposal: enforce 95% on `domain` + non-UI logic, and **exclude** UI/DI/generated code via
-  Kover rules, rather than chasing 95% of the whole APK. Confirm this interpretation of "95% for all
-  the tools."
-- **Q4 — Cat-ear artwork & licensing:** The overlay art must be GPLv3-compatible. Proposal:
-  self-authored simple vector ears committed to the repo. Confirm, or provide assets.
-- **Q5 — App display name:** Still "Undecided" in VISION. Needed at Work Package 13. Proposal:
-  "Cat Ears" / "CatEars Camera". Confirm before release polish.
-- **Q6 — Min/target/compile SDK exact values:** minSdk 34 (Android 14, per VISION). Proposal:
-  compileSdk/targetSdk = latest stable at implementation time. Confirm.
+All initial open questions have been resolved by the user. These are now **binding**; agents do not
+re-litigate them, but must still raise *new* decisions not covered here.
+
+- **Q1 — Dependency injection: Hilt.** Use Google's Hilt from the start. Rationale: it is the
+  industry-standard, officially recommended DI for Android and directly serves the project's
+  "learn modern Android" goal. Define collaborators behind interfaces so they remain swappable with
+  fakes in unit tests.
+- **Q2 — Module structure: single module.** Build the MVP as a single `:app` module organised
+  package-by-feature (see 1.3). Splitting into `:core`/`:feature` modules remains a documented
+  future option, not MVP work.
+- **Q3 — Coverage scope: domain/logic, exclude UI & generated code.** The 95% gate is enforced on
+  the `domain` layer and other non-UI logic. Compose UI, DI wiring, and generated code are
+  **excluded** via Kover rules rather than chasing 95% across the whole APK.
+- **Q4 — Artwork: generic, self-generated, replaceable.** Start with simple generic cat-ear
+  artwork — self-authored (or generated) so it is unambiguously GPLv3-compatible — committed to the
+  repo. It is explicitly a **placeholder** that can be replaced later without affecting placement
+  logic (logic depends on geometry, not on the specific asset).
+- **Q5 — App display name: `androidCatEars`** for now. This is a working name to be changed/adapted
+  later; do not block release polish on a final name.
+- **Q6 — SDK levels: most recent stable.** minSdk 34 (Android 14, per VISION). compileSdk and
+  targetSdk track the **latest stable** at implementation time. Goal: a stable but up-to-date
+  codebase — prefer current stable releases of Gradle, AGP, Kotlin, Compose, and libraries (no
+  alpha/beta unless unavoidable and justified).
 
 ---
 
@@ -129,7 +138,7 @@ demonstrable as early as possible and never broken between packages.
   - `AndroidManifest.xml`, minSdk 34, themes, basic resources.
   - `README.md` build section verified against the real Gradle tasks.
 - **Done when:** `./gradlew assembleDebug` produces an installable APK; app launches to the placeholder.
-- **Decision gate:** resolve **Q6** (SDK levels) before finalising.
+- **Applies decision Q6:** minSdk 34; compileSdk/targetSdk = latest stable; current stable Gradle/AGP/Kotlin/Compose.
 
 ### WP 1 — Versioning automation
 - **Goal:** Patch version auto-increments on every commit, from the single source of truth.
@@ -151,8 +160,9 @@ demonstrable as early as possible and never broken between packages.
 ### WP 3 — Testing & coverage harness
 - **Goal:** Unit-test infrastructure with an enforced 95% coverage gate.
 - **Deliverables:** JUnit5 + MockK + Turbine set up; Kover configured with a **95% verification
-  rule** and exclusions per **Q3**; at least one real `domain` test proving the pipeline.
-  - **Decision gate:** resolve **Q3** (coverage scope) and **Q1** (DI) here, since both shape testability.
+  rule** and exclusions per **Q3** (95% on `domain`/logic; exclude UI/DI/generated); at least one
+  real `domain` test proving the pipeline.
+  - **Applies decisions Q1 (Hilt) and Q3 (coverage scope)** — both shape testability.
 - **Done when:** `./gradlew test koverVerify` passes; lowering coverage fails the build (verified).
 
 ### WP 4 — Continuous Integration pipeline
@@ -169,7 +179,7 @@ demonstrable as early as possible and never broken between packages.
 - **Goal:** The package structure, theme, navigation entry point, and DI wiring in place — still no
   camera, but the scaffolding all real features plug into.
 - **Deliverables:** Compose theme (colour, typography), app entry/navigation, an empty
-  `MainViewModel` exposing `StateFlow` UI state, DI container (per Q1), package skeleton from 1.3.
+  `MainViewModel` exposing `StateFlow` UI state, Hilt wiring (per Q1), package skeleton from 1.3.
 - **Done when:** App builds and shows the themed home screen driven by a ViewModel; tests cover the
   ViewModel state logic.
 
@@ -204,10 +214,9 @@ demonstrable as early as possible and never broken between packages.
 
 ### WP 10 — Cat-ear overlay rendering
 - **Goal:** Draw 2D cat ears correctly placed above the detected face, in real time.
-- **Deliverables:** Cat-ear assets (per **Q4**), a Compose `Canvas`/overlay layer, placement math
-  (position/scale/rotation from face geometry) in `domain` with unit tests, smoothing to reduce
-  jitter.
-  - **Decision gate:** resolve **Q4** (artwork/licensing) before adding assets.
+- **Deliverables:** Cat-ear assets (per **Q4** — generic, self-generated, GPLv3-safe placeholder
+  that can be swapped later), a Compose `Canvas`/overlay layer, placement math (position/scale/
+  rotation from face geometry) in `domain` with unit tests, smoothing to reduce jitter.
 - **Done when:** Ears track the face live and stay aligned when moving/switching cameras; placement
   math is unit-tested.
 
@@ -233,9 +242,9 @@ demonstrable as early as possible and never broken between packages.
 
 ### WP 14 — Product polish (name, icon, theming, UX)
 - **Goal:** Make it feel like a finished app.
-- **Deliverables:** Final app display name (per **Q5**), adaptive launcher icon, refined Compose
-  theme, empty/error states, basic accessibility (content descriptions), light/dark handling.
-  - **Decision gate:** resolve **Q5** (app name) here.
+- **Deliverables:** App display name `androidCatEars` (per **Q5** — working name, changeable later),
+  adaptive launcher icon, refined Compose theme, empty/error states, basic accessibility (content
+  descriptions), light/dark handling.
 - **Done when:** App presents a coherent, polished experience; screenshots added to README.
 
 ### WP 15 — Release build & signing
