@@ -1,0 +1,192 @@
+# Backlog — Cat Ears Camera
+
+The actionable, **atomic** task list, derived from [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md) and
+governed by [`agents.md`](agents.md).
+
+## How to use this backlog
+
+- Each task is **one focused aspect** sized to **one atomic commit** (or a small, tightly related set).
+- Work tasks **top to bottom, in order.** Do not start a task until its predecessors are `DONE`.
+- A task gives a **Goal** and **Acceptance criteria** — the *what*, not a recipe. The *how* is the
+  agent's choice, within `agents.md` and the project's binding decisions (Q1–Q6 in the plan).
+- Every task must also satisfy the global **Definition of Done** (build, tests ≥95% on scope, lint,
+  docs, version bump, signed atomic commit, **no push**).
+- If a task is too big to stay atomic, **split it into sub-tasks here first**, then start.
+- Task IDs are `<WP>.<seq>` and are stable. Update **Status** as you go.
+
+**Status legend:** `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED` (note the blocker) · `ASK` (needs a
+user decision before proceeding).
+
+---
+
+## Milestone 0.1.x — Foundation, quality gate, CI
+
+### WP 0 — Repository foundation & buildable skeleton
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 0.0 | TODO | Repo hygiene files | `.gitignore` (Android/Gradle/Studio) and `.editorconfig` present; junk paths ignored. |
+| 0.1 | TODO | GPLv3 LICENSE + SPDX convention | Full `LICENSE` (GPLv3) in root; SPDX header convention documented for source files. |
+| 0.2 | TODO | Gradle build foundation | Gradle wrapper, `settings.gradle.kts`, root `build.gradle.kts`, `gradle/libs.versions.toml`; latest **stable** Gradle/AGP/Kotlin (Q6). `./gradlew tasks` runs. |
+| 0.3 | TODO | Version single source of truth | `version.properties` (`major=0,minor=1,patch=0`) read by Gradle into `versionName`/`versionCode`. |
+| 0.4 | TODO | `:app` module scaffolding | `:app` `build.gradle.kts`, `AndroidManifest.xml` (minSdk 34), base theme + resources; package `it.marcelpetrick.catears`. |
+| 0.5 | TODO | Compose placeholder screen | `MainActivity` renders a Compose placeholder ("Cat Ears — coming soon"). |
+| 0.6 | TODO | Verify build + README | `./gradlew assembleDebug` produces an installable APK that launches; README build section matches real tasks. |
+
+### WP 1 — Versioning automation
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 1.0 | TODO | Patch-bump git hook | A committed `scripts/` pre-commit hook increments `patch` in `version.properties` and re-stages it. |
+| 1.1 | TODO | Hook installer | `installHooks` Gradle task (or documented script) installs the hook into `.git/hooks`. |
+| 1.2 | TODO | Document versioning | README explains auto patch-bump and how to do manual minor/major bumps. |
+
+### WP 2 — Code quality tooling
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 2.0 | TODO | Formatter (ktlint/spotless) | Format tooling wired into Gradle; `spotlessApply` formats; `spotlessCheck` passes on existing code. |
+| 2.1 | TODO | Static analysis (detekt) | detekt with a committed config; `./gradlew detekt` passes clean. |
+| 2.2 | TODO | Android Lint + aggregation | Lint configured; `spotlessCheck`/`detekt`/`lint` aggregated under `check`; README documents commands. |
+
+### WP 3 — Testing & coverage harness
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 3.0 | TODO | Unit-test stack | JUnit5 + MockK + Turbine wired; one trivial passing test; `./gradlew test` green. |
+| 3.1 | TODO | Coverage gate (Kover) | Kover configured with a **95%** verification rule and Q3 exclusions (UI/DI/generated). |
+| 3.2 | TODO | Prove the gate | A real `domain` test exists; verified that dropping coverage fails `koverVerify`; README documents it. |
+
+### WP 4 — Continuous Integration
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 4.0 | TODO | CI workflow | GitHub Actions workflow: build → format/detekt/lint → test → `koverVerify`; file is valid. |
+| 4.1 | TODO | Local gate + docs | A local equivalent (`./gradlew check` aggregation or `scripts/ci.sh`) runs the same gate offline; README "CI / quality gate" section added. |
+
+---
+
+## Milestone 0.2.x — Live preview & camera switching
+
+### WP 5 — Architecture skeleton & Hilt (Q1)
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 5.0 | TODO | Hilt wiring | Hilt deps + `@HiltAndroidApp` Application + minimal module; app still builds and launches. |
+| 5.1 | TODO | Package skeleton | Create `ui/camera/facedetect/overlay/capture/share/domain/di` packages (plan §1.3) with placeholders. |
+| 5.2 | TODO | Compose theme | Theme: colour, typography, shapes; placeholder screen uses it. |
+| 5.3 | TODO | Home screen + ViewModel | `MainViewModel` exposes `StateFlow` UI state; home screen renders it; ViewModel state logic unit-tested. |
+
+### WP 6 — Camera permission flow
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 6.0 | TODO | Permission state model | Camera-permission states modelled in `domain`; unit-tested without a device. |
+| 6.1 | TODO | Permission UI | `CAMERA` in manifest; Compose flow for granted/denied/permanently-denied (with settings deep-link). |
+
+### WP 7 — Live camera preview (CameraX)
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 7.0 | TODO | Camera controller seam | CameraX deps + a testable wrapper around the camera controller; non-UI logic unit-tested. |
+| 7.1 | TODO | Preview composable | CameraX `Preview` use case bound to lifecycle, shown full-screen; clean start/stop. |
+| 7.2 | TODO | Verify run + README | Preview shows live on emulator/device; README "Run" section verified. |
+
+### WP 8 — Front/rear switching
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 8.0 | TODO | Lens-selector state | Lens selection modelled in `domain`; unit-tested. |
+| 8.1 | TODO | Switch UI + rebind | UI toggle flips the live camera by rebinding CameraX use cases. |
+
+---
+
+## Milestone 0.3.x — Face-tracked cat-ear overlay
+
+### WP 9 — On-device face detection (ML Kit)
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 9.0 | TODO | Analysis pipeline | ML Kit deps + CameraX `ImageAnalysis` use case feeding the detector. |
+| 9.1 | TODO | Face model | Framework-free face model (box + key landmarks); single-face selection logic. |
+| 9.2 | TODO | Coordinate transform | image→view transform incl. front-camera mirroring, in `domain`; thoroughly unit-tested across orientations. |
+| 9.3 | TODO | Debug verification | A debug overlay/log confirms live face data updates in real time. |
+
+### WP 10 — Cat-ear overlay rendering
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 10.0 | TODO | Placeholder asset (Q4) | Generic, self-generated GPLv3-safe cat-ear asset committed; simple asset model. Replaceable later. |
+| 10.1 | TODO | Placement math | Position/scale/rotation from face geometry, in `domain`; unit-tested. |
+| 10.2 | TODO | Overlay layer | Compose `Canvas` overlay draws the ears over the preview using the placement math. |
+| 10.3 | TODO | Jitter smoothing | Smoothing reduces overlay jitter; smoothing logic unit-tested. |
+
+---
+
+## Milestone 0.4.x — Capture, save, share
+
+### WP 11 — Photo capture with overlay composited
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 11.0 | TODO | Capture use case + UI | Capture button + CameraX `ImageCapture` produces a still frame. |
+| 11.1 | TODO | Composite overlay | Camera frame + overlay composited into one bitmap; testable parts factored and tested. |
+
+### WP 12 — Save captured image
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 12.0 | TODO | Naming/metadata | Filename/metadata strategy in `domain`; unit-tested. |
+| 12.1 | TODO | MediaStore save | Save to gallery via `MediaStore` (scoped storage); user feedback on success/failure. |
+
+### WP 13 — Share captured image
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 13.0 | TODO | Share-intent builder | `FileProvider` configured; share `Intent` construction in `domain`; unit-tested. |
+| 13.1 | TODO | Share UI | Share button opens the system share sheet delivering the saved image. |
+
+---
+
+## Milestone 0.5.x → 1.0.0 — Polish, release, docs
+
+### WP 14 — Product polish
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 14.0 | TODO | Name + launcher icon | Display name `androidCatEars` (Q5); adaptive launcher icon added. |
+| 14.1 | TODO | Theme refinement | Refined theme; correct light/dark handling. |
+| 14.2 | TODO | States + a11y | Empty/error states; content descriptions for accessibility. |
+| 14.3 | TODO | README screenshots | Screenshots of the working app added to README. |
+
+### WP 15 — Release build & signing
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 15.0 | TODO | Release build type | R8/ProGuard rules + resource shrinking; release build compiles. |
+| 15.1 | TODO | Signing config | Signing driven by `local.properties`/env; **no secrets committed**. |
+| 15.2 | TODO | Deploy docs + verify | Release checklist + README "Deploy" section; `assembleRelease`/`bundleRelease` produce a signed artifact. |
+
+### WP 16 — Documentation finalisation
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 16.0 | TODO | README pass | Overview/build/run/deploy all accurate against the shipped app. |
+| 16.1 | TODO | Architecture notes | Architecture documentation under `documentation/`. |
+| 16.2 | TODO | CHANGELOG + troubleshooting | CHANGELOG seeded from SemVer history; troubleshooting section added. |
+
+---
+
+## Optional / post-MVP (ask before starting)
+
+### WP 17 — Desktop overlay-geometry simulator
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 17.0 | ASK | Desktop simulator | **Out of MVP scope.** Only if the user requests it: a JVM tool reusing the pure `domain` geometry to visualise overlay placement on sample landmark data. |
+
+### Future backlog (not yet broken down)
+
+Video recording · multi-face tracking · extra filters (dog ears, glasses, hats) · animated overlays ·
+expression reactions · custom AI models (ONNX/TFLite) · overlay marketplace · social features.
+Each becomes its own set of tasks when prioritised — see [`VISION.md`](VISION.md) "Future Ideas".

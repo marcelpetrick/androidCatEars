@@ -9,6 +9,10 @@ It has two parts:
 2. **Work Packages** — an enumerated, incremental backlog. Each package is sized so that an agent
    can complete it in isolation and leave the repository **buildable, documented, and working**.
 
+> **Execution happens from [`BACKLOG.md`](BACKLOG.md), not from this plan.** Each work package below
+> is broken into atomic, commit-sized tasks there. This document is the strategic *what and why*;
+> the backlog is the actionable *next concrete step*. See [`agents.md`](agents.md) "Work Format".
+
 > **How agents must use this plan**
 > Implement work packages strictly in order. Do not start a package until the previous one is
 > done. If a package contains an **open question** or you hit an unlisted decision, **stop and ask
