@@ -4,6 +4,10 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 -->
 <resources>
-    <!-- Base application theme — Compose handles real theming; this is the window backdrop. -->
-    <style name="Theme.AndroidCatEars" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Base application theme — Compose handles real theming; this is only the
+         window backdrop shown briefly before the first frame. Light variant;
+         see values-night for the dark override. -->
+    <style name="Theme.AndroidCatEars" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

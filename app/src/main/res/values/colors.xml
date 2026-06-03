@@ -5,4 +5,6 @@
 -->
 <resources>
     <color name="ic_launcher_background">#FF6D3B</color>
+    <!-- Window backdrop (light); dark override in values-night/colors.xml. -->
+    <color name="window_background">#FFFBFF</color>
 </resources>

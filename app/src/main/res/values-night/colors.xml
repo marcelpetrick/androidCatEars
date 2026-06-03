@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<resources>
+    <!-- Dark window backdrop — matches the Compose dark scheme surface (#201A18). -->
+    <color name="window_background">#201A18</color>
+</resources>

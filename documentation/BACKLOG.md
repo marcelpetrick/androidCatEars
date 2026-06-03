@@ -158,7 +158,7 @@ user decision before proceeding).
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 14.0 | DONE | Name + launcher icon | Display name `androidCatEars` (Q5); adaptive launcher icon added. |
-| 14.1 | TODO | Theme refinement | Refined theme; correct light/dark handling. |
+| 14.1 | DONE | Theme refinement | Refined theme; correct light/dark handling. |
 | 14.2 | DONE | States + a11y | Empty/error states; content descriptions for accessibility. |
 | 14.3 | DONE | Version + commit stamp at startup | App displays current version (from `version.properties`, e.g. `0.1.15`) and the first 7 characters of the git commit hash on the main screen at startup. Useful during development to identify exactly what build is running. Version is read at build time via `BuildConfig`; commit hash is injected by Gradle at build time. Both are shown as a small non-intrusive label (e.g. bottom of screen or about overlay). |
 | 14.4 | TODO | README screenshots | Screenshots of the working app added to README. |
