@@ -112,7 +112,7 @@ user decision before proceeding).
 | 9.1 | DONE | Face model | Framework-free face model (box + key landmarks); single-face selection logic. |
 | 9.2 | DONE | Coordinate transform | image→view transform incl. front-camera mirroring, in `domain`; thoroughly unit-tested across orientations. |
 | 9.3 | DONE | Debug verification | A debug overlay/log confirms live face data updates in real time. |
-| 9.4 | TODO | Wire ImageAnalysis into camera pipeline | Add `ImageAnalysis` use case to `CameraXControllerImpl`; bind `MlKitFaceDetectorImpl` as the analyser; route results through `PlacementSmoother` into `MainViewModel.onFaceDetected()`; ears track faces live on device. |
+| 9.4 | DONE | Wire ImageAnalysis into camera pipeline | Add `ImageAnalysis` use case to `CameraXControllerImpl`; bind `MlKitFaceDetectorImpl` as the analyser; route results through `PlacementSmoother` into `MainViewModel.onFaceDetected()`; ears track faces live on device. |
 
 ### WP 10 — Cat-ear overlay rendering
 

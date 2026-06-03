@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
                     onToggleLens = viewModel::onToggleLens,
                     onCapture = { viewModel.onCaptureRequested() },
                     onShare = null,
+                    onFaceDetected = viewModel::onFaceDetected,
                 )
             }
         }

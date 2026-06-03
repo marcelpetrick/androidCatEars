@@ -44,6 +44,7 @@ fun MainScreen(
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
+    onFaceDetected: (OverlayPlacement?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -57,6 +58,7 @@ fun MainScreen(
             MainUiState.Ready -> CameraContent(
                 lens = lens,
                 overlayPlacement = overlayPlacement,
+                onFaceDetected = onFaceDetected,
                 onToggleLens = onToggleLens,
                 onCapture = onCapture,
                 onShare = onShare,
@@ -128,12 +130,13 @@ private fun PermissionDeniedContent(onOpenSettings: () -> Unit) {
 private fun CameraContent(
     lens: LensSelector,
     overlayPlacement: OverlayPlacement?,
+    onFaceDetected: (OverlayPlacement?) -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        CameraPreview(lens = lens, modifier = Modifier.fillMaxSize())
+        CameraPreview(lens = lens, onFaceDetected = onFaceDetected, modifier = Modifier.fillMaxSize())
         CatEarOverlay(placement = overlayPlacement)
         FloatingActionButton(
             onClick = onToggleLens,
@@ -177,6 +180,7 @@ private fun MainScreenReadyPreview() {
             onToggleLens = {},
             onCapture = {},
             onShare = {},
+            onFaceDetected = {},
         )
     }
 }
@@ -194,6 +198,7 @@ private fun MainScreenPermissionRequiredPreview() {
             onToggleLens = {},
             onCapture = {},
             onShare = {},
+            onFaceDetected = {},
         )
     }
 }
@@ -211,6 +216,7 @@ private fun MainScreenPermissionDeniedPreview() {
             onToggleLens = {},
             onCapture = {},
             onShare = {},
+            onFaceDetected = {},
         )
     }
 }
