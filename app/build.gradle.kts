@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     // kotlin-android no longer applied separately; built into AGP 9.0+
@@ -25,6 +27,31 @@ val gitCommitHash: String =
         .orElse("unknown")
         .get()
 
+// Release signing — credentials come from a gitignored keystore.properties or
+// environment variables; never from committed sources. When neither is present
+// (e.g. a contributor or CI without the keystore), signing is skipped and the
+// release build produces an unsigned APK so the build still succeeds.
+val keystorePropsFile = rootProject.file("keystore.properties")
+val signingProps: Map<String, String?> =
+    if (keystorePropsFile.exists()) {
+        val props = Properties()
+        keystorePropsFile.inputStream().use { props.load(it) }
+        mapOf(
+            "storeFile" to props.getProperty("storeFile"),
+            "storePassword" to props.getProperty("storePassword"),
+            "keyAlias" to props.getProperty("keyAlias"),
+            "keyPassword" to props.getProperty("keyPassword"),
+        )
+    } else {
+        mapOf(
+            "storeFile" to System.getenv("RELEASE_STORE_FILE"),
+            "storePassword" to System.getenv("RELEASE_STORE_PASSWORD"),
+            "keyAlias" to System.getenv("RELEASE_KEY_ALIAS"),
+            "keyPassword" to System.getenv("RELEASE_KEY_PASSWORD"),
+        )
+    }
+val hasReleaseSigning = signingProps["storeFile"]?.let { file(it).exists() } == true
+
 android {
     namespace = "it.marcelpetrick.catears"
     compileSdk = 36
@@ -38,6 +65,17 @@ android {
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommitHash\"")
     }
 
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(signingProps.getValue("storeFile")!!)
+                storePassword = signingProps["storePassword"]
+                keyAlias = signingProps["keyAlias"]
+                keyPassword = signingProps["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -46,6 +84,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Attach the release signing config only when credentials are available;
+            // otherwise the build emits an unsigned release APK.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
         }
     }
 

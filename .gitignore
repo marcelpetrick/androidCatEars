@@ -17,6 +17,7 @@ local.properties
 # Keystore / signing artefacts  (secrets must not be stored in git)
 *.jks
 *.keystore
+keystore.properties
 
 # Android build artefacts
 *.apk
