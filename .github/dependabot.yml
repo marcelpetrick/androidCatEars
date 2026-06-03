@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Dependabot keeps Gradle dependencies and GitHub Actions up to date
+# by opening pull requests when newer versions are published.
+
+version: 2
+
+updates:
+  # Gradle dependencies (libs.versions.toml + build scripts)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      # SDK upgrades need manual attention: SDKs must be installed first
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
