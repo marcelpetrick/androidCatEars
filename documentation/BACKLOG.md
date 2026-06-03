@@ -190,8 +190,8 @@ Design and rationale in [`OVERLAY_LAB.md`](OVERLAY_LAB.md). Resolves TODO #3
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 17.0 | TODO | Extract `:domain` module | Move the pure geometry/state package out of `:app` into a standalone `:domain` JVM module; no behaviour change; all tests still green. |
-| 17.1 | TODO | Golden-fixture placement tests | JSON fixtures (face box + landmarks + expected ear anchors + tolerance) under test resources; parameterized JUnit asserts `computeOverlayPlacement` within tolerance. |
+| 17.0 | DONE | Extract `:domain` module | Pure domain package moved to `domain/` JVM library module; `:app` depends on it via `project(":domain")`; package names unchanged; all CI gates green. |
+| 17.1 | DONE | Golden-fixture placement tests | `ComputeOverlayPlacementFixtureTest`: 8 `@ParameterizedTest` cases (frontal/roll/yaw/extreme-yaw/landmarks/tilt/partial-landmarks) via `@MethodSource`; each asserts all 5 EarAnchor fields within 0.01 tolerance. |
 | 17.2 | TODO | Sample image set + annotations | A curated `samples/` set (varied distance/tilt/lighting) with landmark annotations (hand-labelled or OpenCV/JavaCV-generated). |
 | 17.3 | TODO | Desktop visualiser module | `:overlay-lab` JVM module (Compose Desktop or Swing) renders the ear asset over each sample using shared `domain`; exports golden PNGs; optional live constant sliders. |
 | 17.4 | TODO | Tune & promote constants | Iterate ear width/offset/scale/rotation against fixtures + visuals until fit error is small; the tuned constants ship unchanged in `:app`. |
