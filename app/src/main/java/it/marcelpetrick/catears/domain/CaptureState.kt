@@ -14,6 +14,9 @@ sealed interface CaptureState {
     /** Capture succeeded; holds the raw JPEG bytes ready for compositing. */
     data class Success(val jpegBytes: ByteArray) : CaptureState
 
-    /** Capture failed for any reason. */
+    /** Capture composited and saved; holds the gallery URI for sharing. */
+    data class Saved(val uri: android.net.Uri) : CaptureState
+
+    /** Capture or save failed for any reason. */
     data object Failed : CaptureState
 }

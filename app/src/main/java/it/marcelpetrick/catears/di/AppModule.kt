@@ -4,13 +4,21 @@
 package it.marcelpetrick.catears.di
 
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 /**
- * Root Hilt module. Bindings for camera, face detection, and other
- * infrastructure are added here as the respective work packages land.
+ * Root Hilt module. Infrastructure bindings wired here as features land.
  */
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule
+object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideApplicationContext(@ApplicationContext context: android.content.Context): android.content.Context =
+        context
+}

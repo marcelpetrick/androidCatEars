@@ -138,8 +138,8 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 12.0 | TODO | Naming/metadata | Filename/metadata strategy in `domain`; unit-tested. |
-| 12.1 | TODO | MediaStore save | Save to gallery via `MediaStore` (scoped storage); user feedback on success/failure. |
+| 12.0 | DONE | Naming/metadata | Filename/metadata strategy in `domain`; unit-tested. |
+| 12.1 | DONE | MediaStore save | Save to gallery via `MediaStore` (scoped storage); user feedback on success/failure. |
 
 ### WP 13 — Share captured image
 
