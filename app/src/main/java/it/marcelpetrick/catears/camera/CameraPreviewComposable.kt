@@ -49,13 +49,15 @@ fun CameraPreview(
     onFaceDetected: (OverlayPlacement?) -> Unit,
     captureRequested: Boolean,
     onComposited: (Bitmap?) -> Unit,
+    cameraControllerFactory: () -> CameraXControllerImpl,
+    faceDetectorFactory: () -> MlKitFaceDetectorImpl,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val detector = remember { MlKitFaceDetectorImpl() }
+    val detector = remember { faceDetectorFactory() }
     val smoother = remember { PlacementSmoother() }
-    val controller = remember { CameraXControllerImpl() }
+    val controller = remember { cameraControllerFactory() }
     val latestPlacement = remember { AtomicReference<OverlayPlacement?>(null) }
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
 

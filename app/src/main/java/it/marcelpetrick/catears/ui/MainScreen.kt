@@ -31,9 +31,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
 import it.marcelpetrick.catears.overlay.CatEarOverlay
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
 
@@ -50,6 +52,8 @@ fun MainScreen(
     onFaceDetected: (OverlayPlacement?) -> Unit,
     captureRequested: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
+    cameraControllerFactory: () -> CameraXControllerImpl,
+    faceDetectorFactory: () -> MlKitFaceDetectorImpl,
     captureStatus: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -68,6 +72,8 @@ fun MainScreen(
                     onFaceDetected = onFaceDetected,
                     captureRequested = captureRequested,
                     onComposited = onComposited,
+                    cameraControllerFactory = cameraControllerFactory,
+                    faceDetectorFactory = faceDetectorFactory,
                     onToggleLens = onToggleLens,
                     onCapture = onCapture,
                     onShare = onShare,
@@ -172,6 +178,8 @@ private fun CameraContent(
     onFaceDetected: (OverlayPlacement?) -> Unit,
     captureRequested: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
+    cameraControllerFactory: () -> CameraXControllerImpl,
+    faceDetectorFactory: () -> MlKitFaceDetectorImpl,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
@@ -182,6 +190,8 @@ private fun CameraContent(
             onFaceDetected = onFaceDetected,
             captureRequested = captureRequested,
             onComposited = onComposited,
+            cameraControllerFactory = cameraControllerFactory,
+            faceDetectorFactory = faceDetectorFactory,
             modifier = Modifier.fillMaxSize(),
         )
         CatEarOverlay(placement = overlayPlacement)
@@ -230,6 +240,8 @@ private fun MainScreenReadyPreview() {
             onFaceDetected = {},
             captureRequested = false,
             onComposited = {},
+            cameraControllerFactory = { CameraXControllerImpl() },
+            faceDetectorFactory = { MlKitFaceDetectorImpl() },
             captureStatus = null,
         )
     }
@@ -251,6 +263,8 @@ private fun MainScreenPermissionRequiredPreview() {
             onFaceDetected = {},
             captureRequested = false,
             onComposited = {},
+            cameraControllerFactory = { CameraXControllerImpl() },
+            faceDetectorFactory = { MlKitFaceDetectorImpl() },
             captureStatus = null,
         )
     }
@@ -272,6 +286,8 @@ private fun MainScreenPermissionDeniedPreview() {
             onFaceDetected = {},
             captureRequested = false,
             onComposited = {},
+            cameraControllerFactory = { CameraXControllerImpl() },
+            faceDetectorFactory = { MlKitFaceDetectorImpl() },
             captureStatus = null,
         )
     }

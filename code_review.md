@@ -42,7 +42,7 @@ exploitable remote vulnerabilities.
    offsets, so overlay placement can be wrong on real screens. **Status: fixed.**
 2. `CameraPreview` manually constructs `CameraXControllerImpl` and
    `MlKitFaceDetectorImpl`, bypassing the Hilt/seam architecture promised in the
-   docs.
+   docs. **Status: fixed.**
 3. `CameraXControllerImpl.capturePhoto()` and the bound `ImageCapture` use case
    are dead code for the current WYSIWYG capture path, increasing camera binding
    complexity without product value.

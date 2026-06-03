@@ -12,21 +12,33 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import it.marcelpetrick.catears.BuildConfig
+import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
 import it.marcelpetrick.catears.share.buildShareConfig
 import it.marcelpetrick.catears.share.toChooserIntent
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
+import javax.inject.Inject
+import javax.inject.Provider
 
 @AndroidEntryPoint
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+
+    @Inject
+    lateinit var cameraControllerProvider: Provider<CameraXControllerImpl>
+
+    @Inject
+    lateinit var faceDetectorProvider: Provider<MlKitFaceDetectorImpl>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +85,8 @@ class MainActivity : ComponentActivity() {
                     onFaceDetected = viewModel::onFaceDetected,
                     captureRequested = captureState is CaptureState.Capturing,
                     onComposited = viewModel::onCompositedBitmap,
+                    cameraControllerFactory = { cameraControllerProvider.get() },
+                    faceDetectorFactory = { faceDetectorProvider.get() },
                     captureStatus = when (captureState) {
                         is CaptureState.Saved -> "Photo saved to gallery · tap share"
                         CaptureState.Failed -> "Capture failed — please try again"
