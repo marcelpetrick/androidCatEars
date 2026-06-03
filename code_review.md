@@ -9,7 +9,7 @@ exploitable remote vulnerabilities.
 
 1. The manual release workflow publishes a debug-signed APK as a user-facing
    download. Debug keys are not a stable release identity and train users to
-   install non-release artifacts.
+   install non-release artifacts. **Status: fixed.**
 2. The manual release workflow builds `bundleRelease` without wiring
    `RELEASE_*` signing secrets or verifying the result, so it can publish an
    unsigned AAB while the docs imply release signing exists.

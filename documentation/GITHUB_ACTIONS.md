@@ -29,16 +29,15 @@ It uploads test, coverage, and lint reports as build artefacts. A red CI run blo
 
 1. Reads the current version from `version.properties` (e.g. `0.1.25`).
 2. Runs the full quality gate (same as CI).
-3. Builds:
-   - `androidCatEars-<version>-debug.apk` — installable directly on an Android 14+ device.
-   - `androidCatEars-<version>-release.aab` — Play Store app bundle.
+3. Builds `androidCatEars-<version>-release.aab` — the Play Store app bundle.
 4. Publishes a **GitHub Release**:
    - Tag: `v<version>` (e.g. `v0.1.25`)
    - Title: `androidCatEars <version>`
    - Body mentions the version number and what each download is.
-   - Both artefacts attached for download.
+   - The release AAB attached for download.
 
-So a user can open the repo's **Releases** page, pick the latest, and download the `.apk` to install.
+So an operator can open the repo's **Releases** page, pick the latest, and download the `.aab` for
+Play Console upload.
 
 ### How to cut a release
 
@@ -50,15 +49,8 @@ So a user can open the repo's **Releases** page, pick the latest, and download t
 
 ### Signing note
 
-The downloadable APK is **debug-signed** (the CI debug keystore). It installs fine for testing,
-but:
-
-- Debug keys differ between machines/runs, so updating over a previously-installed build from a
-  different source may require uninstalling first.
-- The `.aab` is **unsigned** until release signing is configured (backlog WP 15).
-
-Once release signing lands, the workflow will produce a properly signed release APK/AAB suitable
-for stable distribution and the Play Store.
+The release workflow publishes only the release AAB. Debug APKs are development artifacts and are
+not attached to GitHub Releases.
 
 ---
 

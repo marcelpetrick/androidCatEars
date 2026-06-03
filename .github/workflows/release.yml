@@ -3,9 +3,8 @@
 #
 # Manual release pipeline.
 # Trigger from the GitHub UI (Actions → Release → Run workflow). It reads the
-# version from version.properties, builds the installable debug APK and the
-# release AAB, and publishes a GitHub Release tagged v<version> with both
-# artefacts attached, so a user can download and install the APK directly.
+# version from version.properties, builds the release AAB, and publishes a
+# GitHub Release tagged v<version> with the store-ready artefact attached.
 
 name: Release
 
@@ -50,17 +49,12 @@ jobs:
       - name: Run quality gate
         run: ./gradlew spotlessCheck detekt :app:lint :app:test :app:koverVerify
 
-      - name: Build installable debug APK
-        run: ./gradlew assembleDebug
-
       - name: Build release bundle (AAB)
         run: ./gradlew bundleRelease
 
       - name: Stage release artefacts
         run: |
           mkdir -p release-artefacts
-          cp app/build/outputs/apk/debug/androidCatEars-debug.apk \
-             "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-debug.apk"
           cp app/build/outputs/bundle/release/androidCatEars-release.aab \
              "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-release.aab"
 
@@ -75,13 +69,10 @@ jobs:
             Real-time cat-ear camera overlay for Android (API 34+).
 
             ### Downloads
-            - **androidCatEars-${{ steps.version.outputs.version }}-debug.apk** — install directly on
-              an Android 14+ device (debug-signed).
             - **androidCatEars-${{ steps.version.outputs.version }}-release.aab** — app bundle for
-              Play Store distribution (unsigned until release signing is configured).
+              Play Store distribution.
 
             Version: `${{ steps.version.outputs.version }}`
           files: |
-            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-debug.apk
             release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-release.aab
           generate_release_notes: true
