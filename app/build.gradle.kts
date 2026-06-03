@@ -110,6 +110,18 @@ android {
         buildConfig = true
     }
 
+    packaging {
+        jniLibs {
+            keepDebugSymbols +=
+                setOf(
+                    "**/libandroidx.graphics.path.so",
+                    "**/libface_detector_v2_jni.so",
+                    "**/libimage_processing_util_jni.so",
+                    "**/libsurface_util_jni.so",
+                )
+        }
+    }
+
     lint {
         lintConfig = file("lint.xml")
         abortOnError = true

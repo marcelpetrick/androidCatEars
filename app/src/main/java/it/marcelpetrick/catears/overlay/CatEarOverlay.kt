@@ -35,41 +35,67 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+/** Bundled animated values driven by time and expression probabilities. */
+private data class EarAnimState(
+    val swayTime: Float,
+    val twitchTime: Float,
+    val leftTilt: Float,
+    val rightTilt: Float,
+    val yShiftFraction: Float,
+    val leftWinkScale: Float,
+    val rightWinkScale: Float,
+)
+
+@Composable
+private fun rememberEarAnimState(placement: OverlayPlacement?): EarAnimState {
+    val transition = rememberInfiniteTransition(label = "earSway")
+    val swayTime by transition.animateFloat(
+        0f,
+        TWO_PI,
+        infiniteRepeatable(tween(SWAY_PERIOD_MS, easing = LinearEasing), RepeatMode.Restart),
+        label = "swayTime",
+    )
+    val twitchTime by transition.animateFloat(
+        0f,
+        TWO_PI,
+        infiniteRepeatable(tween(TWITCH_PERIOD_MS, easing = LinearEasing), RepeatMode.Restart),
+        label = "twitchTime",
+    )
+    val leftTilt by animateFloatAsState(
+        if (placement != null) placement.leftEar.tiltDegrees * LEFT_TILT_FACTOR else 0f,
+        spring(stiffness = Spring.StiffnessMedium),
+        label = "leftTilt",
+    )
+    val rightTilt by animateFloatAsState(
+        if (placement != null) placement.rightEar.tiltDegrees * RIGHT_TILT_FACTOR else 0f,
+        spring(stiffness = Spring.StiffnessMedium),
+        label = "rightTilt",
+    )
+    val smiling = placement?.smilingProbability ?: 0f
+    val eyeOpen = placement?.eyeOpennessMean ?: 1f
+    val smileY by animateFloatAsState(
+        if (smiling > SMILE_THRESHOLD) -SMILE_PERK_FRACTION else 0f,
+        spring(stiffness = Spring.StiffnessMediumLow),
+        label = "smileY",
+    )
+    val wideEyeY by animateFloatAsState(
+        if (eyeOpen > WIDE_EYE_THRESHOLD) -WIDE_EYE_PERK_FRACTION else 0f,
+        spring(stiffness = Spring.StiffnessHigh),
+        label = "wideEyeY",
+    )
+    val winkScale = if (eyeOpen < WINK_THRESHOLD) WINK_SCALE else 1f
+    val leftWink by animateFloatAsState(winkScale, spring(stiffness = Spring.StiffnessMedium), label = "leftWink")
+    val rightWink by animateFloatAsState(winkScale, spring(stiffness = Spring.StiffnessMedium), label = "rightWink")
+    return EarAnimState(swayTime, twitchTime, leftTilt, rightTilt, smileY + wideEyeY, leftWink, rightWink)
+}
+
 /**
  * Transparent overlay that draws two animated procedural cat ears at the positions described by
  * [placement]. When [placement] is null (no face detected) nothing is rendered.
  */
 @Composable
 fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "earSway")
-    val swayTime by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = TWO_PI,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = SWAY_PERIOD_MS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "swayTime",
-    )
-    val twitchTime by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = TWO_PI,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = TWITCH_PERIOD_MS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "twitchTime",
-    )
-    val leftTilt by animateFloatAsState(
-        targetValue = if (placement != null) placement.leftEar.tiltDegrees * LEFT_TILT_FACTOR else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
-        label = "leftTilt",
-    )
-    val rightTilt by animateFloatAsState(
-        targetValue = if (placement != null) placement.rightEar.tiltDegrees * RIGHT_TILT_FACTOR else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
-        label = "rightTilt",
-    )
+    val anim = rememberEarAnimState(placement)
     val style = placement?.earStyle ?: EarStyle.CLASSIC
     Box(
         modifier = modifier
@@ -77,12 +103,38 @@ fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
             .drawWithContent {
                 drawContent()
                 if (placement != null) {
-                    drawEar(placement.leftEar.copy(tiltDegrees = leftTilt), style, swayTime, twitchTime)
-                    drawEar(placement.rightEar.copy(tiltDegrees = rightTilt), style, swayTime, twitchTime)
+                    drawEar(
+                        placement.leftEar.copy(
+                            tiltDegrees = anim.leftTilt,
+                            y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
+                            xScale = placement.leftEar.xScale * anim.leftWinkScale,
+                        ),
+                        style,
+                        anim.swayTime,
+                        anim.twitchTime,
+                    )
+                    drawEar(
+                        placement.rightEar.copy(
+                            tiltDegrees = anim.rightTilt,
+                            y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
+                            xScale = placement.rightEar.xScale * anim.rightWinkScale,
+                        ),
+                        style,
+                        anim.swayTime,
+                        anim.twitchTime,
+                    )
                 }
             },
     )
 }
+
+// --- expression animation constants
+private const val SMILE_THRESHOLD = 0.85f
+private const val SMILE_PERK_FRACTION = 0.20f
+private const val WIDE_EYE_THRESHOLD = 0.90f
+private const val WIDE_EYE_PERK_FRACTION = 0.12f
+private const val WINK_THRESHOLD = 0.20f
+private const val WINK_SCALE = 0.5f
 
 private fun DrawScope.drawEar(anchor: EarAnchor, style: EarStyle, swayTime: Float, twitchTime: Float) {
     val cx = anchor.x
@@ -137,8 +189,8 @@ private fun DrawScope.drawClassicEar(cx: Float, top: Float, s: Float, swayTime: 
     STRAND_PHASES.forEachIndexed { i, phase ->
         val bx = cx + (STRAND_X_FRACTIONS[i] - 0.5f) * s * OUTER_HALF_BASE * 2f
         val by = top + s * STRAND_BASE_Y_RATIO
-        val tx = bx + sin(swayTime + phase).toFloat() * s * STRAND_SWAY_RATIO
-        val ty = top + s * STRAND_TIP_Y_RATIO + cos(swayTime * STRAND_BOB_FREQ + phase).toFloat() * s * STRAND_BOB_RATIO
+        val tx = bx + sin(swayTime + phase) * s * STRAND_SWAY_RATIO
+        val ty = top + s * STRAND_TIP_Y_RATIO + cos(swayTime * STRAND_BOB_FREQ + phase) * s * STRAND_BOB_RATIO
         drawLine(FUR_COLOR, Offset(bx, by), Offset(tx, ty), sw, StrokeCap.Round)
     }
 }
@@ -172,7 +224,7 @@ private fun DrawScope.drawSharpFelineEar(cx: Float, top: Float, s: Float, swayTi
     val ts = s * TUFT_STROKE
     for (i in -1..1) {
         val angle = Math.toRadians((TUFT_FAN_DEG * i).toDouble()).toFloat()
-        val sway = sin(swayTime + i * 1.2f).toFloat() * TUFT_SWAY_DEG
+        val sway = sin(swayTime + i * 1.2f) * TUFT_SWAY_DEG
         val rad = angle + Math.toRadians(sway.toDouble()).toFloat()
         val len = s * TUFT_LENGTH
         drawLine(
@@ -211,7 +263,7 @@ private fun DrawScope.drawRoundedFelineEar(cx: Float, top: Float, s: Float, sway
     drawPath(inner, color = FELINE_INNER_COLOR)
     val ts = s * TUFT_STROKE
     for (i in -1..0) {
-        val sway = sin(swayTime + i * 1.5f).toFloat() * s * 0.04f
+        val sway = sin(swayTime + i * 1.5f) * s * 0.04f
         drawLine(
             FELINE_TUFT_COLOR,
             Offset(cx + i * s * 0.03f, top),
@@ -245,7 +297,7 @@ private fun DrawScope.drawLynxTuftedEar(cx: Float, top: Float, s: Float, swayTim
     val fanAngles = floatArrayOf(-24f, -16f, -8f, 0f, 8f, 16f, 24f)
     LYNX_TUFT_PHASES.forEachIndexed { i, phase ->
         val rad = Math.toRadians(
-            (fanAngles[i] + sin(swayTime + phase).toFloat() * LYNX_SWAY_DEG).toDouble(),
+            (fanAngles[i] + sin(swayTime + phase) * LYNX_SWAY_DEG).toDouble(),
         ).toFloat()
         val len = s * LYNX_TUFT_LENGTH
         drawLine(
@@ -282,7 +334,7 @@ private fun DrawScope.drawDenseFluffyEar(cx: Float, top: Float, s: Float, swayTi
         val frac = i / 7f
         val ex = cx - halfBase * frac
         val ey = top + s * frac
-        val sway = sin(swayTime + FLUFFY_PHASES[i]).toFloat() * s * 0.07f
+        val sway = sin(swayTime + FLUFFY_PHASES[i]) * s * 0.07f
         drawLine(FLUFFY_FUR_COLOR, Offset(ex, ey), Offset(ex - s * 0.10f + sway, ey - s * 0.08f), sw, StrokeCap.Round)
     }
 }
@@ -358,7 +410,7 @@ private fun DrawScope.drawCaninePerkyEar(cx: Float, top: Float, s: Float, swayTi
         val xSpan = halfBase * (0.7f - i * 0.15f)
         drawLine(PERKY_HATCH_COLOR, Offset(cx - xSpan, yOff), Offset(cx + xSpan, yOff + s * 0.12f), hs)
     }
-    val baseSway = sin(swayTime * 0.8f).toFloat() * s * 0.015f
+    val baseSway = sin(swayTime * 0.8f) * s * 0.015f
     drawLine(
         PERKY_HATCH_COLOR,
         Offset(cx - halfBase + baseSway, top + s),
@@ -398,7 +450,7 @@ private fun DrawScope.drawFoxEar(cx: Float, top: Float, s: Float, swayTime: Floa
     drawCircle(Color.White, s * 0.07f, Offset(tipX, top))
     val ts = s * 0.04f
     for (i in -1..0) {
-        val sway = sin(swayTime + i * 1.1f).toFloat() * s * 0.03f
+        val sway = sin(swayTime + i * 1.1f) * s * 0.03f
         drawLine(FOX_TUFT_COLOR, Offset(tipX, top), Offset(tipX + sway, top - s * 0.10f), ts, StrokeCap.Round)
     }
 }

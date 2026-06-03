@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 plugins {
+    id("com.android.lint")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kover)
 }

@@ -75,7 +75,7 @@ produces the same versioned CycloneDX JSON/XML files plus SHA-256 checksums.
 
 - `actions/checkout@v6`, `actions/setup-java@v5` (Temurin JDK 17), `gradle/actions/setup-gradle@v6`
   for Gradle caching.
-- `softprops/action-gh-release@v2` for publishing releases.
+- `softprops/action-gh-release@v3` for publishing releases.
 - Least-privilege `permissions: contents: write` (only what's needed to create a release/tag).
 - The release reuses the exact same quality gate as CI before building artefacts.
 - Release artifacts include CycloneDX SBOM JSON/XML files and SHA-256 checksums.
