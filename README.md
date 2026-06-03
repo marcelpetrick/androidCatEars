@@ -36,11 +36,12 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 
 ## CI / Quality Gate
 
-The CI pipeline runs on GitHub Actions on every push/PR to `master`/`main`.
-The same gate runs locally via `scripts/ci.sh` — run it before pushing.
+The required local gate is [`scripts/ci.sh`](scripts/ci.sh). Run it before
+pushing; GitHub Actions invokes the same script so local and remote CI cannot
+drift silently.
 
 ```bash
-# Full local CI gate (mirrors GitHub Actions exactly)
+# Full local CI gate: build, format, detekt, lint, tests, Kover
 ./scripts/ci.sh
 
 # Format (auto-fix)
@@ -58,6 +59,20 @@ The same gate runs locally via `scripts/ci.sh` — run it before pushing.
 ./gradlew detekt          # detekt static analysis
 ./gradlew :app:lint       # Android Lint
 ```
+
+If a local gate step fails, `scripts/ci.sh` prints the failed step and command.
+GitHub CI uploads test, coverage, and lint reports as workflow artifacts.
+
+GitHub Actions also runs security/release workflows:
+
+- `ci.yml` — push/PR quality gate using `scripts/ci.sh`.
+- `dependency-review.yml` — blocks vulnerable dependency changes on PRs.
+- `codeql.yml` — Java/Kotlin code scanning on push/PR and weekly schedule.
+- `secret-scan.yml` — Gitleaks scan for committed credentials.
+- `release.yml` — manual signed AAB release publishing.
+
+See [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) for
+workflow triggers, secrets, timeouts, and release behavior.
 
 ## License
 
@@ -101,8 +116,9 @@ Install on a connected device or running emulator:
 5. Tap the **share** button (bottom-left, appears after a capture) to send the
    saved photo via the Android share sheet.
 
-> Face tracking needs a real face in view; the emulator's virtual camera has
-> none, so test tracking on a physical device.
+> Face tracking needs a real face in view. The emulator can use a host webcam
+> (`-camera-front webcam0`) for local testing, but a physical Android 14+
+> device remains the final check for camera behavior and overlay alignment.
 
 ## Release Build & Deploy
 
@@ -115,11 +131,18 @@ Build a minified, resource-shrunk release APK or an App Bundle for the Play Stor
 
 Release **signing** is driven by a gitignored `keystore.properties` (copy
 `keystore.properties.example`) or by `RELEASE_*` environment variables — **no
-secrets are committed**. When no credentials are present, the release build
-still succeeds but produces an *unsigned* artifact (`…-release-unsigned.apk`).
+secrets are committed**. In GitHub Actions, the release keystore is stored as
+`RELEASE_KEYSTORE_BASE64`; the workflow decodes it into a runner-local file,
+builds a signed AAB, verifies it with `jarsigner`, and publishes only the AAB to
+GitHub Releases.
+
+When no credentials are present, local release builds still succeed but produce
+an *unsigned* artifact (`…-release-unsigned.apk`).
 
 See [`documentation/RELEASE.md`](documentation/RELEASE.md) for the full release
-checklist, keystore setup, and how to install a signed build on a device.
+checklist and keystore setup. See
+[`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) for the
+manual GitHub release workflow.
 
 ---
 
@@ -161,10 +184,19 @@ Never edit `versionCode` or `versionName` anywhere else — they are derived fro
 
 ## Documentation
 
+Project documentation lives in [`documentation/`](documentation/). Start with
+the README for daily commands, then use the table below for deeper topics.
+
 | Document | What it covers |
 |----------|----------------|
+| [`documentation/DEV_INTRO.md`](documentation/DEV_INTRO.md) | Fresh-clone setup and Android Studio workflow |
+| [`documentation/VISION.md`](documentation/VISION.md) | Product intent, scope, and technology decisions |
+| [`documentation/DEVELOPMENT_PLAN.md`](documentation/DEVELOPMENT_PLAN.md) | Strategic work plan and binding decisions |
+| [`documentation/BACKLOG.md`](documentation/BACKLOG.md) | Ordered actionable task list for agents/contributors |
 | [`documentation/ARCHITECTURE.md`](documentation/ARCHITECTURE.md) | Structure, MVVM, and the seam/testability pattern |
+| [`documentation/WORKFLOW_C4.md`](documentation/WORKFLOW_C4.md) | C4-style workflow and runtime diagrams |
 | [`documentation/PROJECT_REVIEW.md`](documentation/PROJECT_REVIEW.md) | Lifecycle review: what exists, testing gaps, what to add |
+| [`code_review.md`](code_review.md) | Security, CI, and correctness review with remediation status |
 | [`documentation/OVERLAY_LAB.md`](documentation/OVERLAY_LAB.md) | Desktop harness for tuning cat-ear placement on sample photos |
 | [`documentation/RELEASE.md`](documentation/RELEASE.md) | Keystore setup, signed builds, release checklist |
 | [`documentation/PLAY_STORE.md`](documentation/PLAY_STORE.md) | Google Play account, signing model, and publishing guide |
@@ -173,8 +205,11 @@ Never edit `versionCode` or `versionName` anywhere else — they are derived fro
 | [`documentation/EMULATOR.md`](documentation/EMULATOR.md) | Emulator setup and GPU/KVM workarounds |
 | [`documentation/TROUBLESHOOTING.md`](documentation/TROUBLESHOOTING.md) | Build, coverage, emulator, device, signing issues |
 | [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) | CI and the manual release workflow |
+| [`documentation/TOOLING.md`](documentation/TOOLING.md) | Installed SDK/tooling log |
+| [`documentation/SPDX.md`](documentation/SPDX.md) | SPDX/license header convention |
 | [`documentation/agents.md`](documentation/agents.md) | Binding engineering rules for contributors |
 | [`CHANGELOG.md`](CHANGELOG.md) | Notable changes by milestone |
+| [`TODO.md`](TODO.md) | Lightweight review radar for follow-ups |
 
 ---
 
