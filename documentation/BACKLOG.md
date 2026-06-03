@@ -181,13 +181,43 @@ user decision before proceeding).
 
 ---
 
-## Optional / post-MVP (ask before starting)
+## Post-MVP — hardening & distribution
 
-### WP 17 — Desktop overlay-geometry simulator
+### WP 17 — Overlay lab: desktop tuning of ear placement (requested)
+
+Design and rationale in [`OVERLAY_LAB.md`](OVERLAY_LAB.md). Resolves TODO #3
+(tune placement constants against real faces) on the desktop.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 17.0 | ASK | Desktop simulator | **Out of MVP scope.** Only if the user requests it: a JVM tool reusing the pure `domain` geometry to visualise overlay placement on sample landmark data. |
+| 17.0 | TODO | Extract `:domain` module | Move the pure geometry/state package out of `:app` into a standalone `:domain` JVM module; no behaviour change; all tests still green. |
+| 17.1 | TODO | Golden-fixture placement tests | JSON fixtures (face box + landmarks + expected ear anchors + tolerance) under test resources; parameterized JUnit asserts `computeOverlayPlacement` within tolerance. |
+| 17.2 | TODO | Sample image set + annotations | A curated `samples/` set (varied distance/tilt/lighting) with landmark annotations (hand-labelled or OpenCV/JavaCV-generated). |
+| 17.3 | TODO | Desktop visualiser module | `:overlay-lab` JVM module (Compose Desktop or Swing) renders the ear asset over each sample using shared `domain`; exports golden PNGs; optional live constant sliders. |
+| 17.4 | TODO | Tune & promote constants | Iterate ear width/offset/scale/rotation against fixtures + visuals until fit error is small; the tuned constants ship unchanged in `:app`. |
+
+### WP 18 — Test depth & supply chain
+
+Rationale in [`PROJECT_REVIEW.md`](PROJECT_REVIEW.md) §3–4.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 18.0 | TODO | Host-side Android tests | Robolectric + Compose UI Test (`createComposeRule`) cover ViewModel wiring and screen states on the JVM. |
+| 18.1 | TODO | Screenshot tests | Paparazzi (or Roborazzi) snapshots for `MainScreen` states, overlay, and light/dark theme. |
+| 18.2 | TODO | Instrumented happy path | `androidTest` source set: Compose UI Test happy path + UI Automator for the permission dialog. |
+| 18.3 | TODO | Emulator E2E in CI | Gradle Managed Devices + a CI job running `connectedCheck` on a headless AVD. |
+| 18.4 | TODO | Supply chain | Dependabot/Renovate, CodeQL, branch protection requiring CI. |
+
+### WP 19 — Google Play release
+
+Full guide in [`PLAY_STORE.md`](PLAY_STORE.md).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 19.0 | TODO | Listing assets | 512×512 icon, 1024×500 feature graphic, ≥2 screenshots (needs 14.4), short/full descriptions. |
+| 19.1 | TODO | Compliance forms | Privacy policy URL (camera + photo storage), data safety, content rating, target audience. |
+| 19.2 | TODO | Play App Signing + first upload | Register upload key, upload signed AAB to internal track; pass pre-launch report. |
+| 19.3 | TODO | (optional) Automated publishing | Gradle Play Publisher or fastlane supply via a CI service account. |
 
 ### Future backlog (not yet broken down)
 
