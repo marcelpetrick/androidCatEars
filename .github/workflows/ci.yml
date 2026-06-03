@@ -44,14 +44,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: app/build/reports/tests/
+          path: |
+            app/build/reports/tests/
+            domain/build/reports/tests/
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: app/build/reports/kover/html/
+          path: domain/build/reports/kover/html/
 
       - name: Upload lint results
         if: always()
