@@ -20,8 +20,14 @@ data class EarAnchor(val x: Float, val y: Float, val size: Float, val tiltDegree
  * @param leftEar Anchor for the left-side cat ear (as seen on screen).
  * @param rightEar Anchor for the right-side cat ear.
  * @param headEulerAngleY Head yaw in degrees; positive = head turned right.
+ * @param earStyle Visual rendering style to apply to both ears.
  */
-data class OverlayPlacement(val leftEar: EarAnchor, val rightEar: EarAnchor, val headEulerAngleY: Float = 0f)
+data class OverlayPlacement(
+    val leftEar: EarAnchor,
+    val rightEar: EarAnchor,
+    val headEulerAngleY: Float = 0f,
+    val earStyle: EarStyle = EarStyle.CLASSIC,
+)
 
 /**
  * Computes independent [EarAnchor] positions for both cat ears.
