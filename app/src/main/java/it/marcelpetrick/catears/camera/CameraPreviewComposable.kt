@@ -27,6 +27,7 @@ import it.marcelpetrick.catears.domain.PlacementSmoother
 import it.marcelpetrick.catears.domain.TransformContext
 import it.marcelpetrick.catears.domain.computeOverlayPlacement
 import it.marcelpetrick.catears.domain.imageToViewBoundingBox
+import it.marcelpetrick.catears.domain.imageToViewCoordinates
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import java.util.concurrent.atomic.AtomicReference
 
@@ -157,7 +158,16 @@ private fun facePlacement(
         return null
     }
     val viewBox = imageToViewBoundingBox(face.boundingBox, transform)
-    return smoother.smooth(computeOverlayPlacement(viewBox, face.headEulerAngleZ))
+    val leftEar = face.leftEarPosition?.let { imageToViewCoordinates(it, transform) }
+    val rightEar = face.rightEarPosition?.let { imageToViewCoordinates(it, transform) }
+    return smoother.smooth(
+        computeOverlayPlacement(
+            viewBox = viewBox,
+            headEulerAngleZ = face.headEulerAngleZ,
+            leftEarAnchor = leftEar,
+            rightEarAnchor = rightEar,
+        ),
+    )
 }
 
 @androidx.annotation.OptIn(ExperimentalGetImage::class)

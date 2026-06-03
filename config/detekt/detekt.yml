@@ -37,5 +37,6 @@ complexity:
   active: true
   LongParameterList:
     active: true
+    ignoreDefaultParameters: true
     ignoreAnnotated:
       - Composable

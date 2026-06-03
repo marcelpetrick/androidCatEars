@@ -14,10 +14,14 @@ class OverlayPlacementTest {
     // Face box: 100×100, centred at (200, 300) in view space.
     private val box = BoundingBox(left = 150f, top = 250f, right = 250f, bottom = 350f)
 
-    // ---- computeOverlayPlacement ----
+    // Ear-landmark anchors in view space (ears are at the sides of the box).
+    private val leftEar = Point2D(box.left, box.centerY)
+    private val rightEar = Point2D(box.right, box.centerY)
+
+    // ---- computeOverlayPlacement — fallback path (no ear landmarks) ----
 
     @Test
-    fun `overlay centerX matches face box centerX`() {
+    fun `overlay centerX matches face box centerX when no ear anchors`() {
         val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
         assertEquals(box.centerX, placement.centerX, DELTA)
     }
@@ -35,7 +39,7 @@ class OverlayPlacementTest {
     }
 
     @Test
-    fun `overlay topY is above the face bounding box`() {
+    fun `overlay topY is above the face bounding box when no ear anchors`() {
         val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
         assertTrue(placement.topY < box.top) {
             "topY (${placement.topY}) should be above face top (${box.top})"
@@ -46,6 +50,50 @@ class OverlayPlacementTest {
     fun `zero rotation produces zero rotation in placement`() {
         val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
         assertEquals(0f, placement.rotationDegrees, DELTA)
+    }
+
+    // ---- computeOverlayPlacement — ear-landmark anchor path ----
+
+    @Test
+    fun `ear-anchor centerX is midpoint of the two ear landmarks`() {
+        val placement = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            leftEarAnchor = leftEar,
+            rightEarAnchor = rightEar,
+        )
+        val expected = (leftEar.x + rightEar.x) / 2f
+        assertEquals(expected, placement.centerX, DELTA)
+    }
+
+    @Test
+    fun `ear-anchor topY places cat-ear bottom at ear attachment height`() {
+        val overlayWidth = box.width * 1.3f
+        val overlayHeight = overlayWidth * 0.5f // EAR_ASPECT_RATIO
+        val earAttachY = (leftEar.y + rightEar.y) / 2f
+        val expectedTopY = earAttachY - overlayHeight
+
+        val placement = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            leftEarAnchor = leftEar,
+            rightEarAnchor = rightEar,
+        )
+        assertEquals(expectedTopY, placement.topY, DELTA)
+    }
+
+    @Test
+    fun `partially absent ear anchors fall back to bounding-box path`() {
+        // Only one anchor — fallback should be used (same as no anchors)
+        val withLeftOnly = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            leftEarAnchor = leftEar,
+            rightEarAnchor = null,
+        )
+        val noAnchors = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertEquals(noAnchors.centerX, withLeftOnly.centerX, DELTA)
+        assertEquals(noAnchors.topY, withLeftOnly.topY, DELTA)
     }
 
     // ---- PlacementSmoother ----

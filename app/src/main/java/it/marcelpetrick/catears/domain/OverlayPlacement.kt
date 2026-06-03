@@ -14,32 +14,52 @@ package it.marcelpetrick.catears.domain
 data class OverlayPlacement(val centerX: Float, val topY: Float, val width: Float, val rotationDegrees: Float)
 
 /**
- * Computes the cat-ear overlay placement from a face bounding box in view space.
+ * Computes the cat-ear overlay placement from a face in view space.
  *
- * Strategy:
- * - Ears are centred horizontally on the face bounding box.
- * - Ears sit above the top of the bounding box by [earHeightRatio] × face height.
- * - Overlay width matches the face width scaled by [widthRatio].
- * - Rotation matches [FaceModel.headEulerAngleZ] (negative = tilt head left).
+ * Anchoring strategy:
+ * - When [leftEarAnchor] / [rightEarAnchor] (the ML Kit ear landmarks transformed to view space)
+ *   are available, the cat-ear bottom is placed at those Y positions so it "grows out of" the
+ *   skull at the natural ear attachment point — immune to bounding-box height noise.
+ * - Fallback (landmarks absent): the old bounding-box-top heuristic is used so the function
+ *   always returns a valid placement.
+ * - Overlay width is always derived from the face bounding box for stable size scaling.
+ * - Rotation matches [headEulerAngleZ].
  *
  * @param viewBox Face bounding box already transformed to view space.
  * @param headEulerAngleZ Head roll from ML Kit (degrees, positive = tilted right).
- * @param widthRatio How wide the overlay is relative to the face. Default 1.3.
- * @param earHeightRatio How far above the face top the overlay bottom sits. Default 0.1.
+ * @param leftEarAnchor View-space position of the left ear landmark; null = use fallback.
+ * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
+ * @param widthRatio How wide the overlay is relative to the face width. Default 1.3.
+ * @param earHeightRatio Fallback only: how far above the box top the overlay bottom sits.
  */
 fun computeOverlayPlacement(
     viewBox: BoundingBox,
     headEulerAngleZ: Float,
+    leftEarAnchor: Point2D? = null,
+    rightEarAnchor: Point2D? = null,
     widthRatio: Float = DEFAULT_WIDTH_RATIO,
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
 ): OverlayPlacement {
     val overlayWidth = viewBox.width * widthRatio
-    val earBottomY = viewBox.top - viewBox.height * earHeightRatio
     val overlayHeight = overlayWidth * EAR_ASPECT_RATIO
-    val topY = earBottomY - overlayHeight
+
+    val topY = if (leftEarAnchor != null && rightEarAnchor != null) {
+        // Anchor the cat-ear bottom to the average human-ear Y; ears then extend upward.
+        val earAttachY = (leftEarAnchor.y + rightEarAnchor.y) / 2f
+        earAttachY - overlayHeight
+    } else {
+        val earBottomY = viewBox.top - viewBox.height * earHeightRatio
+        earBottomY - overlayHeight
+    }
+
+    val centerX = if (leftEarAnchor != null && rightEarAnchor != null) {
+        (leftEarAnchor.x + rightEarAnchor.x) / 2f
+    } else {
+        viewBox.centerX
+    }
 
     return OverlayPlacement(
-        centerX = viewBox.centerX,
+        centerX = centerX,
         topY = topY,
         width = overlayWidth,
         rotationDegrees = headEulerAngleZ,
