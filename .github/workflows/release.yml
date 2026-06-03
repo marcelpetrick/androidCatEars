@@ -80,8 +80,8 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
-      - name: Build release bundle (AAB)
-        run: ./gradlew bundleRelease
+      - name: Build release bundle (AAB) and debug APK
+        run: ./gradlew bundleRelease assembleDebug
         env:
           # RELEASE_STORE_FILE is only written to GITHUB_ENV by the signing step
           # when secrets are present; it is absent (not "") when unsigned, so Gradle
@@ -102,6 +102,8 @@ jobs:
           fi
           cp app/build/outputs/bundle/release/androidCatEars-release.aab \
              "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-${SUFFIX}.aab"
+          cp app/build/outputs/apk/debug/androidCatEars-debug.apk \
+             "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-debug.apk"
           echo "ARTEFACT_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
 
       - name: Publish GitHub Release
@@ -116,10 +118,14 @@ jobs:
 
             ### Downloads
             - **androidCatEars-${{ steps.version.outputs.version }}-${{ env.ARTEFACT_SUFFIX }}.aab** — app bundle for Play Store distribution.
+            - **androidCatEars-${{ steps.version.outputs.version }}-debug.apk** — debug APK for direct sideloading and testing. ⚠️ Debug build: not minified, debuggable flag set, do not use in production.
 
-            ${{ steps.signing.outputs.signed == 'true' && '✅ Signed with release key.' || '⚠️ Unsigned build — configure RELEASE_KEYSTORE_BASE64 and related secrets for a signed release (see documentation/RELEASE.md).' }}
+            ${{ steps.signing.outputs.signed == 'true' && '✅ AAB signed with release key.' || '⚠️ Unsigned AAB — configure RELEASE_KEYSTORE_BASE64 and related secrets for a signed release (see documentation/RELEASE.md).' }}
+
+            To install the debug APK: enable **Unknown sources** (or **Install unknown apps**) in Android settings, transfer the APK to the device, and tap to install. Requires Android 14+ (API 34).
 
             Version: `${{ steps.version.outputs.version }}`
           files: |
             release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-${{ env.ARTEFACT_SUFFIX }}.aab
+            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-debug.apk
           generate_release_notes: true

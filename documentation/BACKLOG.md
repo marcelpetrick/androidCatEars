@@ -219,8 +219,29 @@ Full guide in [`PLAY_STORE.md`](PLAY_STORE.md).
 | 19.2 | TODO | Play App Signing + first upload | Register upload key, upload signed AAB to internal track; pass pre-launch report. |
 | 19.3 | TODO | (optional) Automated publishing | Gradle Play Publisher or fastlane supply via a CI service account. |
 
+### WP 20 — Animated, 3D-look cat ears with proper head anchoring
+
+Full design rationale and rendering approach in [`ANIMATED_EARS.md`](ANIMATED_EARS.md).
+Two distinct goals: fix the flying-ears anchoring bug, and replace the static sprite with
+a procedural, animated, depth-illusory ear renderer — all within the existing Compose
+layer, no new runtime dependencies.
+
+**Prerequisite order**: 20.0 → 20.1 → 20.2 → 20.3 → 20.4 → 20.5 → 20.6 → 20.7
+Each task keeps all quality gates green (build + detekt + lint + tests ≥ 95% + koverVerify).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 20.0 | TODO | Expose richer ML Kit landmarks | Add `leftEarTipPosition`, `rightEarTipPosition`, `headEulerAngleY` to `FaceModel`. Update `MlKitFaceDetectorImpl` to extract `FaceLandmark.LEFT_EAR_TIP`, `FaceLandmark.RIGHT_EAR_TIP`, and `headEulerAngleY` via the ML Kit `Face` object. Update FaceModel unit tests; all gates green. |
+| 20.1 | TODO | Anchor ears to human ear-tip landmarks | Rewrite `computeOverlayPlacement` to place each cat ear's bottom above the corresponding `EAR_TIP` landmark (not bounding-box top). Bounding box is still used for size scaling only. Fallback to eye-line estimate when tip landmarks are absent. Update/extend placement unit tests; ears no longer fly when bounding box is tall. |
+| 20.2 | TODO | Two-anchor `OverlayPlacement` model | Replace single `(centerX, topY, width, rotationDegrees)` with `OverlayPlacement(leftEar: EarAnchor, rightEar: EarAnchor, headEulerAngleY: Float)` where `EarAnchor` holds `x, y, size, tiltDegrees, xScale`. Update `PlacementSmoother` to smooth each `EarAnchor` independently. All placement/smoother tests updated and green. |
+| 20.3 | TODO | Compose Canvas ear shape renderer | Replace `Image(painterResource(ic_cat_ears))` in `CatEarOverlay` with a `Canvas` composable that draws two independent ears as Bezier-curved triangle paths. Each ear has: outer fur fill with `linearGradient` (dark tan at edges → lighter centre), inner-ear pink accent shape, drop-shadow offset duplicate. No animation yet; static but visually 3D. Placement still driven by `OverlayPlacement`. |
+| 20.4 | TODO | Per-ear perspective X-squash | In `CatEarOverlay`, wrap each ear in `graphicsLayer { scaleX = anchor.xScale }`. In `computeOverlayPlacement`, set `xScale = 1f + headEulerAngleY * K` for near ear and `1f - headEulerAngleY * K` for far ear (clamped to [0.4, 1.3]). When head turns, near ear widens and far ear narrows — 3D depth illusion. Unit-test the xScale computation in placement tests. |
+| 20.5 | TODO | Animated fur strands | Add `rememberInfiniteTransition` in `CatEarOverlay` cycling a time value at ~0.8 Hz. Draw ~5 hair strands per ear as animated Bezier `Path` curves; each strand tip offset by `sin(t + phase) × swayAmplitude`. Add a second transition at ~0.2 Hz for a periodic ear-tip twitch (±8° rotation, 120 ms ease-in-out). Strands run continuously while any face is detected; no visible pop on face reappear. |
+| 20.6 | TODO | Pose-reactive ear tilt with spring | Map `headEulerAngleZ` to per-ear tilt: left ear at `0.6 × roll`, right ear at `1.0 × roll`. Drive both through `animateFloatAsState` with a spring (`Spring.StiffnessMedium`) so rapid head snaps produce a slight elastic overshoot — the classic comical lag. Replace the current single `rotationZ = placement.rotationDegrees` with per-ear animated tilt. |
+| 20.7 | TODO | Capture path: `EarBitmapRenderer` for compositing | Implement `EarBitmapRenderer` that draws the same ear geometry (same constants, no Compose dependency) onto an `android.graphics.Canvas`. Update `OverlayCompositor` to accept an `OverlayPlacement` and use `EarBitmapRenderer` instead of decoding a PNG asset. Update `CameraPreviewComposable.captureComposited()` accordingly. Saved photos show the animated ears as rendered at capture time. |
+
 ### Future backlog (not yet broken down)
 
-Video recording · multi-face tracking · extra filters (dog ears, glasses, hats) · animated overlays ·
+Video recording · multi-face tracking · extra filters (dog ears, glasses, hats) ·
 expression reactions · custom AI models (ONNX/TFLite) · overlay marketplace · social features.
 Each becomes its own set of tasks when prioritised — see [`VISION.md`](VISION.md) "Future Ideas".

@@ -44,6 +44,9 @@ drift silently.
 # Full local CI gate: build, format, detekt, lint, tests, Kover
 ./scripts/ci.sh
 
+# Same gate with all Gradle caches cleared first (for a truly clean run)
+./gradlew --stop && rm -rf .gradle/configuration-cache app/build && ./scripts/ci.sh
+
 # Format (auto-fix)
 ./gradlew spotlessApply
 
@@ -69,14 +72,14 @@ Example summary from a successful local run:
 +----+----------------------------------+----------+----------+
 | #  | Step                             | Status   | Wall     |
 +----+----------------------------------+----------+----------+
-| 1  | Build (debug)                    | PASSED   | 00:00    |
+| 1  | Build (debug)                    | PASSED   | 00:09    |
 | 2  | Format check (Spotless)          | PASSED   | 00:01    |
 | 3  | Static analysis (detekt)         | PASSED   | 00:01    |
-| 4  | Android Lint                     | PASSED   | 00:00    |
-| 5  | Unit tests                       | PASSED   | 00:01    |
-| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:00    |
+| 4  | Android Lint                     | PASSED   | 00:17    |
+| 5  | Unit tests                       | PASSED   | 00:10    |
+| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:06    |
 +----+----------------------------------+----------+----------+
-| Total                                 | PASSED   | 00:03    |
+| Total                                 | PASSED   | 00:44    |
 +---------------------------------------+----------+----------+
 All checks passed.
 ```
@@ -216,6 +219,7 @@ the README for daily commands, then use the table below for deeper topics.
 | [`documentation/PROJECT_REVIEW.md`](documentation/PROJECT_REVIEW.md) | Lifecycle review: what exists, testing gaps, what to add |
 | [`code_review.md`](code_review.md) | Security, CI, and correctness review with remediation status |
 | [`documentation/OVERLAY_LAB.md`](documentation/OVERLAY_LAB.md) | Desktop harness for tuning cat-ear placement on sample photos |
+| [`documentation/ANIMATED_EARS.md`](documentation/ANIMATED_EARS.md) | Design for animated, 3D-look procedural ears with proper head anchoring (WP 20) |
 | [`documentation/RELEASE.md`](documentation/RELEASE.md) | Keystore setup, signed builds, release checklist |
 | [`documentation/PLAY_STORE.md`](documentation/PLAY_STORE.md) | Google Play account, signing model, and publishing guide |
 | [`documentation/PRIVACY_POLICY.md`](documentation/PRIVACY_POLICY.md) | Privacy policy template for Play Store submission |
