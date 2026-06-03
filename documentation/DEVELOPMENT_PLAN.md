@@ -115,6 +115,12 @@ re-litigate them, but must still raise *new* decisions not covered here.
   logic (logic depends on geometry, not on the specific asset).
 - **Q5 — App display name: `androidCatEars`** for now. This is a working name to be changed/adapted
   later; do not block release polish on a final name.
+- **Q7 — Version + commit stamp display:** The app must show the current version string (e.g.
+  `0.1.15`) and the first 7 characters of the git commit hash at startup, as a small non-intrusive
+  label. This identifies exactly which build is running — useful both during development and for
+  users reporting issues. Implementation: Gradle injects both values into `BuildConfig` at build
+  time; the UI reads them from `BuildConfig.VERSION_NAME` and a custom `BuildConfig.GIT_COMMIT`
+  field. See backlog task 14.3.
 - **Q6 — SDK levels: most recent stable.** minSdk 34 (Android 14, per VISION). compileSdk and
   targetSdk track the **latest stable** at implementation time. Goal: a stable but up-to-date
   codebase — prefer current stable releases of Gradle, AGP, Kotlin, Compose, and libraries (no
