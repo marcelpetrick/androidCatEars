@@ -41,8 +41,9 @@ data class OverlayPlacement(
  * Computes independent [EarAnchor] positions for both cat ears.
  *
  * Anchoring strategy:
- * - When [leftEarAnchor] / [rightEarAnchor] are provided (ML Kit ear landmarks in view space)
- *   each cat ear is placed above its corresponding human ear — immune to bounding-box noise.
+ * - When [leftEarAnchor] / [rightEarAnchor] are provided (ML Kit ear landmarks in view space),
+ *   their X positions control left/right spacing, but Y placement still attaches to the top of
+ *   the head. Cat ears should not sit down at human-ear height.
  * - Fallback (landmarks absent): positions derived from the bounding box centre so the ears
  *   are symmetrically placed above the face.
  * - Ear size is always derived from the face bounding box width for stable distance scaling.
@@ -53,7 +54,7 @@ data class OverlayPlacement(
  * @param leftEarAnchor View-space position of the left ear landmark; null = use fallback.
  * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
  * @param widthRatio Width of one ear relative to face width. Default 0.65.
- * @param earHeightRatio Fallback only: gap between box top and ear bottom (fraction of height).
+ * @param earHeightRatio Gap between box top and ear bottom (fraction of height).
  * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
  * @param eyeOpennessMean Mean of left+right eye-open probabilities [0..1]; 1 when absent.
  * @param trackingId Stable face-tracking ID for Compose keying; null when unavailable.
@@ -75,19 +76,21 @@ fun computeOverlayPlacement(
     val yawFraction = (headEulerAngleY / MAX_YAW_DEGREES).coerceIn(-1f, 1f)
     val leftXScale = (1f - yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
     val rightXScale = (1f + yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
+    val earBottomY = viewBox.top - viewBox.height * earHeightRatio
+    val topY = earBottomY - earSize
 
     return if (leftEarAnchor != null && rightEarAnchor != null) {
         OverlayPlacement(
             leftEar = EarAnchor(
                 x = leftEarAnchor.x,
-                y = leftEarAnchor.y - earSize,
+                y = topY,
                 size = earSize,
                 tiltDegrees = headEulerAngleZ,
                 xScale = leftXScale,
             ),
             rightEar = EarAnchor(
                 x = rightEarAnchor.x,
-                y = rightEarAnchor.y - earSize,
+                y = topY,
                 size = earSize,
                 tiltDegrees = headEulerAngleZ,
                 xScale = rightXScale,
@@ -98,8 +101,6 @@ fun computeOverlayPlacement(
             trackingId = trackingId,
         )
     } else {
-        val earBottomY = viewBox.top - viewBox.height * earHeightRatio
-        val topY = earBottomY - earSize
         val halfSpacing = earSize * EAR_HALF_SPACING_RATIO
         OverlayPlacement(
             leftEar = EarAnchor(

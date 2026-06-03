@@ -131,14 +131,13 @@ data class PlacementFixture(
             // ---- ear-landmark anchor path ----
 
             PlacementFixture(
-                name = "ear landmarks present — cat ear top sits exactly earSize above landmark",
+                name = "ear landmarks present — x follows landmark, y attaches to top of head",
                 box = BOX, eulerZ = 0f, eulerY = 0f,
                 leftEarLandmark = Point2D(150f, 300f),
                 rightEarLandmark = Point2D(250f, 300f),
                 widthRatio = W,
-                // cat ear top = landmarkY - earSize = 300 - 65 = 235
-                expectedLeft = EarAnchor(x = 150f, y = 235f, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
-                expectedRight = EarAnchor(x = 250f, y = 235f, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
+                expectedLeft = EarAnchor(x = 150f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
+                expectedRight = EarAnchor(x = 250f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
             ),
 
             PlacementFixture(
@@ -147,8 +146,8 @@ data class PlacementFixture(
                 leftEarLandmark = Point2D(150f, 300f),
                 rightEarLandmark = Point2D(250f, 300f),
                 widthRatio = W,
-                expectedLeft = EarAnchor(x = 150f, y = 235f, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
-                expectedRight = EarAnchor(x = 250f, y = 235f, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
+                expectedLeft = EarAnchor(x = 150f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
+                expectedRight = EarAnchor(x = 250f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
             ),
 
             PlacementFixture(

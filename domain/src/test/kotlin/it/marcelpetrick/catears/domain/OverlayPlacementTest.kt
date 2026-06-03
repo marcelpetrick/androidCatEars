@@ -146,16 +146,19 @@ class OverlayPlacementTest {
     }
 
     @Test
-    fun `ear-anchor —cat ear top is above the human ear attachment point`() {
+    fun `ear-anchor —cat ear vertical placement attaches to top of head`() {
         val earSize = box.width * 0.65f
+        val expectedTopY = box.top - box.height * 0.1f - earSize
         val p = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
             leftEarAnchor = leftEar,
             rightEarAnchor = rightEar,
         )
-        assertEquals(leftEar.y - earSize, p.leftEar.y, DELTA)
-        assertEquals(rightEar.y - earSize, p.rightEar.y, DELTA)
+        assertEquals(expectedTopY, p.leftEar.y, DELTA)
+        assertEquals(expectedTopY, p.rightEar.y, DELTA)
+        assertTrue(p.leftEar.y + earSize < leftEar.y) { "Cat ear base should sit above the human ear landmark" }
+        assertTrue(p.rightEar.y + earSize < rightEar.y) { "Cat ear base should sit above the human ear landmark" }
     }
 
     @Test
