@@ -5,6 +5,7 @@ package it.marcelpetrick.catears.ui
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.PermissionState
 import it.marcelpetrick.catears.domain.permissionResultToState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,13 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Initialising)
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    private val _lens = MutableStateFlow(LensSelector.Front)
+    val lens: StateFlow<LensSelector> = _lens.asStateFlow()
+
+    fun onToggleLens() {
+        _lens.value = _lens.value.toggled()
+    }
 
     /**
      * Called by the UI once the Android permission result is known.

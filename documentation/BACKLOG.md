@@ -89,16 +89,16 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 7.0 | TODO | Camera controller seam | CameraX deps + a testable wrapper around the camera controller; non-UI logic unit-tested. |
-| 7.1 | TODO | Preview composable | CameraX `Preview` use case bound to lifecycle, shown full-screen; clean start/stop. |
-| 7.2 | TODO | Verify run + README | Preview shows live on emulator/device; README "Run" section verified. |
+| 7.0 | DONE | Camera controller seam | CameraX deps + a testable wrapper around the camera controller; non-UI logic unit-tested. |
+| 7.1 | DONE | Preview composable | CameraX `Preview` use case bound to lifecycle, shown full-screen; clean start/stop. |
+| 7.2 | DONE | Verify run + README | Preview shows live on emulator/device; README "Run" section verified. |
 
 ### WP 8 — Front/rear switching
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 8.0 | TODO | Lens-selector state | Lens selection modelled in `domain`; unit-tested. |
-| 8.1 | TODO | Switch UI + rebind | UI toggle flips the live camera by rebinding CameraX use cases. |
+| 8.0 | DONE | Lens-selector state | Lens selection modelled in `domain`; unit-tested. |
+| 8.1 | DONE | Switch UI + rebind | UI toggle flips the live camera by rebinding CameraX use cases. |
 
 ---
 

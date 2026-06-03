@@ -4,6 +4,7 @@
 package it.marcelpetrick.catears.ui
 
 import app.cash.turbine.test
+import it.marcelpetrick.catears.domain.LensSelector
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -62,6 +63,38 @@ class MainViewModelTest {
             assertEquals(MainUiState.PermissionRequired, awaitItem())
             vm.onPermissionResult(granted = true, showRationale = false)
             assertEquals(MainUiState.Ready, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `initial lens is Front`() = runTest {
+        viewModel().lens.test {
+            assertEquals(LensSelector.Front, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onToggleLens switches Front to Rear`() = runTest {
+        val vm = viewModel()
+        vm.lens.test {
+            assertEquals(LensSelector.Front, awaitItem())
+            vm.onToggleLens()
+            assertEquals(LensSelector.Rear, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onToggleLens twice returns to Front`() = runTest {
+        val vm = viewModel()
+        vm.lens.test {
+            assertEquals(LensSelector.Front, awaitItem())
+            vm.onToggleLens()
+            assertEquals(LensSelector.Rear, awaitItem())
+            vm.onToggleLens()
+            assertEquals(LensSelector.Front, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

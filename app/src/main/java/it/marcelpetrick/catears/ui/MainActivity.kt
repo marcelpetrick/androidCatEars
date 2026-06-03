@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CatEarsTheme {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val lens by viewModel.lens.collectAsStateWithLifecycle()
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -45,8 +46,10 @@ class MainActivity : ComponentActivity() {
 
                 MainScreen(
                     uiState = uiState,
+                    lens = lens,
                     onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                     onOpenSettings = { openAppSettings() },
+                    onToggleLens = viewModel::onToggleLens,
                 )
             }
         }

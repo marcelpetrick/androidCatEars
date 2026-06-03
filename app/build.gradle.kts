@@ -71,8 +71,15 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
+
+    // CameraX
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -114,6 +121,13 @@ kover {
                     // Application class (framework entry point, no logic)
                     "it.marcelpetrick.catears.CatEarsApplication",
                     "it.marcelpetrick.catears.CatEarsApplication*",
+                    // CameraX concrete implementation and Composable — lifecycle-bound, device-only
+                    "it.marcelpetrick.catears.camera.CameraXControllerImpl",
+                    "it.marcelpetrick.catears.camera.CameraXControllerImpl*",
+                    "it.marcelpetrick.catears.camera.CameraPreviewComposableKt",
+                    // Hilt-generated factories
+                    "*_Factory",
+                    "*_Factory*",
                 )
                 annotatedBy(
                     "dagger.hilt.android.HiltAndroidApp",
