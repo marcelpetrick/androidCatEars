@@ -84,3 +84,12 @@ scan.
 
 It builds the debug APK and runs CodeQL's Java/Kotlin analysis, publishing findings to GitHub code
 scanning.
+
+---
+
+## 5. Secret Scan — `secret-scan.yml`
+
+**Trigger:** automatically on pushes and pull requests to `master` / `main`.
+
+It runs Gitleaks across committed history so accidental keystores, tokens, passwords, and similar
+secrets fail CI before they are treated as project artifacts.

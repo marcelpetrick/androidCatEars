@@ -22,6 +22,7 @@ exploitable remote vulnerabilities.
    **Status: fixed.**
 6. The project has no committed secret-scanning workflow. `.gitignore` blocks
    common keystore names, but CI does not detect accidentally committed secrets.
+   **Status: fixed.**
 7. The app allows screenshots and Recents thumbnails of the live camera preview.
    That is a privacy leak for a camera-first app.
 8. `ImageSaver.save()` returns success even if `Bitmap.compress()` returns
