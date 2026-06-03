@@ -20,9 +20,11 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 ## What It Does
 
 - Live camera preview with front/rear camera switching
-- On-device face detection via ML Kit
-- Real-time 2D cat-ear overlay positioned above the detected face
-- Still photo capture with the overlay baked in
+- On-device face detection via ML Kit (ear landmarks, head pose)
+- Animated 3D-look cat-ear overlay: procedural Compose Canvas ears anchored to
+  detected human ear positions, with swaying fur strands, spring-animated tilt,
+  and perspective X-squash for a comical depth illusion
+- Still photo capture with the animated overlay baked in
 - Save to local storage and share via Android sharing intents
 
 ## Tech Stack
