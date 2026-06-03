@@ -90,5 +90,7 @@ run_step "Unit tests" ./gradlew :app:test :domain:test
 
 run_step "Coverage gate (Kover >= 95%)" ./gradlew :domain:koverVerify
 
+run_step "SBOM (CycloneDX)" ./gradlew cyclonedxBom
+
 print_summary
 echo "All checks passed."

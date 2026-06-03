@@ -32,6 +32,7 @@ kotlinx-coroutines               = "1.11.0"
 detekt                           = "1.23.8"
 spotless                         = "8.6.0"
 kover                            = "0.9.8"
+cyclonedx                        = "3.2.4"
 
 [libraries]
 # AndroidX core
@@ -83,3 +84,4 @@ ksp                              = { id = "com.google.devtools.ksp",            
 detekt                           = { id = "io.gitlab.arturbosch.detekt",          version.ref = "detekt" }
 spotless                         = { id = "com.diffplug.spotless",                version.ref = "spotless" }
 kover                            = { id = "org.jetbrains.kotlinx.kover",          version.ref = "kover" }
+cyclonedx                        = { id = "org.cyclonedx.bom",                   version.ref = "cyclonedx" }

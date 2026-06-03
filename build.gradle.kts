@@ -27,6 +27,34 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.kover) apply false
+    alias(libs.plugins.cyclonedx)
+}
+
+group = "it.marcelpetrick.catears"
+version = extra["appVersionName"] as String
+
+allprojects {
+    group = rootProject.group
+    version = rootProject.extra["appVersionName"] as String
+}
+
+tasks.withType<org.cyclonedx.gradle.CyclonedxDirectTask>().configureEach {
+    projectType = org.cyclonedx.model.Component.Type.APPLICATION
+    componentGroup = rootProject.group.toString()
+    componentVersion = rootProject.extra["appVersionName"] as String
+    includeConfigs = listOf("releaseRuntimeClasspath", "runtimeClasspath")
+    includeBomSerialNumber = true
+    includeMetadataResolution = true
+    includeBuildSystem = true
+}
+
+tasks.withType<org.cyclonedx.gradle.CyclonedxAggregateTask>().configureEach {
+    projectType = org.cyclonedx.model.Component.Type.APPLICATION
+    componentName = "androidCatEars"
+    componentGroup = rootProject.group.toString()
+    componentVersion = rootProject.extra["appVersionName"] as String
+    includeBomSerialNumber = true
+    includeBuildSystem = true
 }
 
 // ---------------------------------------------------------------------------

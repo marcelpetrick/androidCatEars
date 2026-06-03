@@ -3,6 +3,7 @@
 # -------------------------------------------------------
 build/
 .gradle/
+.kotlin/
 out/
 
 # Android Studio captures

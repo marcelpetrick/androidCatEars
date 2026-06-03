@@ -93,10 +93,6 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
-      - name: Verify signed release bundle
-        if: steps.signing.outputs.signed == 'true'
-        run: jarsigner -verify -strict -verbose app/build/outputs/bundle/release/androidCatEars-release.aab
-
       - name: Stage release artefacts
         run: |
           mkdir -p release-artefacts

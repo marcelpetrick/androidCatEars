@@ -207,6 +207,7 @@ Rationale in [`PROJECT_REVIEW.md`](PROJECT_REVIEW.md) §3–4.
 | 18.2 | TODO | Instrumented happy path | `androidTest` source set: Compose UI Test happy path + UI Automator for the permission dialog. |
 | 18.3 | TODO | Emulator E2E in CI | Gradle Managed Devices + a CI job running `connectedCheck` on a headless AVD. |
 | 18.4 | DONE | Supply chain | `.github/dependabot.yml` added: weekly Gradle + GitHub Actions PRs. CodeQL (`codeql.yml`), dependency review (`dependency-review.yml`), and Gitleaks (`secret-scan.yml`) workflows already present. Branch protection rules must be set in the GitHub repository settings (not codeable). |
+| 18.5 | DONE | CycloneDX SBOM automation | `org.cyclonedx.bom` generates aggregate JSON/XML SBOMs via `./gradlew cyclonedxBom`; `scripts/generate-sbom.sh` creates versioned release-style SBOM files and SHA-256 checksums; `scripts/ci.sh` includes SBOM generation in the local ASCII summary; `ci.yml` uploads SBOM artifacts; `release.yml` attaches CycloneDX SBOMs and checksums to GitHub Releases. |
 
 ### WP 19 — Google Play release
 

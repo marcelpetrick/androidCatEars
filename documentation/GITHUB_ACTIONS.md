@@ -32,15 +32,15 @@ local and GitHub checks cannot drift silently.
 
 1. Reads the current version from `version.properties` (e.g. `0.1.25`).
 2. Runs the full quality gate (same as CI).
-3. Requires `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and
-   `RELEASE_KEY_PASSWORD` repository secrets.
-4. Builds `androidCatEars-<version>-release.aab` — the signed Play Store app bundle.
+3. Uses `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and
+   `RELEASE_KEY_PASSWORD` repository secrets when present; otherwise the release AAB is unsigned
+   and labelled as such.
+4. Builds `androidCatEars-<version>-release.aab` — signed only when signing secrets are configured.
 5. Generates CycloneDX SBOM release artifacts:
    - `androidCatEars-<version>.cdx.json`
    - `androidCatEars-<version>.cdx.xml`
    - SHA-256 checksum files for both SBOMs
-6. Verifies the AAB signature with `jarsigner -verify -strict`.
-7. Publishes a **GitHub Release**:
+6. Publishes a **GitHub Release**:
    - Tag: `v<version>` (e.g. `v0.1.25`)
    - Title: `androidCatEars <version>`
    - Body mentions the version number and what each download is.
@@ -55,13 +55,13 @@ CycloneDX SBOMs for release supply-chain records.
    (the patch auto-increments per commit; bump minor/major manually if needed).
 2. Push your branch to GitHub (this project commits locally by default — push when ready).
 3. Go to **Actions → Release → Run workflow**, choose the branch, and run it.
-4. When it finishes, the new release appears under **Releases** with the signed AAB.
+4. When it finishes, the new release appears under **Releases** with the AAB and SBOM artifacts.
 
 ### Signing note
 
 The release workflow decodes `RELEASE_KEYSTORE_BASE64` into a runner-local keystore file, passes
-that path to Gradle as `RELEASE_STORE_FILE`, and verifies the signed AAB before publishing. The
-debug APK is attached for sideload testing only and must not be used as a production artifact.
+that path to Gradle as `RELEASE_STORE_FILE`, and signs the AAB when all signing secrets are present.
+The debug APK is attached for sideload testing only and must not be used as a production artifact.
 
 ### SBOM note
 

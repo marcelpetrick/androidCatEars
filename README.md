@@ -70,7 +70,8 @@ drift silently.
 ```
 
 If a local gate step fails, `scripts/ci.sh` prints the failed step and command.
-GitHub CI uploads test, coverage, and lint reports as workflow artifacts.
+GitHub CI uploads test, coverage, lint, and CycloneDX SBOM reports as workflow
+artifacts.
 
 Example summary from a successful local run:
 
@@ -78,14 +79,15 @@ Example summary from a successful local run:
 +----+----------------------------------+----------+----------+
 | #  | Step                             | Status   | Wall     |
 +----+----------------------------------+----------+----------+
-| 1  | Build (debug)                    | PASSED   | 00:09    |
+| 1  | Build (debug)                    | PASSED   | 00:51    |
 | 2  | Format check (Spotless)          | PASSED   | 00:01    |
 | 3  | Static analysis (detekt)         | PASSED   | 00:01    |
-| 4  | Android Lint                     | PASSED   | 00:17    |
-| 5  | Unit tests                       | PASSED   | 00:10    |
-| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:06    |
+| 4  | Android Lint                     | PASSED   | 00:18    |
+| 5  | Unit tests                       | PASSED   | 00:08    |
+| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:01    |
+| 7  | SBOM (CycloneDX)                 | PASSED   | 00:06    |
 +----+----------------------------------+----------+----------+
-| Total                                 | PASSED   | 00:44    |
+| Total                                 | PASSED   | 01:26    |
 +---------------------------------------+----------+----------+
 All checks passed.
 ```
@@ -96,7 +98,14 @@ GitHub Actions also runs security/release workflows:
 - `dependency-review.yml` — blocks vulnerable dependency changes on PRs.
 - `codeql.yml` — Java/Kotlin code scanning on push/PR and weekly schedule.
 - `secret-scan.yml` — Gitleaks scan for committed credentials.
-- `release.yml` — manual signed AAB release publishing.
+- `release.yml` — manual release publishing with AAB, debug APK, CycloneDX SBOMs, and checksums.
+
+CycloneDX SBOMs can also be generated locally:
+
+```bash
+./gradlew cyclonedxBom              # raw aggregate SBOM under build/reports/cyclonedx/
+./scripts/generate-sbom.sh          # versioned release-style SBOM files + SHA-256 checksums
+```
 
 See [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) for
 workflow triggers, secrets, timeouts, and release behavior.
@@ -164,8 +173,8 @@ Release **signing** is driven by a gitignored `keystore.properties` (copy
 `keystore.properties.example`) or by `RELEASE_*` environment variables — **no
 secrets are committed**. In GitHub Actions, the release keystore is stored as
 `RELEASE_KEYSTORE_BASE64`; the workflow decodes it into a runner-local file,
-builds a signed AAB, verifies it with `jarsigner`, and publishes only the AAB to
-GitHub Releases.
+builds a signed AAB when all signing secrets are configured, and publishes the
+AAB, debug APK, CycloneDX SBOMs, and SBOM SHA-256 checksums to GitHub Releases.
 
 When no credentials are present, local release builds still succeed but produce
 an *unsigned* artifact (`…-release-unsigned.apk`).
