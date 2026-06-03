@@ -6,6 +6,7 @@ package it.marcelpetrick.catears.ui
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.marcelpetrick.catears.domain.LensSelector
+import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
 import it.marcelpetrick.catears.domain.permissionResultToState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,14 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     fun onToggleLens() {
         _lens.value = _lens.value.toggled()
+    }
+
+    private val _overlayPlacement = MutableStateFlow<OverlayPlacement?>(null)
+    val overlayPlacement: StateFlow<OverlayPlacement?> = _overlayPlacement.asStateFlow()
+
+    /** Called from the face-detection callback with the smoothed placement, or null if no face. */
+    fun onFaceDetected(placement: OverlayPlacement?) {
+        _overlayPlacement.value = placement
     }
 
     /**

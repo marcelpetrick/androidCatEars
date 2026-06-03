@@ -4,9 +4,12 @@
 package it.marcelpetrick.catears.ui
 
 import app.cash.turbine.test
+import it.marcelpetrick.catears.domain.BoundingBox
 import it.marcelpetrick.catears.domain.LensSelector
+import it.marcelpetrick.catears.domain.OverlayPlacement
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class MainViewModelTest {
@@ -82,6 +85,40 @@ class MainViewModelTest {
             assertEquals(LensSelector.Front, awaitItem())
             vm.onToggleLens()
             assertEquals(LensSelector.Rear, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `initial overlayPlacement is null`() = runTest {
+        viewModel().overlayPlacement.test {
+            assertNull(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onFaceDetected updates overlayPlacement`() = runTest {
+        val vm = viewModel()
+        val placement = OverlayPlacement(centerX = 100f, topY = 50f, width = 200f, rotationDegrees = 0f)
+        vm.overlayPlacement.test {
+            assertNull(awaitItem())
+            vm.onFaceDetected(placement)
+            assertEquals(placement, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onFaceDetected null clears placement`() = runTest {
+        val vm = viewModel()
+        val placement = OverlayPlacement(centerX = 100f, topY = 50f, width = 200f, rotationDegrees = 0f)
+        vm.overlayPlacement.test {
+            assertNull(awaitItem())
+            vm.onFaceDetected(placement)
+            assertEquals(placement, awaitItem())
+            vm.onFaceDetected(null)
+            assertNull(awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -28,12 +28,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.domain.LensSelector
+import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.overlay.CatEarOverlay
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
 
 @Composable
 fun MainScreen(
     uiState: MainUiState,
     lens: LensSelector,
+    overlayPlacement: OverlayPlacement?,
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleLens: () -> Unit,
@@ -42,9 +45,16 @@ fun MainScreen(
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (uiState) {
             MainUiState.Initialising -> InitialisingContent()
+
             MainUiState.PermissionRequired -> PermissionRequiredContent(onRequestPermission)
+
             MainUiState.PermissionPermanentlyDenied -> PermissionDeniedContent(onOpenSettings)
-            MainUiState.Ready -> CameraContent(lens = lens, onToggleLens = onToggleLens)
+
+            MainUiState.Ready -> CameraContent(
+                lens = lens,
+                overlayPlacement = overlayPlacement,
+                onToggleLens = onToggleLens,
+            )
         }
     }
 }
@@ -109,9 +119,10 @@ private fun PermissionDeniedContent(onOpenSettings: () -> Unit) {
 }
 
 @Composable
-private fun CameraContent(lens: LensSelector, onToggleLens: () -> Unit) {
+private fun CameraContent(lens: LensSelector, overlayPlacement: OverlayPlacement?, onToggleLens: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(lens = lens, modifier = Modifier.fillMaxSize())
+        CatEarOverlay(placement = overlayPlacement)
         FloatingActionButton(
             onClick = onToggleLens,
             modifier = Modifier
@@ -127,8 +138,14 @@ private fun CameraContent(lens: LensSelector, onToggleLens: () -> Unit) {
 @Composable
 private fun MainScreenReadyPreview() {
     CatEarsTheme {
-        MainScreen(uiState = MainUiState.Ready, lens = LensSelector.Front, onRequestPermission = {
-        }, onOpenSettings = {}, onToggleLens = {})
+        MainScreen(
+            uiState = MainUiState.Ready,
+            lens = LensSelector.Front,
+            overlayPlacement = null,
+            onRequestPermission = {},
+            onOpenSettings = {},
+            onToggleLens = {},
+        )
     }
 }
 
@@ -136,8 +153,14 @@ private fun MainScreenReadyPreview() {
 @Composable
 private fun MainScreenPermissionRequiredPreview() {
     CatEarsTheme {
-        MainScreen(uiState = MainUiState.PermissionRequired, lens = LensSelector.Front, onRequestPermission = {
-        }, onOpenSettings = {}, onToggleLens = {})
+        MainScreen(
+            uiState = MainUiState.PermissionRequired,
+            lens = LensSelector.Front,
+            overlayPlacement = null,
+            onRequestPermission = {},
+            onOpenSettings = {},
+            onToggleLens = {},
+        )
     }
 }
 
@@ -145,7 +168,13 @@ private fun MainScreenPermissionRequiredPreview() {
 @Composable
 private fun MainScreenPermissionDeniedPreview() {
     CatEarsTheme {
-        MainScreen(uiState = MainUiState.PermissionPermanentlyDenied, lens = LensSelector.Front, onRequestPermission = {
-        }, onOpenSettings = {}, onToggleLens = {})
+        MainScreen(
+            uiState = MainUiState.PermissionPermanentlyDenied,
+            lens = LensSelector.Front,
+            overlayPlacement = null,
+            onRequestPermission = {},
+            onOpenSettings = {},
+            onToggleLens = {},
+        )
     }
 }
