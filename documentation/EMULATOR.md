@@ -65,7 +65,7 @@ export ANDROID_HOME="$HOME/Android/Sdk"
 Or build first, then install manually:
 ```bash
 ./gradlew assembleDebug
-adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5554 install -r app/build/outputs/apk/debug/androidCatEars-debug.apk
 ```
 
 ---

@@ -10,6 +10,11 @@ plugins {
     alias(libs.plugins.kover)
 }
 
+// APK output naming: produces androidCatEars-debug.apk / androidCatEars-release.apk
+base {
+    archivesName = "androidCatEars"
+}
+
 android {
     namespace = "it.marcelpetrick.catears"
     compileSdk = 36

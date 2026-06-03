@@ -49,7 +49,7 @@ That's it. The app launches automatically after install.
 
 APK lands at:
 ```
-app/build/outputs/apk/debug/app-debug.apk
+app/build/outputs/apk/debug/androidCatEars-debug.apk
 ```
 
 Transfer it to the phone manually (USB, local network, etc.) and tap to install.
