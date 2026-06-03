@@ -87,8 +87,25 @@ patch=0
 `build.gradle.kts` reads this file and exposes `appVersionName` (e.g. `0.1.0`) and
 `appVersionCode` to the app module. **Never hardcode version strings elsewhere.**
 
-The patch number is auto-incremented by a git pre-commit hook (set up in task 1.0).
-Manual minor/major bumps: edit `version.properties` directly, reset lower fields to `0`.
+The patch number is **auto-incremented on every commit** by a git pre-commit hook in `scripts/pre-commit`.
+
+**First-time setup** — install the hook (required once per clone):
+```bash
+./gradlew installHooks
+```
+
+**Manual minor bump** (new backwards-compatible feature):
+```bash
+# Edit version.properties: increment minor, set patch=0
+./gradlew installHooks  # hook is already installed; no-op if re-run
+```
+
+**Manual major bump** (breaking change):
+```bash
+# Edit version.properties: increment major, set minor=0, patch=0
+```
+
+Never edit `versionCode` or `versionName` anywhere else — they are derived from `version.properties`.
 
 ---
 

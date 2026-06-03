@@ -37,9 +37,9 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 1.0 | TODO | Patch-bump git hook | A committed `scripts/` pre-commit hook increments `patch` in `version.properties` and re-stages it. |
-| 1.1 | TODO | Hook installer | `installHooks` Gradle task (or documented script) installs the hook into `.git/hooks`. |
-| 1.2 | TODO | Document versioning | README explains auto patch-bump and how to do manual minor/major bumps. |
+| 1.0 | DONE | Patch-bump git hook | A committed `scripts/` pre-commit hook increments `patch` in `version.properties` and re-stages it. |
+| 1.1 | DONE | Hook installer | `installHooks` Gradle task (or documented script) installs the hook into `.git/hooks`. |
+| 1.2 | DONE | Document versioning | README explains auto patch-bump and how to do manual minor/major bumps. |
 
 ### WP 2 — Code quality tooling
 

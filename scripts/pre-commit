@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Pre-commit hook: auto-increments the patch version in version.properties
+# and re-stages the file so the bump is part of the commit.
+#
+# Install via:  ./gradlew installHooks
+# Or manually:  cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -euo pipefail
+
+PROPS="$(git rev-parse --show-toplevel)/version.properties"
+
+if [[ ! -f "$PROPS" ]]; then
+  echo "pre-commit: version.properties not found at $PROPS — skipping version bump" >&2
+  exit 0
+fi
+
+# Read current values
+major=$(grep '^major=' "$PROPS" | cut -d= -f2)
+minor=$(grep '^minor=' "$PROPS" | cut -d= -f2)
+patch=$(grep '^patch=' "$PROPS" | cut -d= -f2)
+
+new_patch=$(( patch + 1 ))
+
+# Write back (preserve file order)
+printf 'major=%s\nminor=%s\npatch=%s\n' "$major" "$minor" "$new_patch" > "$PROPS"
+
+# Re-stage so the bump is included in the commit
+git add "$PROPS"
+
+echo "pre-commit: version bumped to ${major}.${minor}.${new_patch}"

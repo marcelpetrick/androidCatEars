@@ -26,3 +26,16 @@ plugins {
     alias(libs.plugins.spotless)            apply false
     alias(libs.plugins.kover)               apply false
 }
+
+tasks.register("installHooks") {
+    group = "setup"
+    description = "Copies scripts/pre-commit into .git/hooks/ and makes it executable."
+    doLast {
+        val hooksDir = rootProject.file(".git/hooks")
+        val src = rootProject.file("scripts/pre-commit")
+        val dst = hooksDir.resolve("pre-commit")
+        src.copyTo(dst, overwrite = true)
+        dst.setExecutable(true)
+        println("Installed pre-commit hook → ${dst.absolutePath}")
+    }
+}
