@@ -1,19 +1,19 @@
 # Android Cat Ears 😼🐾
 
+A real-time augmented reality camera application for Android.
+Point the camera at your face and get cat ears — instantly, on-device, no cloud required.
+
 <p align="center">
   <img src="media/logo.svg" alt="androidCatEars logo" width="160"/>
 </p>
+
+---
 
 **Author: Marcel Petrick <mail@marcelpetrick.it>**
 
 **Note: project is generated with AI.**
 
 **License: GPLv3 or later. See `LICENSE`.**
-
----
-
-A real-time augmented reality camera application for Android.
-Point the camera at your face and get cat ears — instantly, on-device, no cloud required.
 
 ---
 
