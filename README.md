@@ -60,6 +60,25 @@ Signing configuration must be set up in `local.properties` or via environment va
 
 ---
 
+## Versioning
+
+The project uses [Semantic Versioning](https://semver.org/). The single source of truth is
+`version.properties` in the repository root:
+
+```properties
+major=0
+minor=1
+patch=0
+```
+
+`build.gradle.kts` reads this file and exposes `appVersionName` (e.g. `0.1.0`) and
+`appVersionCode` to the app module. **Never hardcode version strings elsewhere.**
+
+The patch number is auto-incremented by a git pre-commit hook (set up in task 1.0).
+Manual minor/major bumps: edit `version.properties` directly, reset lower fields to `0`.
+
+---
+
 ## Package
 
 `it.marcelpetrick.catears`
