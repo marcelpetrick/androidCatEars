@@ -45,7 +45,7 @@ exploitable remote vulnerabilities.
    docs. **Status: fixed.**
 3. `CameraXControllerImpl.capturePhoto()` and the bound `ImageCapture` use case
    are dead code for the current WYSIWYG capture path, increasing camera binding
-   complexity without product value.
+   complexity without product value. **Status: fixed.**
 4. `CaptureState.Success` is obsolete and still describes raw JPEG bytes even
    though the app now saves composited preview bitmaps.
 5. `CaptureState.Saved` stores `android.net.Uri` inside the domain package,

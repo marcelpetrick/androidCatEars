@@ -3,7 +3,6 @@
 
 package it.marcelpetrick.catears.camera
 
-import android.graphics.Bitmap
 import it.marcelpetrick.catears.domain.LensSelector
 
 /**
@@ -26,11 +25,4 @@ interface CameraControllerSeam {
         bindPreview(lens)
     }
 
-    /**
-     * Capture a single still frame as a [Bitmap].
-     *
-     * [onResult] is called on an arbitrary thread with the captured bitmap, or null on failure.
-     * Callers must recycle the bitmap when done.
-     */
-    fun capturePhoto(onResult: (Bitmap?) -> Unit)
 }

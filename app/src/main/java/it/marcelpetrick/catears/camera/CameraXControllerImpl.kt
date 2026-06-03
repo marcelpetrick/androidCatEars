@@ -3,14 +3,10 @@
 
 package it.marcelpetrick.catears.camera
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -32,7 +28,6 @@ import javax.inject.Inject
 class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
 
     private var cameraProvider: ProcessCameraProvider? = null
-    private var imageCapture: ImageCapture? = null
     var previewView: PreviewView? = null
     var lifecycleOwner: LifecycleOwner? = null
 
@@ -42,7 +37,6 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     /** Receives (face, uprightImageWidth, uprightImageHeight) on each analysed frame. */
     var onFaceResult: ((FaceModel?, Int, Int) -> Unit)? = null
 
-    private val captureExecutor = Executors.newSingleThreadExecutor()
     private val analysisExecutor = Executors.newSingleThreadExecutor()
 
     fun setCameraProvider(provider: ProcessCameraProvider) {
@@ -64,26 +58,20 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             it.surfaceProvider = surface.surfaceProvider
         }
 
-        val capture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .build()
-        imageCapture = capture
-
         // Binding can fail (camera busy, unsupported use-case combination, hardware
-        // quirks). Never let that crash the app: log it and leave capture disabled.
+        // quirks). Never let that crash the app: log it and leave the preview unbound.
         @Suppress("TooGenericExceptionCaught")
         try {
             provider.unbindAll()
             val analysis = buildAnalysisUseCase()
             if (analysis != null) {
-                provider.bindToLifecycle(owner, selector, preview, capture, analysis)
+                provider.bindToLifecycle(owner, selector, preview, analysis)
             } else {
-                provider.bindToLifecycle(owner, selector, preview, capture)
+                provider.bindToLifecycle(owner, selector, preview)
             }
             Log.d(TAG, "Camera bound (lens=$lens, faceTracking=${analysis != null})")
         } catch (e: Exception) {
             Log.e(TAG, "Camera bind failed", e)
-            imageCapture = null
         }
     }
 
@@ -116,41 +104,6 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
 
     override fun unbind() {
         cameraProvider?.unbindAll()
-        imageCapture = null
-    }
-
-    override fun capturePhoto(onResult: (Bitmap?) -> Unit) {
-        val capture = imageCapture ?: run {
-            onResult(null)
-            return
-        }
-        capture.takePicture(
-            captureExecutor,
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    onResult(decodeCaptured(image))
-                }
-
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed", exception)
-                    onResult(null)
-                }
-            },
-        )
-    }
-
-    // Decodes a captured frame to a Bitmap; any failure yields null instead of a crash.
-    @Suppress("TooGenericExceptionCaught")
-    private fun decodeCaptured(image: ImageProxy): Bitmap? = try {
-        image.use { proxy ->
-            val buffer = proxy.planes[0].buffer
-            val bytes = ByteArray(buffer.remaining())
-            buffer.get(bytes)
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Decoding captured frame failed", e)
-        null
     }
 
     private companion object {
