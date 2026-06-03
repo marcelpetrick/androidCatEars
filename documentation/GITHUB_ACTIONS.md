@@ -18,6 +18,7 @@ This project has several workflows under [`.github/workflows/`](../.github/workf
 6. `:app:koverVerify` — coverage ≥ 95% on the domain/logic scope
 
 It uploads test, coverage, and lint reports as build artefacts. A red CI run blocks merging.
+The workflow invokes `./scripts/ci.sh` directly so local and GitHub checks cannot drift silently.
 
 ---
 
