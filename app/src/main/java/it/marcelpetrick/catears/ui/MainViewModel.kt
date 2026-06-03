@@ -13,18 +13,18 @@ import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
 import it.marcelpetrick.catears.domain.permissionResultToState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 import javax.inject.Inject
-import kotlin.random.Random
 
 @HiltViewModel
-class MainViewModel @Inject constructor(private val imageSaver: ImageSaver) : ViewModel() {
+class MainViewModel @Inject constructor(
+    private val imageSaver: ImageSaver,
+    private val captureRuntime: CaptureRuntime,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Initialising)
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -62,11 +62,11 @@ class MainViewModel @Inject constructor(private val imageSaver: ImageSaver) : Vi
             return
         }
         viewModelScope.launch {
-            val uri = withContext(Dispatchers.IO) {
+            val uri = withContext(captureRuntime.ioDispatcher) {
                 imageSaver.save(
                     bitmap = bitmap,
-                    epochMillis = System.currentTimeMillis(),
-                    randomSuffix = randomSuffix(),
+                    epochMillis = captureRuntime.nowMillis(),
+                    randomSuffix = captureRuntime.randomSuffix(),
                 )
             }
             _captureState.value = if (uri != null) CaptureState.Saved(uri.toString()) else CaptureState.Failed
@@ -94,9 +94,4 @@ class MainViewModel @Inject constructor(private val imageSaver: ImageSaver) : Vi
         }
     }
 
-    private fun randomSuffix(): String = String.format(Locale.US, "%04x", Random.nextInt(SUFFIX_RANGE))
-
-    private companion object {
-        const val SUFFIX_RANGE = 0x10000
-    }
 }

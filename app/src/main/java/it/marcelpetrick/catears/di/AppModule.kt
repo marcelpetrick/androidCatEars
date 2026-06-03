@@ -8,6 +8,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import it.marcelpetrick.catears.ui.CaptureRuntime
+import it.marcelpetrick.catears.ui.DefaultCaptureRuntime
 import javax.inject.Singleton
 
 /**
@@ -21,4 +23,8 @@ object AppModule {
     @Singleton
     fun provideApplicationContext(@ApplicationContext context: android.content.Context): android.content.Context =
         context
+
+    @Provides
+    @Singleton
+    fun provideCaptureRuntime(): CaptureRuntime = DefaultCaptureRuntime()
 }

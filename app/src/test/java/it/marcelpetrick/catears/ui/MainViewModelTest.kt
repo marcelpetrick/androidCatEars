@@ -3,12 +3,17 @@
 
 package it.marcelpetrick.catears.ui
 
+import android.graphics.Bitmap
+import android.net.Uri
 import app.cash.turbine.test
+import io.mockk.every
 import io.mockk.mockk
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -16,7 +21,10 @@ import org.junit.jupiter.api.Test
 
 class MainViewModelTest {
 
-    private fun viewModel() = MainViewModel(imageSaver = mockk<ImageSaver>(relaxed = true))
+    private fun viewModel(
+        imageSaver: ImageSaver = mockk<ImageSaver>(relaxed = true),
+        captureRuntime: CaptureRuntime = FakeCaptureRuntime(),
+    ) = MainViewModel(imageSaver = imageSaver, captureRuntime = captureRuntime)
 
     @Test
     fun `initial state is Initialising`() = runTest {
@@ -142,6 +150,25 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `onCompositedBitmap saves with deterministic runtime values`() = runTest {
+        val imageSaver = mockk<ImageSaver>()
+        val bitmap = mockk<Bitmap>()
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns "content://saved/photo"
+        every {
+            imageSaver.save(bitmap = bitmap, epochMillis = 1234L, randomSuffix = "beef")
+        } returns uri
+
+        val vm = viewModel(imageSaver = imageSaver)
+        vm.captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            vm.onCompositedBitmap(bitmap)
+            assertEquals(CaptureState.Saved("content://saved/photo"), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `onCaptureConsumed resets to Idle`() = runTest {
         val vm = viewModel()
         vm.captureState.test {
@@ -179,5 +206,13 @@ class MainViewModelTest {
             assertEquals(LensSelector.Front, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    private class FakeCaptureRuntime : CaptureRuntime {
+        override val ioDispatcher: CoroutineDispatcher = Dispatchers.Unconfined
+
+        override fun nowMillis(): Long = 1234L
+
+        override fun randomSuffix(): String = "beef"
     }
 }

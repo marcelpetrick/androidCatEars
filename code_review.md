@@ -57,6 +57,7 @@ exploitable remote vulnerabilities.
    **Status: fixed.**
 8. `MainViewModel` hardcodes `Dispatchers.IO`, `System.currentTimeMillis()`, and
    random suffix generation, making save behavior harder to test deterministically.
+   **Status: fixed.**
 9. `app/lint.xml` still suppresses `UnusedResources` with a comment from before
    the cat-ear asset was wired, hiding real resource cleanup problems.
 10. `TODO.md` and emulator docs are stale relative to `BACKLOG.md` and the local
