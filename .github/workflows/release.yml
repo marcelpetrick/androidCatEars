@@ -49,8 +49,28 @@ jobs:
       - name: Run quality gate
         run: ./gradlew spotlessCheck detekt :app:lint :app:test :app:koverVerify
 
+      - name: Validate release signing secrets
+        run: |
+          test -n "${RELEASE_STORE_FILE}"
+          test -n "${RELEASE_STORE_PASSWORD}"
+          test -n "${RELEASE_KEY_ALIAS}"
+          test -n "${RELEASE_KEY_PASSWORD}"
+        env:
+          RELEASE_STORE_FILE: ${{ secrets.RELEASE_STORE_FILE }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
       - name: Build release bundle (AAB)
         run: ./gradlew bundleRelease
+        env:
+          RELEASE_STORE_FILE: ${{ secrets.RELEASE_STORE_FILE }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Verify release bundle signature
+        run: jarsigner -verify -strict app/build/outputs/bundle/release/androidCatEars-release.aab
 
       - name: Stage release artefacts
         run: |

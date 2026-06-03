@@ -29,8 +29,11 @@ It uploads test, coverage, and lint reports as build artefacts. A red CI run blo
 
 1. Reads the current version from `version.properties` (e.g. `0.1.25`).
 2. Runs the full quality gate (same as CI).
-3. Builds `androidCatEars-<version>-release.aab` — the Play Store app bundle.
-4. Publishes a **GitHub Release**:
+3. Requires `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and
+   `RELEASE_KEY_PASSWORD` repository secrets.
+4. Builds `androidCatEars-<version>-release.aab` — the signed Play Store app bundle.
+5. Verifies the AAB signature with `jarsigner -verify -strict`.
+6. Publishes a **GitHub Release**:
    - Tag: `v<version>` (e.g. `v0.1.25`)
    - Title: `androidCatEars <version>`
    - Body mentions the version number and what each download is.
@@ -49,8 +52,9 @@ Play Console upload.
 
 ### Signing note
 
-The release workflow publishes only the release AAB. Debug APKs are development artifacts and are
-not attached to GitHub Releases.
+The release workflow publishes only the signed release AAB. Debug APKs are development artifacts
+and are not attached to GitHub Releases. If signing secrets are missing or the AAB signature cannot
+be verified, the workflow fails before publishing.
 
 ---
 

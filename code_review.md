@@ -12,7 +12,7 @@ exploitable remote vulnerabilities.
    install non-release artifacts. **Status: fixed.**
 2. The manual release workflow builds `bundleRelease` without wiring
    `RELEASE_*` signing secrets or verifying the result, so it can publish an
-   unsigned AAB while the docs imply release signing exists.
+   unsigned AAB while the docs imply release signing exists. **Status: fixed.**
 3. The manifest does not explicitly disable Android backup. The
    `dataExtractionRules` file excludes data on Android 12+, but the app should
    make the no-backup policy explicit at the manifest level.
