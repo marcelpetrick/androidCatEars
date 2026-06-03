@@ -4,6 +4,7 @@
 package it.marcelpetrick.catears.ui
 
 import android.Manifest
+import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -78,7 +79,7 @@ class MainActivity : ComponentActivity() {
                     onCapture = { viewModel.onCaptureRequested() },
                     onShare = savedState?.let { saved ->
                         {
-                            startActivity(buildShareConfig(saved.uri).toChooserIntent())
+                            startActivity(buildShareConfig(Uri.parse(saved.uriString)).toChooserIntent())
                             viewModel.onCaptureConsumed()
                         }
                     },

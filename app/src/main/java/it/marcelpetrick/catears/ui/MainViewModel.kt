@@ -69,7 +69,7 @@ class MainViewModel @Inject constructor(private val imageSaver: ImageSaver) : Vi
                     randomSuffix = randomSuffix(),
                 )
             }
-            _captureState.value = if (uri != null) CaptureState.Saved(uri) else CaptureState.Failed
+            _captureState.value = if (uri != null) CaptureState.Saved(uri.toString()) else CaptureState.Failed
         }
     }
 

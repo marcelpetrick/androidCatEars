@@ -49,7 +49,7 @@ exploitable remote vulnerabilities.
 4. `CaptureState.Success` is obsolete and still describes raw JPEG bytes even
    though the app now saves composited preview bitmaps. **Status: fixed.**
 5. `CaptureState.Saved` stores `android.net.Uri` inside the domain package,
-   violating the documented framework-free domain boundary.
+   violating the documented framework-free domain boundary. **Status: fixed.**
 6. `CameraXControllerImpl` owns executors but never shuts them down, leaking
    threads across activity disposal/recreation.
 7. The capture button remains active while a capture/save is already in progress,

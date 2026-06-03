@@ -11,8 +11,8 @@ sealed interface CaptureState {
     /** Capture is in progress — shutter released, waiting for the frame. */
     data object Capturing : CaptureState
 
-    /** Capture composited and saved; holds the gallery URI for sharing. */
-    data class Saved(val uri: android.net.Uri) : CaptureState
+    /** Capture composited and saved; holds the gallery URI string for sharing. */
+    data class Saved(val uriString: String) : CaptureState
 
     /** Capture or save failed for any reason. */
     data object Failed : CaptureState
