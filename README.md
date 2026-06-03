@@ -88,6 +88,22 @@ Install on a connected device or running emulator:
 ./gradlew installDebug
 ```
 
+## Usage
+
+1. On first launch, grant the **camera** permission when prompted (if denied
+   permanently, the app links you to system settings to re-enable it).
+2. The live preview fills the screen. A small `v<version> (<commit>)` build
+   stamp is shown at the top to identify exactly which build is running.
+3. Tap the **switch** button (bottom-right) to flip between front and rear
+   cameras. Cat ears track a detected face in real time.
+4. Tap the **capture** button (bottom-centre) to take a photo with the ears
+   baked in; it is saved to your gallery and a status banner confirms it.
+5. Tap the **share** button (bottom-left, appears after a capture) to send the
+   saved photo via the Android share sheet.
+
+> Face tracking needs a real face in view; the emulator's virtual camera has
+> none, so test tracking on a physical device.
+
 ## Release Build & Deploy
 
 Build a minified, resource-shrunk release APK or an App Bundle for the Play Store:
@@ -140,6 +156,21 @@ The patch number is **auto-incremented on every commit** by a git pre-commit hoo
 ```
 
 Never edit `versionCode` or `versionName` anywhere else — they are derived from `version.properties`.
+
+---
+
+## Documentation
+
+| Document | What it covers |
+|----------|----------------|
+| [`documentation/ARCHITECTURE.md`](documentation/ARCHITECTURE.md) | Structure, MVVM, and the seam/testability pattern |
+| [`documentation/RELEASE.md`](documentation/RELEASE.md) | Keystore setup, signed builds, release checklist |
+| [`documentation/DEPLOY_PHONE.md`](documentation/DEPLOY_PHONE.md) | Building and installing on a physical device |
+| [`documentation/EMULATOR.md`](documentation/EMULATOR.md) | Emulator setup and GPU/KVM workarounds |
+| [`documentation/TROUBLESHOOTING.md`](documentation/TROUBLESHOOTING.md) | Build, coverage, emulator, device, signing issues |
+| [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) | CI and the manual release workflow |
+| [`documentation/agents.md`](documentation/agents.md) | Binding engineering rules for contributors |
+| [`CHANGELOG.md`](CHANGELOG.md) | Notable changes by milestone |
 
 ---
 
