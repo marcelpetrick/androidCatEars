@@ -24,7 +24,7 @@ exploitable remote vulnerabilities.
    common keystore names, but CI does not detect accidentally committed secrets.
    **Status: fixed.**
 7. The app allows screenshots and Recents thumbnails of the live camera preview.
-   That is a privacy leak for a camera-first app.
+   That is a privacy leak for a camera-first app. **Status: fixed for release builds.**
 8. `ImageSaver.save()` returns success even if `Bitmap.compress()` returns
    `false`, which can expose a broken gallery/share URI as if it were a valid
    saved photo.
