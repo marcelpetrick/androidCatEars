@@ -34,9 +34,15 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 | Min SDK        | Android 14 (API 34)             |
 | Target SDK     | Android 16 (API 36)             |
 
-## Quality Gate
+## CI / Quality Gate
+
+The CI pipeline runs on GitHub Actions on every push/PR to `master`/`main`.
+The same gate runs locally via `scripts/ci.sh` — run it before pushing.
 
 ```bash
+# Full local CI gate (mirrors GitHub Actions exactly)
+./scripts/ci.sh
+
 # Format (auto-fix)
 ./gradlew spotlessApply
 

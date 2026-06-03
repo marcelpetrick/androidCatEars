@@ -62,8 +62,8 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 4.0 | TODO | CI workflow | GitHub Actions workflow: build → format/detekt/lint → test → `koverVerify`; file is valid. |
-| 4.1 | TODO | Local gate + docs | A local equivalent (`./gradlew check` aggregation or `scripts/ci.sh`) runs the same gate offline; README "CI / quality gate" section added. |
+| 4.0 | DONE | CI workflow | GitHub Actions workflow: build → format/detekt/lint → test → `koverVerify`; file is valid. |
+| 4.1 | DONE | Local gate + docs | A local equivalent (`./gradlew check` aggregation or `scripts/ci.sh`) runs the same gate offline; README "CI / quality gate" section added. |
 
 ---
 
