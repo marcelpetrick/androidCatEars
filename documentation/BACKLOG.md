@@ -167,7 +167,7 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 15.0 | TODO | Release build type | R8/ProGuard rules + resource shrinking; release build compiles. |
+| 15.0 | DONE | Release build type | R8/ProGuard rules + resource shrinking; release build compiles. |
 | 15.1 | TODO | Signing config | Signing driven by `local.properties`/env; **no secrets committed**. |
 | 15.2 | TODO | Deploy docs + verify | Release checklist + README "Deploy" section; `assembleRelease`/`bundleRelease` produce a signed artifact. |
 
