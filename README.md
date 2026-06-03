@@ -168,6 +168,7 @@ Never edit `versionCode` or `versionName` anywhere else — they are derived fro
 | [`documentation/OVERLAY_LAB.md`](documentation/OVERLAY_LAB.md) | Desktop harness for tuning cat-ear placement on sample photos |
 | [`documentation/RELEASE.md`](documentation/RELEASE.md) | Keystore setup, signed builds, release checklist |
 | [`documentation/PLAY_STORE.md`](documentation/PLAY_STORE.md) | Google Play account, signing model, and publishing guide |
+| [`documentation/PRIVACY_POLICY.md`](documentation/PRIVACY_POLICY.md) | Privacy policy template for Play Store submission |
 | [`documentation/DEPLOY_PHONE.md`](documentation/DEPLOY_PHONE.md) | Building and installing on a physical device |
 | [`documentation/EMULATOR.md`](documentation/EMULATOR.md) | Emulator setup and GPU/KVM workarounds |
 | [`documentation/TROUBLESHOOTING.md`](documentation/TROUBLESHOOTING.md) | Build, coverage, emulator, device, signing issues |

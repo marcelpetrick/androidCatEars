@@ -78,7 +78,8 @@ Target API level: Play requires new apps/updates to target a recent API
      processes the camera **on-device only**, takes no data off the device, and
      saves photos to the user's own gallery — state exactly that.
    - **Privacy policy** — a public URL is **required** (camera is a sensitive
-     permission). Host a short policy and paste the link.
+     permission). Start from [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md), host it,
+     and paste the link.
    - **Government apps / financial / health** — N/A.
 
 ---
@@ -140,7 +141,8 @@ the existing manual release workflow in [`GITHUB_ACTIONS.md`](GITHUB_ACTIONS.md)
 - [ ] Developer account approved; US$25 paid.
 - [ ] Upload keystore created, backed up, registered (or Google-generated app key).
 - [ ] `bundleRelease` AAB built and signed; `versionCode` increased.
-- [ ] Privacy policy URL live (covers camera + photo storage).
+- [ ] Privacy policy URL live (start from [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md);
+      covers camera + photo storage).
 - [ ] Data safety, content rating, target audience, ads forms completed.
 - [ ] Store listing: icon, feature graphic, ≥2 screenshots, descriptions.
 - [ ] Closed test run (≥20 testers / 14 days) if a post-2023 personal account.

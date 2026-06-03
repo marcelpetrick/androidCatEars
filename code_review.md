@@ -32,7 +32,8 @@ exploitable remote vulnerabilities.
    so operators can ship with a false understanding of artifact security.
    **Status: fixed.**
 10. Play Store compliance work is only in backlog. There is no committed privacy
-    policy template covering camera processing and gallery writes.
+    policy template covering camera processing and gallery writes. **Status:
+    fixed.**
 
 ## Software Correctness / Architecture Blunders
 
