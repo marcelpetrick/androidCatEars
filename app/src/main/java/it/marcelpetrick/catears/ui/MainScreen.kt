@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
@@ -42,6 +43,7 @@ fun MainScreen(
     onOpenSettings: () -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
+    onShare: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -57,6 +59,7 @@ fun MainScreen(
                 overlayPlacement = overlayPlacement,
                 onToggleLens = onToggleLens,
                 onCapture = onCapture,
+                onShare = onShare,
             )
         }
     }
@@ -127,6 +130,7 @@ private fun CameraContent(
     overlayPlacement: OverlayPlacement?,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
+    onShare: (() -> Unit)?,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(lens = lens, modifier = Modifier.fillMaxSize())
@@ -147,6 +151,16 @@ private fun CameraContent(
         ) {
             Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
         }
+        if (onShare != null) {
+            FloatingActionButton(
+                onClick = onShare,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+            ) {
+                Icon(imageVector = Icons.Filled.Share, contentDescription = "Share photo")
+            }
+        }
     }
 }
 
@@ -162,6 +176,7 @@ private fun MainScreenReadyPreview() {
             onOpenSettings = {},
             onToggleLens = {},
             onCapture = {},
+            onShare = {},
         )
     }
 }
@@ -178,6 +193,7 @@ private fun MainScreenPermissionRequiredPreview() {
             onOpenSettings = {},
             onToggleLens = {},
             onCapture = {},
+            onShare = {},
         )
     }
 }
@@ -194,6 +210,7 @@ private fun MainScreenPermissionDeniedPreview() {
             onOpenSettings = {},
             onToggleLens = {},
             onCapture = {},
+            onShare = {},
         )
     }
 }

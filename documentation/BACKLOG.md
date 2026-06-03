@@ -145,8 +145,8 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 13.0 | TODO | Share-intent builder | `FileProvider` configured; share `Intent` construction in `domain`; unit-tested. |
-| 13.1 | TODO | Share UI | Share button opens the system share sheet delivering the saved image. |
+| 13.0 | DONE | Share-intent builder | `FileProvider` configured; share `Intent` construction in `domain`; unit-tested. |
+| 13.1 | DONE | Share UI | Share button opens the system share sheet delivering the saved image. |
 
 ---
 

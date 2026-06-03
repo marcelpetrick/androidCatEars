@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
                     onOpenSettings = { openAppSettings() },
                     onToggleLens = viewModel::onToggleLens,
                     onCapture = { viewModel.onCaptureRequested() },
+                    onShare = null,
                 )
             }
         }
