@@ -29,7 +29,7 @@ It uploads test, coverage, and lint reports as build artefacts. A red CI run blo
 
 1. Reads the current version from `version.properties` (e.g. `0.1.25`).
 2. Runs the full quality gate (same as CI).
-3. Requires `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and
+3. Requires `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and
    `RELEASE_KEY_PASSWORD` repository secrets.
 4. Builds `androidCatEars-<version>-release.aab` — the signed Play Store app bundle.
 5. Verifies the AAB signature with `jarsigner -verify -strict`.
@@ -39,8 +39,7 @@ It uploads test, coverage, and lint reports as build artefacts. A red CI run blo
    - Body mentions the version number and what each download is.
    - The release AAB attached for download.
 
-So an operator can open the repo's **Releases** page, pick the latest, and download the `.aab` for
-Play Console upload.
+So an operator can download the `.aab` for Play Console upload.
 
 ### How to cut a release
 
@@ -48,13 +47,13 @@ Play Console upload.
    (the patch auto-increments per commit; bump minor/major manually if needed).
 2. Push your branch to GitHub (this project commits locally by default — push when ready).
 3. Go to **Actions → Release → Run workflow**, choose the branch, and run it.
-4. When it finishes, the new release appears under **Releases** with the APK and AAB.
+4. When it finishes, the new release appears under **Releases** with the signed AAB.
 
 ### Signing note
 
-The release workflow publishes only the signed release AAB. Debug APKs are development artifacts
-and are not attached to GitHub Releases. If signing secrets are missing or the AAB signature cannot
-be verified, the workflow fails before publishing.
+The release workflow decodes `RELEASE_KEYSTORE_BASE64` into a runner-local keystore file, passes
+that path to Gradle as `RELEASE_STORE_FILE`, and verifies the signed AAB before publishing. Debug
+APKs are development artifacts and are not attached to GitHub Releases.
 
 ---
 

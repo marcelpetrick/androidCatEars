@@ -44,6 +44,17 @@ The build reads signing credentials from **either** source, checked in this orde
    export RELEASE_KEY_PASSWORD=…
    ```
 
+   In GitHub Actions, store the keystore contents as a base64 secret instead of
+   a path:
+
+   ```bash
+   base64 -w 0 release.jks
+   # save output as RELEASE_KEYSTORE_BASE64
+   ```
+
+   The release workflow decodes it into a runner-local file and exports
+   `RELEASE_STORE_FILE` for Gradle.
+
 If neither is present, the release build still succeeds but emits an **unsigned**
 artifact (`androidCatEars-release-unsigned.apk`).
 

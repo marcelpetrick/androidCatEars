@@ -64,3 +64,16 @@ exploitable remote vulnerabilities.
 10. `TODO.md` and emulator docs are stale relative to `BACKLOG.md` and the local
     webcam-capable emulator setup, so agents get contradictory project state.
     **Status: fixed.**
+
+## CI / Local Gate Findings
+
+1. `release.yml` expects `RELEASE_STORE_FILE` to be a usable file path on the
+   GitHub runner. That is not a stable secret model; the workflow should decode
+   a base64 keystore secret into a runner-local file before building. **Status:
+   fixed.**
+2. `ci.yml` duplicates the local gate command-by-command instead of invoking
+   `scripts/ci.sh`, so the claimed local/remote parity can drift.
+3. Workflows do not set job timeouts or concurrency cancellation, so stuck or
+   superseded runs can waste minutes and obscure the latest signal.
+4. `scripts/ci.sh` exits on failure but does not print which command failed,
+   making local failure diagnosis less clear than it should be.

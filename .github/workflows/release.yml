@@ -49,14 +49,17 @@ jobs:
       - name: Run quality gate
         run: ./gradlew spotlessCheck detekt :app:lint :app:test :app:koverVerify
 
-      - name: Validate release signing secrets
+      - name: Materialize release keystore
         run: |
-          test -n "${RELEASE_STORE_FILE}"
+          test -n "${RELEASE_KEYSTORE_BASE64}"
           test -n "${RELEASE_STORE_PASSWORD}"
           test -n "${RELEASE_KEY_ALIAS}"
           test -n "${RELEASE_KEY_PASSWORD}"
+          printf '%s' "${RELEASE_KEYSTORE_BASE64}" | base64 --decode > "${RUNNER_TEMP}/release.jks"
+          test -s "${RUNNER_TEMP}/release.jks"
+          echo "RELEASE_STORE_FILE=${RUNNER_TEMP}/release.jks" >> "$GITHUB_ENV"
         env:
-          RELEASE_STORE_FILE: ${{ secrets.RELEASE_STORE_FILE }}
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
@@ -64,7 +67,7 @@ jobs:
       - name: Build release bundle (AAB)
         run: ./gradlew bundleRelease
         env:
-          RELEASE_STORE_FILE: ${{ secrets.RELEASE_STORE_FILE }}
+          RELEASE_STORE_FILE: ${{ env.RELEASE_STORE_FILE }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
