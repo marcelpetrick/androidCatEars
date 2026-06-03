@@ -4,8 +4,8 @@
 -->
 # Project Review — androidCatEars
 
-A software-development-lifecycle review of the project as of version `0.1.39`:
-what exists, how healthy it is, and what is worth adding. Companion to
+A software-development-lifecycle review of the current documented project state:
+what exists, how healthy it is, and what is worth adding next. Companion to
 [`ARCHITECTURE.md`](ARCHITECTURE.md) (structure) and [`PLAY_STORE.md`](PLAY_STORE.md)
 (publishing).
 
@@ -21,6 +21,8 @@ The MVP from [`VISION.md`](VISION.md) is **functionally complete**:
 | Front/rear lens switching | ✅ |
 | On-device face detection (ML Kit) | ✅ |
 | Real-time face-tracked cat-ear overlay (with jitter smoothing) | ✅ |
+| Landmark-aware ear anchoring and perspective X-squash | ✅ |
+| Animated procedural ears with fur, wobble, and capture compositor parity | ✅ |
 | Photo capture with overlay baked in (WYSIWYG) | ✅ |
 | Save to gallery (MediaStore, scoped storage) | ✅ |
 | Share via system share sheet | ✅ |
@@ -28,9 +30,12 @@ The MVP from [`VISION.md`](VISION.md) is **functionally complete**:
 | Branded adaptive icon + Material 3 theme (light/dark) | ✅ |
 | Startup version + git-commit build stamp | ✅ |
 | Accessibility (content descriptions, live-region status) | ✅ partial |
+| Pure `:domain` module with golden overlay fixtures | ✅ |
 
-**Verified-on-hardware items still open:** live tracking accuracy, overlay
-constant tuning, README screenshots (backlog 14.4) — all need a physical device.
+**Verified-on-hardware items still open:** live tracking accuracy on a physical
+device, overlay constant tuning against real face samples, and README screenshots
+(backlog 14.4). A webcam-backed emulator is useful for local workflow checks,
+but it does not replace final device validation.
 
 ---
 
@@ -42,12 +47,13 @@ constant tuning, README screenshots (backlog 14.4) — all need a physical devic
 | Versioning | `version.properties` SSOT, auto patch-bump hook, SemVer | ✅ |
 | Formatting | Spotless 8.6.0 (ktlint) | ✅ |
 | Static analysis | detekt 1.23.8 + Android Lint (warnings-as-errors) | ✅ |
-| Unit testing | JUnit5 + MockK + Turbine + coroutines-test — **11 files, 70 tests** | ✅ strong on domain |
+| Unit testing | JUnit5 + MockK + Turbine + coroutines-test across app logic and `:domain` | ✅ strong on domain |
 | Coverage | Kover, **95% gate** on pure logic | ✅ |
 | CI | GitHub Actions: build→spotless→detekt→lint→test→kover on push/PR | ✅ |
-| Local gate | `scripts/ci.sh` mirrors CI | ✅ |
-| Release | R8 + shrink, signing via `keystore.properties`/env, manual release workflow (APK+AAB) | ✅ |
-| Docs | vision, plan, backlog, architecture, release, troubleshooting, emulator, deploy, changelog | ✅ |
+| Local gate | `scripts/ci.sh` mirrors CI and prints a timed ASCII summary | ✅ |
+| Release | R8 + shrink, signing via `keystore.properties`/env, manual signed-AAB release workflow | ✅ |
+| Supply chain | Dependabot, CodeQL, Dependency Review, Gitleaks | ✅ |
+| Docs | vision, plan, backlog, architecture, release, troubleshooting, emulator, deploy, review logs | ✅ |
 
 **This is an unusually disciplined foundation for a hobby-scale app.** The
 quality gate, automated versioning, and documentation are production-grade.
@@ -56,14 +62,15 @@ quality gate, automated versioning, and documentation are production-grade.
 
 ## 3. The testing pyramid — the main gap
 
-Today the pyramid is **all base, no middle or top**:
+The project has a strong JVM base, especially after extracting `:domain`, but
+automated Android/UI coverage is still thin:
 
 ```
-        /\        E2E / UI flows ......... ❌ none
-       /  \       Instrumented (device) .. ❌ none
-      /----\      Screenshot / snapshot ... ❌ none
-     /      \     Integration (Android) ... ❌ none (Robolectric absent)
-    /--------\    Unit (pure JVM) ......... ✅ 70 tests, 95% on domain
+        /\        E2E / UI flows ......... ❌ TODO
+       /  \       Instrumented (device) .. ❌ TODO
+      /----\      Screenshot / snapshot ... ❌ TODO
+     /      \     Integration (Android) ... ⚠️ BLOCKED (Robolectric/JDK 26)
+    /--------\    Unit (pure JVM) ......... ✅ 95% gate on pure logic
 ```
 
 By design, everything that touches the Android framework — CameraX, ML Kit, the
@@ -80,6 +87,9 @@ hand. That is the single biggest quality risk.
 - Pairs with `androidx.compose.ui:ui-test-junit4` + `createComposeRule` to assert
   that the capture/share FABs appear in the right states (the logic currently
   only checked by reading `MainScreen.kt`).
+- Current blocker: Robolectric 4.14.1 uses ASM 9.7 and cannot instrument classes
+  compiled by JDK 26. Unblock by using a JDK 21 Gradle test toolchain or by
+  waiting for a Robolectric/ASM release that supports Java 26 class files.
 
 **B. Screenshot / snapshot testing — strong fit for a visual app**
 - **Paparazzi** (JVM, no device) renders Composables to PNGs and diffs them.
@@ -106,6 +116,8 @@ hand. That is the single biggest quality risk.
   also gives a free **Pre-launch report** when you upload to Play.
 - The camera/face path can't see a real face on an emulator — feed a **virtual
   scene / injected image** or assert on UI state rather than detection output.
+  For local manual work, a webcam-backed emulator can still exercise the live
+  preview and face pipeline.
 
 **E. Mutation testing (test-quality check)**
 - **PITest** (`pitest`/`gradle-pitest-plugin`) mutates the `domain` code and
@@ -114,17 +126,22 @@ hand. That is the single biggest quality risk.
 
 ---
 
-## 4. Static analysis & supply chain — what to add
+## 4. Static analysis & supply chain
 
-- **Dependabot / Renovate** — automated dependency-update PRs; directly unblocks
-  backlog **2.3** (SDK 37 / Kotlin 2.4 / JUnit 6) by surfacing releases.
-- **GitHub CodeQL** — free SAST for the repo (security/quality queries).
-- **OWASP `dependency-check`** (or GitHub Dependency Review) — flags vulnerable
-  transitive libraries.
+Implemented:
+
+- **Dependabot** — weekly Gradle and GitHub Actions update PRs.
+- **GitHub CodeQL** — SAST for security and quality queries.
+- **GitHub Dependency Review** — blocks vulnerable dependency additions in PRs.
+- **Gitleaks** — secret scanning in CI.
+
+Worth adding later:
+
 - **detekt type resolution** (`detektMain` with classpath) + the
   **`detekt-formatting`** ruleset — deeper rules than the current config.
 - **`com.autonomousapps.dependency-analysis`** — finds unused/misplaced deps.
-- **Branch protection** — require the CI check + ≥1 review before merge to `main`.
+- **Branch protection** — require CI + security workflows before merge to `main`
+  in GitHub repository settings. This is not codeable from the repo itself.
 - **Codecov/Coveralls upload** — trend coverage over time (Kover XML already
   produced).
 
@@ -140,13 +157,16 @@ hand. That is the single biggest quality risk.
 
 ---
 
-## 6. Suggested next backlog (see BACKLOG.md “WP 18 / WP 19”)
+## 6. Suggested next backlog
 
-1. Robolectric + Compose UI Test harness (A) — biggest coverage gap.
-2. Paparazzi screenshot tests for overlay + theme (B).
-3. `androidTest` happy-path + UI Automator permission handling (C).
-4. GMD + CI emulator job running `connectedCheck` (D).
-5. Dependabot + CodeQL + branch protection (§4).
-6. Play Store publishing prep (see [`PLAY_STORE.md`](PLAY_STORE.md)).
+1. Add README screenshots and Play listing assets (14.4, 19.0).
+2. Capture or annotate real face samples, then tune overlay constants (17.2–17.4).
+3. Add screenshot tests for `MainScreen`, overlay states, and light/dark theme (18.1).
+4. Add `androidTest` happy-path coverage with UI Automator for permissions (18.2).
+5. Add emulator E2E in CI with Gradle Managed Devices or an emulator-runner job (18.3).
+6. Configure branch protection in GitHub repository settings.
+7. Prepare Play Store compliance and first signed AAB upload (19.1–19.2).
+8. Upgrade compile/target SDK, Kotlin, and JUnit when SDK 37/tooling are available (2.3).
+9. Add Robolectric host-side Android tests once the JDK 26/ASM blocker is resolved (18.0).
 
 None of these block the MVP; they harden it for real distribution.

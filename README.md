@@ -223,7 +223,7 @@ the README for daily commands, then use the table below for deeper topics.
 | [`documentation/ARCHITECTURE.md`](documentation/ARCHITECTURE.md) | Structure, MVVM, and the seam/testability pattern |
 | [`documentation/WORKFLOW_C4.md`](documentation/WORKFLOW_C4.md) | C4-style workflow and runtime diagrams |
 | [`documentation/PROJECT_REVIEW.md`](documentation/PROJECT_REVIEW.md) | Lifecycle review: what exists, testing gaps, what to add |
-| [`code_review.md`](code_review.md) | Security, CI, and correctness review with remediation status |
+| [`documentation/code_review.md`](documentation/code_review.md) | Security, CI, and correctness review with remediation status |
 | [`documentation/OVERLAY_LAB.md`](documentation/OVERLAY_LAB.md) | Desktop harness for tuning cat-ear placement on sample photos |
 | [`documentation/ANIMATED_EARS.md`](documentation/ANIMATED_EARS.md) | Design for animated, 3D-look procedural ears with proper head anchoring (WP 20) |
 | [`documentation/EAR_STYLES.md`](documentation/EAR_STYLES.md) | Feline-quality ear styles + style switcher design (WP 21) |
