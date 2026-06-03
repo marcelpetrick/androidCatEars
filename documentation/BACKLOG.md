@@ -73,10 +73,10 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 5.0 | TODO | Hilt wiring | Hilt deps + `@HiltAndroidApp` Application + minimal module; app still builds and launches. |
-| 5.1 | TODO | Package skeleton | Create `ui/camera/facedetect/overlay/capture/share/domain/di` packages (plan §1.3) with placeholders. |
-| 5.2 | TODO | Compose theme | Theme: colour, typography, shapes; placeholder screen uses it. |
-| 5.3 | TODO | Home screen + ViewModel | `MainViewModel` exposes `StateFlow` UI state; home screen renders it; ViewModel state logic unit-tested. |
+| 5.0 | DONE | Hilt wiring | Hilt deps + `@HiltAndroidApp` Application + minimal module; app still builds and launches. |
+| 5.1 | DONE | Package skeleton | Create `ui/camera/facedetect/overlay/capture/share/domain/di` packages (plan §1.3) with placeholders. |
+| 5.2 | DONE | Compose theme | Theme: colour, typography, shapes; placeholder screen uses it. |
+| 5.3 | DONE | Home screen + ViewModel | `MainViewModel` exposes `StateFlow` UI state; home screen renders it; ViewModel state logic unit-tested. |
 
 ### WP 6 — Camera permission flow
 

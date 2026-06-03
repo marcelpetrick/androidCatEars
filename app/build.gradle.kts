@@ -62,6 +62,7 @@ dependencies {
     // AndroidX core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
 
     // Compose (version from BOM)
@@ -101,6 +102,8 @@ kover {
                 classes(
                     // Compose UI — Activities, Screens, themes, previews
                     "it.marcelpetrick.catears.ui.*",
+                    // DI wiring — pure framework glue, no testable logic
+                    "it.marcelpetrick.catears.di.*",
                     // Hilt-generated classes (all known patterns)
                     "*_HiltComponents*",
                     "*_MembersInjector*",
@@ -110,10 +113,12 @@ kover {
                     "hilt_aggregated_deps.*",
                     // Application class (framework entry point, no logic)
                     "it.marcelpetrick.catears.CatEarsApplication",
+                    "it.marcelpetrick.catears.CatEarsApplication*",
                 )
                 annotatedBy(
                     "dagger.hilt.android.HiltAndroidApp",
                     "dagger.hilt.android.AndroidEntryPoint",
+                    "dagger.Module",
                     "androidx.compose.runtime.Composable",
                     "androidx.compose.ui.tooling.preview.Preview",
                 )
