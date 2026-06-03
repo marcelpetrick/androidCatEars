@@ -68,9 +68,14 @@ object OverlayCompositor {
             when (style) {
                 EarStyle.CLASSIC -> drawClassicEar(this, anchor)
                 EarStyle.SHARP_FELINE -> drawSharpFelineEar(this, anchor)
+                EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(this, anchor)
                 EarStyle.LYNX_TUFTED -> drawLynxTuftedEar(this, anchor)
+                EarStyle.DENSE_FLUFFY -> drawDenseFluffyEar(this, anchor)
                 EarStyle.CANINE_FLOPPY -> drawCanineFloppyEar(this, anchor)
                 EarStyle.CANINE_PERKY -> drawCaninePerkyEar(this, anchor)
+                EarStyle.RABBIT -> drawRabbitEar(this, anchor)
+                EarStyle.FOX -> drawFoxEar(this, anchor)
+                EarStyle.BEAR -> drawBearEar(this, anchor)
             }
         }
     }
@@ -192,6 +197,122 @@ object OverlayCompositor {
         canvas.drawPath(trianglePath(inner), perkyInnerPaint)
     }
 
+    // ─── ROUNDED FELINE ──────────────────────────────────────────────────────
+
+    private fun drawRoundedFelineEar(canvas: Canvas, anchor: EarAnchor) {
+        val cx = anchor.x
+        val top = anchor.y
+        val s = anchor.size
+        val outer = android.graphics.Path().apply {
+            moveTo(cx - s * 0.38f, top + s)
+            cubicTo(cx - s * 0.52f, top + s * 0.50f, cx - s * 0.08f, top + s * 0.05f, cx, top)
+            cubicTo(cx + s * 0.32f, top + s * 0.08f, cx + s * 0.28f, top + s * 0.60f, cx + s * 0.24f, top + s)
+            close()
+        }
+        canvas.drawPath(outer, roundedOuterPaint)
+        val inner = android.graphics.Path().apply {
+            moveTo(cx - s * 0.18f, top + s * 0.92f)
+            cubicTo(cx - s * 0.24f, top + s * 0.50f, cx - s * 0.04f, top + s * 0.18f, cx, top + s * 0.10f)
+            cubicTo(cx + s * 0.14f, top + s * 0.18f, cx + s * 0.14f, top + s * 0.50f, cx + s * 0.12f, top + s * 0.92f)
+            close()
+        }
+        canvas.drawPath(inner, felineInnerPaint)
+    }
+
+    // ─── DENSE FLUFFY ─────────────────────────────────────────────────────────
+
+    private fun drawDenseFluffyEar(canvas: Canvas, anchor: EarAnchor) {
+        val cx = anchor.x
+        val top = anchor.y
+        val s = anchor.size
+        val halfBase = s * 0.48f
+        canvas.drawPath(
+            trianglePath(floatArrayOf(cx, top, cx - halfBase, top + s, cx + halfBase * 0.85f, top + s)),
+            fluffyOuterPaint,
+        )
+        val ih = s * 0.26f
+        canvas.drawPath(
+            trianglePath(
+                floatArrayOf(
+                    cx,
+                    top + s * 0.20f,
+                    cx - ih,
+                    top + s * 0.88f,
+                    cx + ih,
+                    top + s * 0.88f,
+                ),
+            ),
+            fluffyInnerPaint,
+        )
+        val furPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = FLUFFY_FUR
+            style = Paint.Style.STROKE
+            strokeWidth = s * 0.045f
+            strokeCap = Paint.Cap.ROUND
+        }
+        for (i in 0..7) {
+            val frac = i / 7f
+            canvas.drawLine(
+                cx - halfBase * frac,
+                top + s * frac,
+                cx - halfBase * frac - s * 0.10f,
+                top + s * frac - s * 0.08f,
+                furPaint,
+            )
+        }
+    }
+
+    // ─── RABBIT ───────────────────────────────────────────────────────────────
+
+    private fun drawRabbitEar(canvas: Canvas, anchor: EarAnchor) {
+        val cx = anchor.x
+        val top = anchor.y
+        val s = anchor.size
+        val halfW = s * 0.18f
+        canvas.drawOval(cx - halfW, top, cx + halfW, top + s, rabbitOuterPaint)
+        canvas.drawOval(cx - halfW * 0.55f, top + s * 0.06f, cx + halfW * 0.55f, top + s * 0.92f, rabbitInnerPaint)
+    }
+
+    // ─── FOX ──────────────────────────────────────────────────────────────────
+
+    private fun drawFoxEar(canvas: Canvas, anchor: EarAnchor) {
+        val cx = anchor.x
+        val top = anchor.y
+        val s = anchor.size
+        val halfBase = s * 0.32f
+        val tipX = cx + s * 0.05f
+        canvas.drawPath(
+            trianglePath(floatArrayOf(tipX, top, cx - halfBase, top + s, cx + halfBase * 0.7f, top + s)),
+            foxOuterPaint,
+        )
+        canvas.drawPath(
+            trianglePath(
+                floatArrayOf(
+                    tipX,
+                    top + s * 0.14f,
+                    cx - halfBase * 0.52f,
+                    top + s * 0.88f,
+                    cx + halfBase * 0.4f,
+                    top + s * 0.88f,
+                ),
+            ),
+            foxInnerPaint,
+        )
+        canvas.drawCircle(tipX, top, s * 0.07f, whitePaint)
+    }
+
+    // ─── BEAR ─────────────────────────────────────────────────────────────────
+
+    private fun drawBearEar(canvas: Canvas, anchor: EarAnchor) {
+        val cx = anchor.x
+        val top = anchor.y
+        val s = anchor.size
+        val r = s * 0.32f
+        val cy = top + r
+        canvas.drawCircle(cx, cy, r, bearOuterPaint)
+        canvas.drawCircle(cx, cy, r * 0.55f, bearInnerPaint)
+    }
+
     // ─── helpers ─────────────────────────────────────────────────────────────
 
     private fun trianglePath(vertices: FloatArray): Path = Path().apply {
@@ -220,6 +341,16 @@ object OverlayCompositor {
     private val floppyInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLOPPY_INNER } }
     private val perkyOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PERKY_OUTER } }
     private val perkyInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PERKY_INNER } }
+    private val roundedOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ROUNDED_OUTER } }
+    private val fluffyOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLUFFY_OUTER } }
+    private val fluffyInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLUFFY_INNER } }
+    private val rabbitOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = RABBIT_OUTER } }
+    private val rabbitInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = RABBIT_INNER } }
+    private val foxOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FOX_OUTER } }
+    private val foxInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FOX_INNER } }
+    private val whitePaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = WHITE } }
+    private val bearOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BEAR_OUTER } }
+    private val bearInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BEAR_INNER } }
 
     // ─── geometry constants ───────────────────────────────────────────────────
     private const val OUTER_HALF_BASE = 0.42f
@@ -238,4 +369,15 @@ object OverlayCompositor {
     private val FLOPPY_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xC8 shl 8) or 0xA8
     private val PERKY_OUTER: Int = (0xFF shl 24) or (0xD4 shl 16) or (0xB8 shl 8) or 0x96
     private val PERKY_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xA0 shl 8) or 0x90
+    private val ROUNDED_OUTER: Int = (0xFF shl 24) or (0xBF shl 16) or (0x8A shl 8) or 0x5A
+    private val FLUFFY_OUTER: Int = (0xFF shl 24) or (0x9E shl 16) or (0x6A shl 8) or 0x38
+    private val FLUFFY_INNER: Int = (0xFF shl 24) or (0xE0 shl 16) or (0xB0 shl 8) or 0xA0
+    private val FLUFFY_FUR: Int = (0xFF shl 24) or (0x6A shl 16) or (0x3E shl 8) or 0x18
+    private val RABBIT_OUTER: Int = (0xFF shl 24) or (0xF0 shl 16) or (0xEC shl 8) or 0xEC
+    private val RABBIT_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0x90 shl 8) or 0xB0
+    private val FOX_OUTER: Int = (0xFF shl 24) or (0xD4 shl 16) or (0x58 shl 8) or 0x00
+    private val FOX_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xC0 shl 8) or 0x90
+    private val WHITE: Int = (0xFF shl 24) or (0xFF shl 16) or (0xFF shl 8) or 0xFF
+    private val BEAR_OUTER: Int = (0xFF shl 24) or (0x3A shl 16) or (0x20 shl 8) or 0x10
+    private val BEAR_INNER: Int = (0xFF shl 24) or (0x7A shl 16) or (0x40 shl 8) or 0x20
 }

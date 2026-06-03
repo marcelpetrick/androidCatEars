@@ -41,3 +41,8 @@ complexity:
     ignoreDefaultParameters: true
     ignoreAnnotated:
       - Composable
+  TooManyFunctions:
+    active: true
+    # Renderer files and test classes legitimately have many functions.
+    excludes: ['**/overlay/CatEarOverlay.kt', '**/capture/OverlayCompositor.kt',
+               '**/test/**', '**/androidTest/**']

@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test
 class EarStyleTest {
 
     @Test
-    fun `EarStyle has exactly five values`() {
-        assertEquals(5, EarStyle.entries.size)
+    fun `EarStyle has exactly ten values`() {
+        assertEquals(10, EarStyle.entries.size)
     }
 
     @Test
@@ -42,6 +42,6 @@ class EarStyleTest {
         val styles = EarStyle.entries
         val cycled = styles.map { styles[(it.ordinal + 1) % styles.size] }
         assertEquals(EarStyle.SHARP_FELINE, cycled[EarStyle.CLASSIC.ordinal])
-        assertEquals(EarStyle.CLASSIC, cycled[EarStyle.CANINE_PERKY.ordinal])
+        assertEquals(EarStyle.CLASSIC, cycled[styles.last().ordinal])
     }
 }

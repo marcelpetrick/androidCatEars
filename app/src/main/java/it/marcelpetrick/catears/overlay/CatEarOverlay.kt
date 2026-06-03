@@ -19,12 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import it.marcelpetrick.catears.domain.EarAnchor
@@ -35,9 +36,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Transparent overlay that draws two animated, procedural cat ears at the positions described by
- * [placement]. Sits on top of the camera preview inside a [Box] with fillMaxSize.
- * When [placement] is null (no face detected) nothing is rendered.
+ * Transparent overlay that draws two animated procedural cat ears at the positions described by
+ * [placement]. When [placement] is null (no face detected) nothing is rendered.
  */
 @Composable
 fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
@@ -60,7 +60,6 @@ fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
         ),
         label = "twitchTime",
     )
-
     val leftTilt by animateFloatAsState(
         targetValue = if (placement != null) placement.leftEar.tiltDegrees * LEFT_TILT_FACTOR else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
@@ -71,9 +70,7 @@ fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
         label = "rightTilt",
     )
-
     val style = placement?.earStyle ?: EarStyle.CLASSIC
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -93,298 +90,344 @@ private fun DrawScope.drawEar(anchor: EarAnchor, style: EarStyle, swayTime: Floa
     val s = anchor.size
     val pivot = Offset(cx, top + s / 2f)
     val twitchAngle = sin(twitchTime) * TWITCH_AMPLITUDE * sin(twitchTime * TWITCH_FREQ_MOD)
-
     rotate(degrees = anchor.tiltDegrees + twitchAngle, pivot = pivot) {
         scale(scaleX = anchor.xScale, scaleY = 1f, pivot = pivot) {
             when (style) {
                 EarStyle.CLASSIC -> drawClassicEar(cx, top, s, swayTime)
                 EarStyle.SHARP_FELINE -> drawSharpFelineEar(cx, top, s, swayTime)
+                EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(cx, top, s, swayTime)
                 EarStyle.LYNX_TUFTED -> drawLynxTuftedEar(cx, top, s, swayTime)
+                EarStyle.DENSE_FLUFFY -> drawDenseFluffyEar(cx, top, s, swayTime)
                 EarStyle.CANINE_FLOPPY -> drawCanineFloppyEar(cx, top, s, swayTime)
                 EarStyle.CANINE_PERKY -> drawCaninePerkyEar(cx, top, s, swayTime)
+                EarStyle.RABBIT -> drawRabbitEar(cx, top, s)
+                EarStyle.FOX -> drawFoxEar(cx, top, s, swayTime)
+                EarStyle.BEAR -> drawBearEar(cx, top, s)
             }
         }
     }
 }
 
-// ─── CLASSIC ────────────────────────────────────────────────────────────────
+// --- 1 CLASSIC
 
 private fun DrawScope.drawClassicEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    drawOuterEar(cx, top, s)
-    drawInnerEar(cx, top, s)
-    drawFurStrands(cx, top, s, swayTime)
-}
-
-private fun DrawScope.drawOuterEar(cx: Float, top: Float, s: Float) {
-    val halfBase = s * OUTER_HALF_BASE
-    val path = Path().apply {
-        moveTo(cx, top)
-        lineTo(cx - halfBase, top + s)
-        lineTo(cx + halfBase, top + s)
-        close()
-    }
-    drawPath(path, color = EAR_COLOR)
-}
-
-private fun DrawScope.drawInnerEar(cx: Float, top: Float, s: Float) {
-    val halfBase = s * INNER_HALF_BASE
-    val innerTop = top + s * INNER_TOP_OFFSET
-    val innerBottom = top + s * INNER_BOTTOM_OFFSET
-    val path = Path().apply {
-        moveTo(cx, innerTop)
-        lineTo(cx - halfBase, innerBottom)
-        lineTo(cx + halfBase, innerBottom)
-        close()
-    }
-    drawPath(path, color = INNER_EAR_COLOR)
-}
-
-private fun DrawScope.drawFurStrands(cx: Float, top: Float, s: Float, swayTime: Float) {
-    val strokeWidth = s * STRAND_WIDTH_RATIO
+    val hb = s * OUTER_HALF_BASE
+    drawPath(
+        Path().apply {
+            moveTo(cx, top)
+            lineTo(cx - hb, top + s)
+            lineTo(cx + hb, top + s)
+            close()
+        },
+        color = EAR_COLOR,
+    )
+    val ih = s * INNER_HALF_BASE
+    val iTop = top + s * INNER_TOP_OFFSET
+    val iBot = top + s * INNER_BOTTOM_OFFSET
+    drawPath(
+        Path().apply {
+            moveTo(cx, iTop)
+            lineTo(cx - ih, iBot)
+            lineTo(cx + ih, iBot)
+            close()
+        },
+        color = INNER_EAR_COLOR,
+    )
+    val sw = s * STRAND_WIDTH_RATIO
     STRAND_PHASES.forEachIndexed { i, phase ->
-        val fractionAlongBase = STRAND_X_FRACTIONS[i]
-        val baseX = cx + (fractionAlongBase - 0.5f) * s * OUTER_HALF_BASE * 2f
-        val baseY = top + s * STRAND_BASE_Y_RATIO
-        val tipSway = sin(swayTime + phase).toFloat() * s * STRAND_SWAY_RATIO
-        val tipBobble = cos(swayTime * STRAND_BOB_FREQ + phase).toFloat() * s * STRAND_BOB_RATIO
-        val tipX = baseX + tipSway
-        val tipY = top + s * STRAND_TIP_Y_RATIO + tipBobble
-        drawLine(
-            color = FUR_COLOR,
-            start = Offset(baseX, baseY),
-            end = Offset(tipX, tipY),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round,
-        )
+        val bx = cx + (STRAND_X_FRACTIONS[i] - 0.5f) * s * OUTER_HALF_BASE * 2f
+        val by = top + s * STRAND_BASE_Y_RATIO
+        val tx = bx + sin(swayTime + phase).toFloat() * s * STRAND_SWAY_RATIO
+        val ty = top + s * STRAND_TIP_Y_RATIO + cos(swayTime * STRAND_BOB_FREQ + phase).toFloat() * s * STRAND_BOB_RATIO
+        drawLine(FUR_COLOR, Offset(bx, by), Offset(tx, ty), sw, StrokeCap.Round)
     }
 }
 
-// ─── SHARP FELINE ────────────────────────────────────────────────────────────
+// --- 2 SHARP FELINE
 
 private fun DrawScope.drawSharpFelineEar(cx: Float, top: Float, s: Float, swayTime: Float) {
     val tipX = cx + s * FELINE_TIP_OFFSET_X
     val tipY = top
-    val baseLeft = Offset(cx - s * FELINE_BASE_LEFT, top + s)
-    val baseRight = Offset(cx + s * FELINE_BASE_RIGHT, top + s)
-
-    // Outer ear — gradient fill via solid + lighter centre overlay
-    val outerPath = Path().apply {
+    val outer = Path().apply {
         moveTo(tipX, tipY)
-        lineTo(baseLeft.x, baseLeft.y)
-        lineTo(baseRight.x, baseRight.y)
+        lineTo(cx - s * FELINE_BASE_LEFT, top + s)
+        lineTo(cx + s * FELINE_BASE_RIGHT, top + s)
         close()
     }
     drawPath(
-        outerPath,
+        outer,
         brush = Brush.radialGradient(
-            colors = listOf(FELINE_CENTER_COLOR, FELINE_RIM_COLOR),
-            center = Offset(cx, top + s * 0.65f),
-            radius = s * 0.55f,
+            listOf(FELINE_CENTER_COLOR, FELINE_RIM_COLOR),
+            Offset(cx, top + s * 0.65f),
+            s * 0.55f,
         ),
     )
-
-    // Inner ear — inset pink
-    val innerPath = Path().apply {
+    val inner = Path().apply {
         moveTo(tipX, top + s * FELINE_INNER_TOP)
         lineTo(cx - s * FELINE_INNER_HALF, top + s * FELINE_INNER_BOTTOM)
         lineTo(cx + s * FELINE_INNER_HALF, top + s * FELINE_INNER_BOTTOM)
         close()
     }
-    drawPath(innerPath, color = FELINE_INNER_COLOR)
-
-    // Tip tufts (3 short animated strands fanning from apex)
-    val tuftStroke = s * TUFT_STROKE
+    drawPath(inner, color = FELINE_INNER_COLOR)
+    val ts = s * TUFT_STROKE
     for (i in -1..1) {
         val angle = Math.toRadians((TUFT_FAN_DEG * i).toDouble()).toFloat()
         val sway = sin(swayTime + i * 1.2f).toFloat() * TUFT_SWAY_DEG
-        val totalAngle = angle + Math.toRadians(sway.toDouble()).toFloat()
+        val rad = angle + Math.toRadians(sway.toDouble()).toFloat()
         val len = s * TUFT_LENGTH
         drawLine(
-            color = FELINE_TUFT_COLOR,
-            start = Offset(tipX, tipY),
-            end = Offset(tipX + sin(totalAngle) * len, tipY - cos(totalAngle) * len),
-            strokeWidth = tuftStroke,
-            cap = StrokeCap.Round,
+            FELINE_TUFT_COLOR,
+            Offset(tipX, tipY),
+            Offset(tipX + sin(rad) * len, tipY - cos(rad) * len),
+            ts,
+            StrokeCap.Round,
         )
     }
 }
 
-// ─── LYNX TUFTED ─────────────────────────────────────────────────────────────
+// --- 3 ROUNDED FELINE
+
+private fun DrawScope.drawRoundedFelineEar(cx: Float, top: Float, s: Float, swayTime: Float) {
+    val outer = Path().apply {
+        moveTo(cx - s * 0.38f, top + s)
+        cubicTo(cx - s * 0.52f, top + s * 0.50f, cx - s * 0.08f, top + s * 0.05f, cx, top)
+        cubicTo(cx + s * 0.32f, top + s * 0.08f, cx + s * 0.28f, top + s * 0.60f, cx + s * 0.24f, top + s)
+        close()
+    }
+    drawPath(
+        outer,
+        brush = Brush.linearGradient(
+            listOf(ROUNDED_CENTER_COLOR, ROUNDED_RIM_COLOR),
+            Offset(cx, top + s * 0.15f),
+            Offset(cx, top + s),
+        ),
+    )
+    val inner = Path().apply {
+        moveTo(cx - s * 0.18f, top + s * 0.92f)
+        cubicTo(cx - s * 0.24f, top + s * 0.50f, cx - s * 0.04f, top + s * 0.18f, cx, top + s * 0.10f)
+        cubicTo(cx + s * 0.14f, top + s * 0.18f, cx + s * 0.14f, top + s * 0.50f, cx + s * 0.12f, top + s * 0.92f)
+        close()
+    }
+    drawPath(inner, color = FELINE_INNER_COLOR)
+    val ts = s * TUFT_STROKE
+    for (i in -1..0) {
+        val sway = sin(swayTime + i * 1.5f).toFloat() * s * 0.04f
+        drawLine(
+            FELINE_TUFT_COLOR,
+            Offset(cx + i * s * 0.03f, top),
+            Offset(cx + i * s * 0.03f + sway, top - s * 0.12f),
+            ts,
+            StrokeCap.Round,
+        )
+    }
+}
+
+// --- 4 LYNX TUFTED
 
 private fun DrawScope.drawLynxTuftedEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    // Same outer shape as sharp feline but wider base
     val tipX = cx + s * FELINE_TIP_OFFSET_X
     val tipY = top
-    val outerPath = Path().apply {
+    val outer = Path().apply {
         moveTo(tipX, tipY)
         lineTo(cx - s * LYNX_BASE_LEFT, top + s)
         lineTo(cx + s * LYNX_BASE_RIGHT, top + s)
         close()
     }
-    drawPath(outerPath, color = LYNX_OUTER_COLOR)
-
-    val innerPath = Path().apply {
+    drawPath(outer, color = LYNX_OUTER_COLOR)
+    val inner = Path().apply {
         moveTo(tipX, top + s * FELINE_INNER_TOP)
         lineTo(cx - s * FELINE_INNER_HALF, top + s * FELINE_INNER_BOTTOM)
         lineTo(cx + s * FELINE_INNER_HALF, top + s * FELINE_INNER_BOTTOM)
         close()
     }
-    drawPath(innerPath, color = FELINE_INNER_COLOR)
-
-    // 7 long dark tufts projecting from the tip with high sway amplitude
-    val tuftStroke = s * TUFT_STROKE * 1.3f
+    drawPath(inner, color = FELINE_INNER_COLOR)
+    val ts = s * TUFT_STROKE * 1.3f
     val fanAngles = floatArrayOf(-24f, -16f, -8f, 0f, 8f, 16f, 24f)
     LYNX_TUFT_PHASES.forEachIndexed { i, phase ->
-        val baseDeg = fanAngles[i]
-        val sway = sin(swayTime + phase).toFloat() * LYNX_SWAY_DEG
-        val rad = Math.toRadians((baseDeg + sway).toDouble()).toFloat()
+        val rad = Math.toRadians(
+            (fanAngles[i] + sin(swayTime + phase).toFloat() * LYNX_SWAY_DEG).toDouble(),
+        ).toFloat()
         val len = s * LYNX_TUFT_LENGTH
         drawLine(
-            color = LYNX_TUFT_COLOR,
-            start = Offset(tipX, tipY),
-            end = Offset(tipX + sin(rad) * len, tipY - cos(rad) * len),
-            strokeWidth = tuftStroke,
-            cap = StrokeCap.Round,
+            LYNX_TUFT_COLOR,
+            Offset(tipX, tipY),
+            Offset(tipX + sin(rad) * len, tipY - cos(rad) * len),
+            ts,
+            StrokeCap.Round,
         )
     }
 }
 
-// ─── CANINE FLOPPY ───────────────────────────────────────────────────────────
+// --- 5 DENSE FLUFFY
+
+private fun DrawScope.drawDenseFluffyEar(cx: Float, top: Float, s: Float, swayTime: Float) {
+    val halfBase = s * 0.48f
+    val outer = Path().apply {
+        moveTo(cx, top)
+        lineTo(cx - halfBase, top + s)
+        lineTo(cx + halfBase * 0.85f, top + s)
+        close()
+    }
+    drawPath(outer, color = FLUFFY_OUTER_COLOR)
+    val ih = s * 0.26f
+    val inner = Path().apply {
+        moveTo(cx, top + s * 0.20f)
+        lineTo(cx - ih, top + s * 0.88f)
+        lineTo(cx + ih, top + s * 0.88f)
+        close()
+    }
+    drawPath(inner, color = FLUFFY_INNER_COLOR)
+    val sw = s * 0.045f
+    for (i in 0..7) {
+        val frac = i / 7f
+        val ex = cx - halfBase * frac
+        val ey = top + s * frac
+        val sway = sin(swayTime + FLUFFY_PHASES[i]).toFloat() * s * 0.07f
+        drawLine(FLUFFY_FUR_COLOR, Offset(ex, ey), Offset(ex - s * 0.10f + sway, ey - s * 0.08f), sw, StrokeCap.Round)
+    }
+}
+
+// --- 6 CANINE FLOPPY
 
 private fun DrawScope.drawCanineFloppyEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    // Teardrop hanging to the outer-left: hinge at anchor top, flap extends down-left.
     val flapDx = s * FLOPPY_FLAP_DX
     val flapDy = s * FLOPPY_FLAP_DY
-    // Pendulum sway on the whole flap
     val swayAngle = sin(swayTime * FLOPPY_FREQ) * FLOPPY_SWAY_DEG
-
-    val outerPath = Path().apply {
-        moveTo(cx - s * 0.15f, top) // hinge top-left
+    val outer = Path().apply {
+        moveTo(cx - s * 0.15f, top)
+        cubicTo(cx - flapDx, top, cx - flapDx, top + flapDy * 0.6f, cx - flapDx * 0.5f, top + flapDy)
+        cubicTo(cx, top + flapDy * 1.05f, cx + s * 0.1f, top + flapDy * 0.4f, cx + s * 0.08f, top)
+        close()
+    }
+    val inner = Path().apply {
+        moveTo(cx - s * 0.12f, top + s * 0.15f)
         cubicTo(
-            cx - flapDx,
-            top, // control: left
-            cx - flapDx,
-            top + flapDy * 0.6f, // control: lower-left
-            cx - flapDx * 0.5f,
-            top + flapDy, // flap bottom
+            cx - flapDx * 0.8f,
+            top + s * 0.20f,
+            cx - flapDx * 0.8f,
+            top + flapDy * 0.55f,
+            cx - flapDx * 0.4f,
+            top + flapDy * 0.88f,
         )
         cubicTo(
             cx,
-            top + flapDy * 1.05f, // control: bottom-right
-            cx + s * 0.1f,
-            top + flapDy * 0.4f,
-            cx + s * 0.08f,
-            top, // back to hinge right
+            top + flapDy * 0.95f,
+            cx + s * 0.05f,
+            top + flapDy * 0.35f,
+            cx + s * 0.04f,
+            top + s * 0.15f,
         )
         close()
     }
-
     rotate(degrees = swayAngle, pivot = Offset(cx, top)) {
-        drawPath(outerPath, color = FLOPPY_OUTER_COLOR)
-        // inner ear crescent
-        val innerPath = Path().apply {
-            moveTo(cx - s * 0.12f, top + s * 0.15f)
-            cubicTo(
-                cx - flapDx * 0.8f,
-                top + s * 0.2f,
-                cx - flapDx * 0.8f,
-                top + flapDy * 0.55f,
-                cx - flapDx * 0.4f,
-                top + flapDy * 0.88f,
-            )
-            cubicTo(
-                cx,
-                top + flapDy * 0.95f,
-                cx + s * 0.05f,
-                top + flapDy * 0.35f,
-                cx + s * 0.04f,
-                top + s * 0.15f,
-            )
-            close()
-        }
-        drawPath(innerPath, color = FLOPPY_INNER_COLOR)
+        drawPath(outer, color = FLOPPY_OUTER_COLOR)
+        drawPath(inner, color = FLOPPY_INNER_COLOR)
     }
 }
 
-// ─── CANINE PERKY ────────────────────────────────────────────────────────────
+// --- 7 CANINE PERKY
 
 private fun DrawScope.drawCaninePerkyEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    // Short wide triangle with rounded arc cap at the top
     val halfBase = s * PERKY_HALF_BASE
-    val tipY = top + s * PERKY_TIP_Y // tip is lower than full height
-
-    val outerPath = Path().apply {
+    val tipY = top + s * PERKY_TIP_Y
+    val outer = Path().apply {
         moveTo(cx - halfBase, top + s)
         lineTo(cx + halfBase, top + s)
         lineTo(cx + halfBase * 0.4f, tipY + s * 0.08f)
         arcTo(
-            androidx.compose.ui.geometry.Rect(
-                cx - halfBase * 0.4f,
-                tipY - s * 0.10f,
-                cx + halfBase * 0.4f,
-                tipY + s * 0.18f,
-            ),
-            startAngleDegrees = 0f,
-            sweepAngleDegrees = -180f,
-            forceMoveTo = false,
+            Rect(cx - halfBase * 0.4f, tipY - s * 0.10f, cx + halfBase * 0.4f, tipY + s * 0.18f),
+            0f,
+            -180f,
+            false,
         )
         lineTo(cx - halfBase * 0.4f, tipY + s * 0.08f)
         close()
     }
-    drawPath(outerPath, color = PERKY_OUTER_COLOR)
-
-    // Inner fill
-    val innerPath = Path().apply {
+    drawPath(outer, color = PERKY_OUTER_COLOR)
+    val inner = Path().apply {
         moveTo(cx - halfBase * 0.55f, top + s * 0.95f)
         lineTo(cx + halfBase * 0.55f, top + s * 0.95f)
         lineTo(cx + halfBase * 0.2f, tipY + s * 0.12f)
         lineTo(cx - halfBase * 0.2f, tipY + s * 0.12f)
         close()
     }
-    drawPath(innerPath, color = PERKY_INNER_COLOR)
-
-    // Cross-hatch texture strokes on outer surface
-    val hatchStroke = s * 0.018f
+    drawPath(inner, color = PERKY_INNER_COLOR)
+    val hs = s * 0.018f
     for (i in 0..2) {
         val yOff = top + s * (0.35f + i * 0.18f)
         val xSpan = halfBase * (0.7f - i * 0.15f)
-        drawLine(
-            color = PERKY_HATCH_COLOR,
-            start = Offset(cx - xSpan, yOff),
-            end = Offset(cx + xSpan, yOff + s * 0.12f),
-            strokeWidth = hatchStroke,
-        )
+        drawLine(PERKY_HATCH_COLOR, Offset(cx - xSpan, yOff), Offset(cx + xSpan, yOff + s * 0.12f), hs)
     }
-
-    // Subtle fur sway on the base edge
-    val baseFurSway = sin(swayTime * 0.8f).toFloat() * s * 0.015f
+    val baseSway = sin(swayTime * 0.8f).toFloat() * s * 0.015f
     drawLine(
-        color = PERKY_HATCH_COLOR,
-        start = Offset(cx - halfBase + baseFurSway, top + s),
-        end = Offset(cx + halfBase + baseFurSway, top + s),
-        strokeWidth = s * 0.03f,
-        cap = StrokeCap.Round,
+        PERKY_HATCH_COLOR,
+        Offset(cx - halfBase + baseSway, top + s),
+        Offset(cx + halfBase + baseSway, top + s),
+        s * 0.03f,
+        StrokeCap.Round,
     )
 }
 
-// ─── animation timing ────────────────────────────────────────────────────────
+// --- 8 RABBIT
+
+private fun DrawScope.drawRabbitEar(cx: Float, top: Float, s: Float) {
+    val halfW = s * 0.18f
+    drawOval(RABBIT_OUTER_COLOR, Offset(cx - halfW, top), Size(halfW * 2f, s))
+    drawOval(RABBIT_INNER_COLOR, Offset(cx - halfW * 0.55f, top + s * 0.06f), Size(halfW * 1.1f, s * 0.86f))
+}
+
+// --- 9 FOX
+
+private fun DrawScope.drawFoxEar(cx: Float, top: Float, s: Float, swayTime: Float) {
+    val halfBase = s * 0.32f
+    val tipX = cx + s * 0.05f
+    val outer = Path().apply {
+        moveTo(tipX, top)
+        lineTo(cx - halfBase, top + s)
+        lineTo(cx + halfBase * 0.7f, top + s)
+        close()
+    }
+    drawPath(outer, color = FOX_OUTER_COLOR)
+    val inner = Path().apply {
+        moveTo(tipX, top + s * 0.14f)
+        lineTo(cx - halfBase * 0.52f, top + s * 0.88f)
+        lineTo(cx + halfBase * 0.4f, top + s * 0.88f)
+        close()
+    }
+    drawPath(inner, color = FOX_INNER_COLOR)
+    drawCircle(Color.White, s * 0.07f, Offset(tipX, top))
+    val ts = s * 0.04f
+    for (i in -1..0) {
+        val sway = sin(swayTime + i * 1.1f).toFloat() * s * 0.03f
+        drawLine(FOX_TUFT_COLOR, Offset(tipX, top), Offset(tipX + sway, top - s * 0.10f), ts, StrokeCap.Round)
+    }
+}
+
+// --- 10 BEAR
+
+private fun DrawScope.drawBearEar(cx: Float, top: Float, s: Float) {
+    val radius = s * 0.32f
+    val centerY = top + radius
+    drawCircle(BEAR_OUTER_COLOR, radius, Offset(cx, centerY))
+    drawCircle(BEAR_INNER_COLOR, radius * 0.55f, Offset(cx, centerY))
+}
+
+// --- animation timing
 private const val SWAY_PERIOD_MS = 1250
 private const val TWITCH_PERIOD_MS = 5000
 private const val TWITCH_AMPLITUDE = 4f
 private const val TWITCH_FREQ_MOD = 3f
 private val TWO_PI = (2.0 * PI).toFloat()
 
-// ─── spring tilt factors ─────────────────────────────────────────────────────
+// --- spring tilt factors
 private const val LEFT_TILT_FACTOR = 0.6f
 private const val RIGHT_TILT_FACTOR = 1.0f
 
-// ─── CLASSIC geometry constants ───────────────────────────────────────────────
+// --- CLASSIC constants
 private const val OUTER_HALF_BASE = 0.42f
 private const val INNER_HALF_BASE = 0.24f
 private const val INNER_TOP_OFFSET = 0.28f
 private const val INNER_BOTTOM_OFFSET = 0.78f
-
-// ─── CLASSIC fur strand constants ─────────────────────────────────────────────
 private const val STRAND_WIDTH_RATIO = 0.04f
 private const val STRAND_BASE_Y_RATIO = 0.15f
 private const val STRAND_TIP_Y_RATIO = -0.08f
@@ -394,8 +437,8 @@ private const val STRAND_BOB_FREQ = 0.7f
 private val STRAND_X_FRACTIONS = floatArrayOf(0.22f, 0.38f, 0.50f, 0.62f, 0.78f)
 private val STRAND_PHASES = floatArrayOf(0.0f, 1.2f, 2.4f, 0.7f, 1.9f)
 
-// ─── SHARP FELINE constants ───────────────────────────────────────────────────
-private const val FELINE_TIP_OFFSET_X = 0.08f // tip leans slightly outward
+// --- SHARP / ROUNDED FELINE constants
+private const val FELINE_TIP_OFFSET_X = 0.08f
 private const val FELINE_BASE_LEFT = 0.44f
 private const val FELINE_BASE_RIGHT = 0.30f
 private const val FELINE_INNER_TOP = 0.26f
@@ -406,24 +449,27 @@ private const val TUFT_FAN_DEG = 18f
 private const val TUFT_SWAY_DEG = 6f
 private const val TUFT_LENGTH = 0.22f
 
-// ─── LYNX TUFTED constants ────────────────────────────────────────────────────
+// --- LYNX constants
 private const val LYNX_BASE_LEFT = 0.48f
 private const val LYNX_BASE_RIGHT = 0.34f
 private const val LYNX_TUFT_LENGTH = 0.36f
 private const val LYNX_SWAY_DEG = 10f
 private val LYNX_TUFT_PHASES = floatArrayOf(0.0f, 0.9f, 1.8f, 2.7f, 0.4f, 1.3f, 2.2f)
 
-// ─── CANINE FLOPPY constants ──────────────────────────────────────────────────
+// --- DENSE FLUFFY constants
+private val FLUFFY_PHASES = floatArrayOf(0.0f, 0.8f, 1.6f, 2.4f, 0.4f, 1.2f, 2.0f, 0.6f)
+
+// --- CANINE FLOPPY constants
 private const val FLOPPY_FLAP_DX = 0.55f
 private const val FLOPPY_FLAP_DY = 1.15f
 private const val FLOPPY_FREQ = 0.5f
 private const val FLOPPY_SWAY_DEG = 4f
 
-// ─── CANINE PERKY constants ───────────────────────────────────────────────────
+// --- CANINE PERKY constants
 private const val PERKY_HALF_BASE = 0.38f
 private const val PERKY_TIP_Y = 0.20f
 
-// ─── colours ─────────────────────────────────────────────────────────────────
+// --- colours
 private val EAR_COLOR = Color(0xFF8B5E3C)
 private val INNER_EAR_COLOR = Color(0xFFE8A0A0)
 private val FUR_COLOR = Color(0xFFD4A07A)
@@ -433,8 +479,15 @@ private val FELINE_CENTER_COLOR = Color(0xFFBF8A5A)
 private val FELINE_INNER_COLOR = Color(0xFFE8A8A0)
 private val FELINE_TUFT_COLOR = Color(0xFF4A2C10)
 
+private val ROUNDED_RIM_COLOR = Color(0xFF7A4E28)
+private val ROUNDED_CENTER_COLOR = Color(0xFFBF8A5A)
+
 private val LYNX_OUTER_COLOR = Color(0xFF9B7040)
 private val LYNX_TUFT_COLOR = Color(0xFF2E1A08)
+
+private val FLUFFY_OUTER_COLOR = Color(0xFF9E6A38)
+private val FLUFFY_INNER_COLOR = Color(0xFFE0B0A0)
+private val FLUFFY_FUR_COLOR = Color(0xFF6A3E18)
 
 private val FLOPPY_OUTER_COLOR = Color(0xFFB8864A)
 private val FLOPPY_INNER_COLOR = Color(0xFFE8C8A8)
@@ -442,3 +495,13 @@ private val FLOPPY_INNER_COLOR = Color(0xFFE8C8A8)
 private val PERKY_OUTER_COLOR = Color(0xFFD4B896)
 private val PERKY_INNER_COLOR = Color(0xFFE8A090)
 private val PERKY_HATCH_COLOR = Color(0xFF9A7848)
+
+private val RABBIT_OUTER_COLOR = Color(0xFFF0ECEC)
+private val RABBIT_INNER_COLOR = Color(0xFFE890B0)
+
+private val FOX_OUTER_COLOR = Color(0xFFD45800)
+private val FOX_INNER_COLOR = Color(0xFFE8C090)
+private val FOX_TUFT_COLOR = Color(0xFF3A1800)
+
+private val BEAR_OUTER_COLOR = Color(0xFF3A2010)
+private val BEAR_INNER_COLOR = Color(0xFF7A4020)
