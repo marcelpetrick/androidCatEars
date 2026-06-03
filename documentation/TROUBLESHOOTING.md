@@ -12,6 +12,15 @@ See also [`EMULATOR.md`](EMULATOR.md), [`DEPLOY_PHONE.md`](DEPLOY_PHONE.md), and
 
 ## Build
 
+**"Deprecated Gradle features were used in this build, making it incompatible with Gradle 10."**
+This one-line footer appears on every build. The single source is `ReportingExtension.file(String)`
+called inside **detekt 1.23.8's own plugin code** (`DetektPlugin.kt:28`) — not our build scripts.
+`1.23.8` is the latest stable detekt release; no fix is available yet. The build succeeds normally.
+`gradle.properties` sets `org.gradle.warning.mode=summary` so the verbose warning text is suppressed
+and only the footer remains. To investigate any NEW warnings: run `./gradlew <task> --warning-mode all`.
+Fix: upgrade detekt once a release that uses the new `getBaseDirectory().file()` API is published
+(tracked in backlog task 2.3 / WP 18 area).
+
 **`./gradlew` fails with OutOfMemoryError / GC overhead during dex or merge.**
 The daemon heap is set in `gradle.properties` (`-Xmx4g`). If it still thrashes
 on a constrained machine, lower other memory use or raise the value.
