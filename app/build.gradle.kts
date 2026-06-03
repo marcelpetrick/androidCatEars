@@ -75,6 +75,9 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 
+    // ML Kit — on-device face detection
+    implementation(libs.mlkit.face.detection)
+
     // CameraX
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)
@@ -125,6 +128,10 @@ kover {
                     "it.marcelpetrick.catears.camera.CameraXControllerImpl",
                     "it.marcelpetrick.catears.camera.CameraXControllerImpl*",
                     "it.marcelpetrick.catears.camera.CameraPreviewComposableKt",
+                    // ML Kit face detector implementation — device-only
+                    "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl",
+                    "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl*",
+                    "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImplKt",
                     // Hilt-generated factories
                     "*_Factory",
                     "*_Factory*",
