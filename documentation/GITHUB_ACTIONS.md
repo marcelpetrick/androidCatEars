@@ -65,6 +65,8 @@ APKs are development artifacts and are not attached to GitHub Releases.
 - `softprops/action-gh-release@v2` for publishing releases.
 - Least-privilege `permissions: contents: write` (only what's needed to create a release/tag).
 - The release reuses the exact same quality gate as CI before building artefacts.
+- Workflows set explicit `timeout-minutes`; branch/PR workflows cancel superseded runs via
+  `concurrency` so the newest signal stays visible.
 
 ---
 
