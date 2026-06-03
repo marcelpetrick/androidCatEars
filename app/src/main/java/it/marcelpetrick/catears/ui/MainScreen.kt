@@ -4,14 +4,18 @@
 package it.marcelpetrick.catears.ui
 
 import androidx.camera.core.ImageProxy
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
@@ -27,12 +31,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.LensSelector
@@ -83,9 +90,10 @@ fun MainScreen(
                     onShare = onShare,
                 )
             }
-            VersionLabel(
+            AppTitleBar(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
+                    .statusBarsPadding()
                     .padding(top = 8.dp),
             )
             if (captureStatus != null) {
@@ -93,11 +101,28 @@ fun MainScreen(
                     message = captureStatus,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = 32.dp),
+                        .statusBarsPadding()
+                        .padding(top = 48.dp),
                 )
             }
         }
     }
+}
+
+@Composable
+private fun AppTitleBar(modifier: Modifier = Modifier) {
+    Text(
+        text = "AndroidCatEars  v${BuildConfig.VERSION_NAME}",
+        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+        color = Color.White,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .background(
+                color = Color.Black.copy(alpha = TITLE_BG_ALPHA),
+                shape = RoundedCornerShape(TITLE_CORNER_DP.dp),
+            )
+            .padding(horizontal = 14.dp, vertical = 4.dp),
+    )
 }
 
 @Composable
@@ -200,38 +225,42 @@ private fun CameraContent(
             modifier = Modifier.fillMaxSize(),
         )
         CatEarOverlay(placement = overlayPlacement)
-        FloatingActionButton(
-            onClick = onToggleLens,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-        ) {
-            Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
-        }
-        FloatingActionButton(
-            onClick = { if (captureEnabled) onCapture() },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp),
-        ) {
-            if (captureEnabled) {
-                Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
-            } else {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-        if (onShare != null) {
+        // FAB row lives inside a nav-bar-inset container so buttons stay visible
+        // above the gesture navigation bar on edge-to-edge layouts.
+        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
             FloatingActionButton(
-                onClick = onShare,
+                onClick = onToggleLens,
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
+                    .align(Alignment.BottomEnd)
                     .padding(16.dp),
             ) {
-                Icon(imageVector = Icons.Filled.Share, contentDescription = "Share photo")
+                Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
+            }
+            FloatingActionButton(
+                onClick = { if (captureEnabled) onCapture() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp),
+            ) {
+                if (captureEnabled) {
+                    Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+            if (onShare != null) {
+                FloatingActionButton(
+                    onClick = onShare,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(16.dp),
+                ) {
+                    Icon(imageVector = Icons.Filled.Share, contentDescription = "Share photo")
+                }
             }
         }
     }
@@ -308,6 +337,9 @@ private fun MainScreenPermissionDeniedPreview() {
         )
     }
 }
+
+private const val TITLE_BG_ALPHA = 0.4f
+private const val TITLE_CORNER_DP = 12
 
 private object PreviewFaceDetector : FaceDetectorSeam {
     override fun process(imageProxy: ImageProxy, onResult: (it.marcelpetrick.catears.domain.FaceModel?) -> Unit) {

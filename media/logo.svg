@@ -1,0 +1,35 @@
+<!--
+  SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  androidCatEars project logo — self-authored, GPLv3-compatible.
+  Converted from the adaptive launcher icon foreground (ic_launcher_foreground.xml).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="200" height="200">
+  <!-- Rounded orange background -->
+  <rect width="108" height="108" rx="22" fill="#FF6C3C"/>
+
+  <!-- Ears (white silhouette) -->
+  <path fill="#FFFFFF" d="M30,50 L36,26 L52,46 Z"/>
+  <path fill="#FFFFFF" d="M78,50 L72,26 L56,46 Z"/>
+
+  <!-- Head circle (white) -->
+  <circle cx="54" cy="60" r="21" fill="#FFFFFF"/>
+
+  <!-- Inner ears (soft pink accent) -->
+  <path fill="#FFB399" d="M37,44 L40,31 L48,45 Z"/>
+  <path fill="#FFB399" d="M71,44 L68,31 L60,45 Z"/>
+
+  <!-- Eyes (dark brown) -->
+  <circle cx="46" cy="58" r="3.2" fill="#3A2A20"/>
+  <circle cx="62" cy="58" r="3.2" fill="#3A2A20"/>
+
+  <!-- Nose (pink triangle) -->
+  <path fill="#FF8FA3" d="M51,64 L57,64 L54,68 Z"/>
+
+  <!-- Whiskers -->
+  <line x1="42" y1="65" x2="28" y2="63" stroke="#3A2A20" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="42" y1="69" x2="29" y2="71" stroke="#3A2A20" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="66" y1="65" x2="80" y2="63" stroke="#3A2A20" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="66" y1="69" x2="79" y2="71" stroke="#3A2A20" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

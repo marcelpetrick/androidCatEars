@@ -1,5 +1,9 @@
 # Android Cat Ears 😼🐾
 
+<p align="center">
+  <img src="media/logo.svg" alt="androidCatEars logo" width="160"/>
+</p>
+
 **Author: Marcel Petrick <mail@marcelpetrick.it>**
 
 **Note: project is generated with AI.**
