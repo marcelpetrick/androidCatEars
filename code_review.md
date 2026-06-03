@@ -27,7 +27,7 @@ exploitable remote vulnerabilities.
    That is a privacy leak for a camera-first app. **Status: fixed for release builds.**
 8. `ImageSaver.save()` returns success even if `Bitmap.compress()` returns
    `false`, which can expose a broken gallery/share URI as if it were a valid
-   saved photo.
+   saved photo. **Status: fixed.**
 9. Release docs still describe the AAB as unsigned after signing support landed,
    so operators can ship with a false understanding of artifact security.
 10. Play Store compliance work is only in backlog. There is no committed privacy

@@ -45,8 +45,12 @@ class ImageSaver @Inject constructor(private val context: Context) {
             ?: return null
 
         return try {
-            resolver.openOutputStream(uri)?.use { stream ->
+            val saved = resolver.openOutputStream(uri)?.use { stream ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)
+            } == true
+            if (!saved) {
+                resolver.delete(uri, null, null)
+                return null
             }
             values.clear()
             values.put(MediaStore.Images.Media.IS_PENDING, PENDING_FALSE)
