@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -79,6 +80,7 @@ dependencies {
     // Testing
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.junit5.params)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
@@ -87,4 +89,40 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// ---------------------------------------------------------------------------
+// Kover — coverage gate: 95% on domain/logic; UI/DI/generated excluded (Q3)
+// ---------------------------------------------------------------------------
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    // Compose UI — Activities, Screens, themes, previews
+                    "it.marcelpetrick.catears.ui.*",
+                    // Hilt-generated classes (all known patterns)
+                    "*_HiltComponents*",
+                    "*_MembersInjector*",
+                    "*Hilt_*",
+                    "*_GeneratedInjector*",
+                    "dagger.hilt.*",
+                    "hilt_aggregated_deps.*",
+                    // Application class (framework entry point, no logic)
+                    "it.marcelpetrick.catears.CatEarsApplication",
+                )
+                annotatedBy(
+                    "dagger.hilt.android.HiltAndroidApp",
+                    "dagger.hilt.android.AndroidEntryPoint",
+                    "androidx.compose.runtime.Composable",
+                    "androidx.compose.ui.tooling.preview.Preview",
+                )
+            }
+        }
+        verify {
+            rule("Domain coverage gate — 95% line coverage required") {
+                minBound(95)
+            }
+        }
+    }
 }

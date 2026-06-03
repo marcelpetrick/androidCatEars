@@ -43,6 +43,10 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 # Check formatting + static analysis + Android lint in one command
 ./gradlew qualityCheck
 
+# Coverage
+./gradlew :app:koverVerify     # Fails if domain/logic coverage < 95%
+./gradlew :app:koverHtmlReport # HTML report → app/build/reports/kover/html/
+
 # Individual tools
 ./gradlew spotlessCheck   # ktlint via Spotless
 ./gradlew detekt          # detekt static analysis

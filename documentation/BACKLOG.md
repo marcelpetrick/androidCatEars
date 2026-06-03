@@ -54,9 +54,9 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 3.0 | TODO | Unit-test stack | JUnit5 + MockK + Turbine wired; one trivial passing test; `./gradlew test` green. |
-| 3.1 | TODO | Coverage gate (Kover) | Kover configured with a **95%** verification rule and Q3 exclusions (UI/DI/generated). |
-| 3.2 | TODO | Prove the gate | A real `domain` test exists; verified that dropping coverage fails `koverVerify`; README documents it. |
+| 3.0 | DONE | Unit-test stack | JUnit5 + MockK + Turbine wired; one trivial passing test; `./gradlew test` green. |
+| 3.1 | DONE | Coverage gate (Kover) | Kover configured with a **95%** verification rule and Q3 exclusions (UI/DI/generated). |
+| 3.2 | DONE | Prove the gate | A real `domain` test exists; verified that dropping coverage fails `koverVerify`; README documents it. |
 
 ### WP 4 — Continuous Integration
 
