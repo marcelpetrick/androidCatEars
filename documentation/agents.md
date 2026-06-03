@@ -27,6 +27,41 @@ Work is organised as **atomic, focused tasks**, not large work packages.
 
 ---
 
+## Execution Loop
+
+This is the autonomous workflow. When the loop is started, repeat the following until told to stop,
+a task needs a user decision, or the backlog has no `TODO` tasks left:
+
+1. **Select** the next `TODO` task in [`BACKLOG.md`](BACKLOG.md), respecting order (top to bottom).
+   Mark it `IN PROGRESS`.
+2. **Implement** it until the global **Definition of Done** is fully met:
+   build passes, tests pass, coverage stays ≥ 95% on its scope, linters are clean, docs are updated,
+   and the patch version is bumped.
+3. **On success:** mark the task `DONE` and make an **atomic, conventional, signed-off** commit
+   locally (no AI attribution, **never push**). Then go to step 1 for the next task.
+4. **If the task cannot be fully completed in one go:**
+   - Implement as much as can be done **while keeping the repository green** (buildable, tests/lint
+     passing). Never leave the repo broken between commits.
+   - **Add one or more follow-up tasks** to `BACKLOG.md` capturing the remaining work, each with a
+     clear goal and acceptance criteria, placed where it belongs in the order.
+   - Include that backlog update **in the same commit**, so another agent can pick the follow-up up
+     later without any lost context.
+   - Mark progress honestly (the original task stays `IN PROGRESS` or becomes `DONE` only if its own
+     acceptance criteria are met; otherwise the remainder lives in the new follow-up task).
+5. **Repeat.**
+
+**Stop and ask the user** when: a task is marked `ASK`, an architectural/product decision not already
+made is required, or something contradicts the documented plan. Present 2–3 concrete proposals with a
+recommendation rather than guessing.
+
+**Loop invariants (never violate):**
+- Every commit leaves the repository **green** — it builds and passes the quality gate.
+- Commits are **local only**; the user decides when to push.
+- All work stays **inside the project directory** (see "Local Environment & Tooling").
+- The backlog is always an accurate reflection of remaining work.
+
+---
+
 ## Git Identity
 
 All commits must use the following identity:
@@ -95,3 +130,40 @@ A pipeline failure blocks the commit from being treated as complete. Fix the fai
   - How to deploy / release (signing, distribution channel, versioning step).
 - Keep `README.md` up to date with every change that affects build, run, or deploy steps.
 - Additional design documents, ADRs, and reference material live under `documentation/`.
+
+---
+
+## Local Environment & Tooling
+
+Agents may install tools, SDKs, and dependencies needed to build, test, and lint the project — but
+under strict rules so the environment stays reproducible and traceable.
+
+- **Stay inside the project directory.** All work and side effects must happen within this repo's
+  directory tree. Prefer project-local installs (Gradle-managed dependencies, the Gradle wrapper,
+  project-local SDK/tool paths) over global or system-wide changes. Do not modify the user's system
+  outside this directory unless it is genuinely unavoidable — and if so, flag it explicitly first.
+- **Prefer reproducible, pinned versions.** Use the Gradle wrapper and the version catalog
+  (`libs.versions.toml`) so versions are declared in-repo, rather than relying on ad-hoc global tools.
+- **Log every installation.** Whenever a tool or SDK is installed (or a system-level change is made),
+  record it in `documentation/TOOLING.md`: the tool name, version, purpose, how it was installed,
+  whether it is project-local or system-wide, and the date. This keeps the setup traceable and
+  reproducible by the next agent or a human.
+- If a required tool is already present, note its version in `documentation/TOOLING.md` rather than
+  reinstalling.
+
+---
+
+## Repository Hygiene (`.gitignore`)
+
+Commit only what is **necessary and not regenerable**. Anything a tool can regenerate must not be
+stored in git.
+
+- **Do commit:** source code, configuration, the Gradle wrapper, the version catalog, documentation,
+  and committed assets (e.g. the placeholder overlay artwork).
+- **Never commit (ignore instead):** build outputs (`build/`, `.gradle/`), IDE files (`.idea/`,
+  `*.iml`), local environment config (`local.properties`), keystores/secrets, caches, and
+  test/coverage report outputs.
+- **Groom `.gitignore` continuously.** As the project grows, if a generated or regenerable artifact
+  shows up in `git status`, add it to `.gitignore` instead of committing it. The goal is a clean repo
+  that contains only meaningful, hand-authored or source-of-truth files.
+- The baseline `.gitignore` is established in backlog task 0.0 and maintained from then on.
