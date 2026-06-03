@@ -12,11 +12,14 @@ See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
 4. Add README screenshots (14.4) once the app is captured on a device or webcam-backed emulator.
 5. GitHub Actions release workflow exists (release.yml); verify it runs once pushed to GitHub.
 6. WP 18.0: Robolectric host-side tests — **blocked on JDK 26** (Robolectric 4.14.1 / ASM 9.7 only supports up to Java 24 class files). Install JDK 21 and configure Gradle toolchains, or wait for Robolectric with ASM 9.9+.
+7. Restore the visible git commit stamp in the main UI; `BuildConfig.GIT_COMMIT` and `VersionLabel` exist, but `MainScreen` currently renders only the version.
+8. Show the current ear-style name in the style switcher UI; WP 21.2 and `EAR_STYLES.md` describe a visible label, but the shipped button is icon-only.
+9. Document the WP 21 style switcher in README usage once the visible style label is restored.
+10. Update `DEVELOPMENT_PLAN.md` architecture notes to acknowledge the post-MVP `:domain` module extraction from WP 17.
 
 ## Resolved (recent reviews)
 
 - ~~Wire full capture flow~~ DONE (11.2): capture → composite → save → share.
-- ~~Version + commit hash at startup~~ DONE (14.3).
 - ~~Designed launcher icon~~ DONE (14.0); ~~branded theme + light/dark~~ DONE (14.1).
 - ~~States + a11y capture feedback~~ DONE (14.2).
 - ~~Release build type / R8~~ DONE (15.0); ~~signing config~~ DONE (15.1); ~~deploy docs~~ DONE (15.2).
