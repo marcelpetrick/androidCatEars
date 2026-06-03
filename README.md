@@ -88,13 +88,22 @@ Install on a connected device or running emulator:
 ./gradlew installDebug
 ```
 
-## Release Build
+## Release Build & Deploy
+
+Build a minified, resource-shrunk release APK or an App Bundle for the Play Store:
 
 ```bash
-./gradlew assembleRelease
+./gradlew assembleRelease   # -> app/build/outputs/apk/release/androidCatEars-release.apk
+./gradlew bundleRelease     # -> app/build/outputs/bundle/release/androidCatEars-release.aab
 ```
 
-Signing configuration must be set up in `local.properties` or via environment variables before a release build will produce a signed APK.
+Release **signing** is driven by a gitignored `keystore.properties` (copy
+`keystore.properties.example`) or by `RELEASE_*` environment variables — **no
+secrets are committed**. When no credentials are present, the release build
+still succeeds but produces an *unsigned* artifact (`…-release-unsigned.apk`).
+
+See [`documentation/RELEASE.md`](documentation/RELEASE.md) for the full release
+checklist, keystore setup, and how to install a signed build on a device.
 
 ---
 
