@@ -240,8 +240,32 @@ Each task keeps all quality gates green (build + detekt + lint + tests ≥ 95% +
 | 20.6 | DONE | Pose-reactive ear tilt with spring | `headEulerAngleZ` mapped to per-ear tilt: left at `0.6 × roll`, right at `1.0 × roll`. Both driven through `animateFloatAsState(spring(StiffnessMedium))` for elastic overshoot on rapid head snaps. |
 | 20.7 | DONE | Capture path: procedural ears composited | `OverlayCompositor.composite(frame, OverlayPlacement?)` draws both ears procedurally on `android.graphics.Canvas` using the same geometry constants. `by lazy {}` Paint initialisation avoids Android class-load in JVM tests. `CameraPreviewComposable.captureComposited()` no longer decodes a PNG asset. |
 
+### WP 21 — Feline-quality ear styles with live style switcher
+
+Full design rationale, visual references, and style definitions in
+[`EAR_STYLES.md`](EAR_STYLES.md). Ten concept mockups in
+[`../ear_design_ideas/`](../ear_design_ideas/).
+
+**Goal 1**: Make the default ears look like real cat ears (feline silhouette,
+gradient fill, fur fringe, rounded tip) rather than plain triangles.
+**Goal 2**: Let the user cycle through 5 distinct ear styles (cat variants +
+dog + other) via a new button in the camera UI.
+
+**Prerequisite order**: 21.0 → 21.1 → 21.2 → 21.3 → 21.4 → 21.5 → 21.6
+Each task keeps all quality gates green.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 21.0 | TODO | `EarStyle` enum in `:domain` | Add `enum class EarStyle { CLASSIC, SHARP_FELINE, LYNX_TUFTED, CANINE_FLOPPY, CANINE_PERKY }` to `:domain`. Add `earStyle: EarStyle = EarStyle.CLASSIC` to `OverlayPlacement` (default-valued, no breaking change). Unit-test enum values and default; all gates green. |
+| 21.1 | TODO | Style-dispatch in `CatEarOverlay` | Refactor `drawEar()` in `CatEarOverlay` to branch on `anchor.style` (or pass `EarStyle` alongside). Extract current triangle logic into `drawClassicEar()`. Add a stub `drawSharpFelineEar()` that delegates to classic for now. All gates green; no visible change yet. |
+| 21.2 | TODO | Style switcher button in `MainScreen` | Add `earStyle: EarStyle` + `onCycleEarStyle: () → Unit` parameters to `MainScreen` and `CameraContent`. In `CameraContent`, add a small `ExtendedFloatingActionButton` (palette icon + current style name label) at `Alignment.BottomEnd` offset above the camera-switch FAB. Wire to `MainViewModel.onCycleEarStyle()`. ViewModel cycles `EarStyle.entries` with wrap-around. Unit-test the cycle logic; UI compiles. |
+| 21.3 | TODO | Style B — Sharp Feline renderer | Implement `drawSharpFelineEar()` in `CatEarOverlay`: asymmetric outline (outer edge steep, inner edge gentle), `linearGradient` fill (dark tan rim → sandy centre), salmon inner-ear inset with shadowed leading strip, 3 animated tip-tufts using the existing `InfiniteTransition`. Mirror same geometry in `OverlayCompositor` for capture. Visual check against `02_sharp_feline.png`. |
+| 21.4 | TODO | Style C — Lynx Tufted renderer | Implement `drawLynxTuftedEar()`: same outline as Sharp Feline but wider base + 6–8 long dark-brown tufts (24–32 dp) projecting from the tip. Tufts animate with higher sway amplitude (`TUFT_SWAY_RATIO = 0.12f`). Visual check against `04_lynx_tufted.png`. |
+| 21.5 | TODO | Style D — Canine Floppy renderer | Implement `drawCanineFloppyEar()`: teardrop path anchored at `anchor.y`, bottom of flap at `anchor.y + 1.2 × anchor.size`, hanging to the outer side. Sway becomes a pendulum swing (±4°) on a single `animateFloatAsState` with `spring(stiffness = StiffnessLow)`. Visual check against `06_canine_floppy.png`. |
+| 21.6 | TODO | Style E — Canine Perky renderer | Implement `drawCaninePerkyEar()`: short wide triangle with `drawArc` rounded cap at the tip, warm cream (#D4B896) outer fill, coral interior, cross-hatch texture on outer surface (4 diagonal lines). Visual check against `07_canine_perky.png`. |
+
 ### Future backlog (not yet broken down)
 
-Video recording · multi-face tracking · extra filters (dog ears, glasses, hats) ·
+Video recording · multi-face tracking · extra filters (glasses, hats) ·
 expression reactions · custom AI models (ONNX/TFLite) · overlay marketplace · social features.
 Each becomes its own set of tasks when prioritised — see [`VISION.md`](VISION.md) "Future Ideas".

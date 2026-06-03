@@ -226,6 +226,7 @@ the README for daily commands, then use the table below for deeper topics.
 | [`code_review.md`](code_review.md) | Security, CI, and correctness review with remediation status |
 | [`documentation/OVERLAY_LAB.md`](documentation/OVERLAY_LAB.md) | Desktop harness for tuning cat-ear placement on sample photos |
 | [`documentation/ANIMATED_EARS.md`](documentation/ANIMATED_EARS.md) | Design for animated, 3D-look procedural ears with proper head anchoring (WP 20) |
+| [`documentation/EAR_STYLES.md`](documentation/EAR_STYLES.md) | Feline-quality ear styles + style switcher design (WP 21) |
 | [`documentation/RELEASE.md`](documentation/RELEASE.md) | Keystore setup, signed builds, release checklist |
 | [`documentation/PLAY_STORE.md`](documentation/PLAY_STORE.md) | Google Play account, signing model, and publishing guide |
 | [`documentation/PRIVACY_POLICY.md`](documentation/PRIVACY_POLICY.md) | Privacy policy template for Play Store submission |
