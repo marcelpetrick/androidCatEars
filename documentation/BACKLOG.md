@@ -176,7 +176,7 @@ user decision before proceeding).
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 16.0 | TODO | README pass | Overview/build/run/deploy all accurate against the shipped app. |
-| 16.1 | TODO | Architecture notes | Architecture documentation under `documentation/`. |
+| 16.1 | DONE | Architecture notes | Architecture documentation under `documentation/`. |
 | 16.2 | TODO | CHANGELOG + troubleshooting | CHANGELOG seeded from SemVer history; troubleshooting section added. |
 
 ---
