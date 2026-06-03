@@ -11,7 +11,7 @@ See [`agents.md`](documentation/agents.md) "Periodic review". Detailed work live
 3. Tune overlay placement constants (width ratio, ear height) against real faces.
 4. Task 2.3: upgrade compileSdk/targetSdk 37, Kotlin 2.4.0 + KSP, JUnit 6 once toolchain available.
 5. Task 14.3: show version + git commit short hash at app startup (Gradle BuildConfig injection).
-6. GitHub Actions: build CI exists; add manual release workflow (tag + AAB + APK + version) — in progress.
+6. GitHub Actions release workflow created (release.yml); verify it runs once pushed to GitHub.
 7. Consider instrumented (androidTest) coverage for camera/ML Kit paths currently excluded from Kover.
 8. Release signing config (WP 15) before any public APK distribution.
 9. Add app icon / final artwork (replace placeholder ic_cat_ears + launcher icon) — WP 14.
