@@ -45,6 +45,8 @@ fun MainScreen(
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
     onFaceDetected: (OverlayPlacement?) -> Unit,
+    captureRequested: Boolean,
+    onComposited: (android.graphics.Bitmap?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -59,6 +61,8 @@ fun MainScreen(
                 lens = lens,
                 overlayPlacement = overlayPlacement,
                 onFaceDetected = onFaceDetected,
+                captureRequested = captureRequested,
+                onComposited = onComposited,
                 onToggleLens = onToggleLens,
                 onCapture = onCapture,
                 onShare = onShare,
@@ -131,12 +135,20 @@ private fun CameraContent(
     lens: LensSelector,
     overlayPlacement: OverlayPlacement?,
     onFaceDetected: (OverlayPlacement?) -> Unit,
+    captureRequested: Boolean,
+    onComposited: (android.graphics.Bitmap?) -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        CameraPreview(lens = lens, onFaceDetected = onFaceDetected, modifier = Modifier.fillMaxSize())
+        CameraPreview(
+            lens = lens,
+            onFaceDetected = onFaceDetected,
+            captureRequested = captureRequested,
+            onComposited = onComposited,
+            modifier = Modifier.fillMaxSize(),
+        )
         CatEarOverlay(placement = overlayPlacement)
         FloatingActionButton(
             onClick = onToggleLens,
@@ -181,6 +193,8 @@ private fun MainScreenReadyPreview() {
             onCapture = {},
             onShare = {},
             onFaceDetected = {},
+            captureRequested = false,
+            onComposited = {},
         )
     }
 }
@@ -199,6 +213,8 @@ private fun MainScreenPermissionRequiredPreview() {
             onCapture = {},
             onShare = {},
             onFaceDetected = {},
+            captureRequested = false,
+            onComposited = {},
         )
     }
 }
@@ -217,6 +233,8 @@ private fun MainScreenPermissionDeniedPreview() {
             onCapture = {},
             onShare = {},
             onFaceDetected = {},
+            captureRequested = false,
+            onComposited = {},
         )
     }
 }

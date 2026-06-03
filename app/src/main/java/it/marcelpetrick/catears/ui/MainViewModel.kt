@@ -3,20 +3,28 @@
 
 package it.marcelpetrick.catears.ui
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
 import it.marcelpetrick.catears.domain.permissionResultToState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Inject
+import kotlin.random.Random
 
 @HiltViewModel
-class MainViewModel @Inject constructor() : ViewModel() {
+class MainViewModel @Inject constructor(private val imageSaver: ImageSaver) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Initialising)
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -39,21 +47,33 @@ class MainViewModel @Inject constructor() : ViewModel() {
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)
     val captureState: StateFlow<CaptureState> = _captureState.asStateFlow()
 
-    /** Signals the start of a capture; the camera implementation calls [onCaptureResult]. */
+    /** Capture button pressed; the camera layer observes this and produces the composited frame. */
     fun onCaptureRequested() {
         _captureState.value = CaptureState.Capturing
     }
 
-    /** Called by the camera layer with the raw JPEG bytes, or null on failure. */
-    fun onCaptureResult(jpegBytes: ByteArray?) {
-        _captureState.value = if (jpegBytes != null) {
-            CaptureState.Success(jpegBytes)
-        } else {
-            CaptureState.Failed
+    /**
+     * Called by the camera layer with the composited (preview + ears) bitmap.
+     * Saves it to the gallery off the main thread, then transitions to Saved or Failed.
+     */
+    fun onCompositedBitmap(bitmap: Bitmap?) {
+        if (bitmap == null) {
+            _captureState.value = CaptureState.Failed
+            return
+        }
+        viewModelScope.launch {
+            val uri = withContext(Dispatchers.IO) {
+                imageSaver.save(
+                    bitmap = bitmap,
+                    epochMillis = System.currentTimeMillis(),
+                    randomSuffix = randomSuffix(),
+                )
+            }
+            _captureState.value = if (uri != null) CaptureState.Saved(uri) else CaptureState.Failed
         }
     }
 
-    /** Resets the capture state back to Idle (called after the result has been consumed). */
+    /** Resets the capture state back to Idle (e.g. after the saved photo has been shared). */
     fun onCaptureConsumed() {
         _captureState.value = CaptureState.Idle
     }
@@ -62,8 +82,8 @@ class MainViewModel @Inject constructor() : ViewModel() {
      * Called by the UI once the Android permission result is known.
      *
      * @param granted Whether the CAMERA permission was granted.
-     * @param showRationale Whether [ActivityCompat.shouldShowRequestPermissionRationale] returned
-     *   true — used to distinguish Denied from PermanentlyDenied.
+     * @param showRationale Whether the rationale should still be shown — distinguishes Denied from
+     *   PermanentlyDenied.
      */
     fun onPermissionResult(granted: Boolean, showRationale: Boolean) {
         _uiState.value = when (permissionResultToState(granted, showRationale)) {
@@ -72,5 +92,11 @@ class MainViewModel @Inject constructor() : ViewModel() {
             PermissionState.PermanentlyDenied -> MainUiState.PermissionPermanentlyDenied
             PermissionState.Unknown -> MainUiState.Initialising
         }
+    }
+
+    private fun randomSuffix(): String = String.format(Locale.US, "%04x", Random.nextInt(SUFFIX_RANGE))
+
+    private companion object {
+        const val SUFFIX_RANGE = 0x10000
     }
 }

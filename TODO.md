@@ -6,7 +6,7 @@ See [`agents.md`](documentation/agents.md) "Periodic review". Detailed work live
 
 ## Open
 
-1. Wire full capture flow: capture → composite overlay → save → enable Share FAB (currently `onShare = null`).
+1. ~~Wire full capture flow~~ DONE (task 11.2): capture → composite → save → share.
 2. Verify live face-tracked overlay on a real device (emulator virtual camera has no real face).
 3. Tune overlay placement constants (width ratio, ear height) against real faces.
 4. Task 2.3: upgrade compileSdk/targetSdk 37, Kotlin 2.4.0 + KSP, JUnit 6 once toolchain available.

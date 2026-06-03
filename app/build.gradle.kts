@@ -135,10 +135,11 @@ kover {
                     "it.marcelpetrick.catears.camera.CameraPreviewComposableKt",
                     // Share intent builder — toChooserIntent() needs Android Intent (not mocked in JVM tests)
                     "it.marcelpetrick.catears.share.ShareConfigKt",
-                    // Compositor and Saver — require real Android Bitmap/Canvas/MediaStore
+                    // Compositor, Saver, and drawable decoder — require real Android Bitmap/Canvas/MediaStore
                     "it.marcelpetrick.catears.capture.OverlayCompositor",
                     "it.marcelpetrick.catears.capture.ImageSaver",
                     "it.marcelpetrick.catears.capture.ImageSaver*",
+                    "it.marcelpetrick.catears.capture.DrawableBitmapKt",
                     // ML Kit face detector implementation — device-only
                     "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl",
                     "it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl*",

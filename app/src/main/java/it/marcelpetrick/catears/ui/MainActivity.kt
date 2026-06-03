@@ -16,6 +16,9 @@ import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.share.buildShareConfig
+import it.marcelpetrick.catears.share.toChooserIntent
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
 
 @AndroidEntryPoint
@@ -31,6 +34,7 @@ class MainActivity : ComponentActivity() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val lens by viewModel.lens.collectAsStateWithLifecycle()
                 val overlayPlacement by viewModel.overlayPlacement.collectAsStateWithLifecycle()
+                val captureState by viewModel.captureState.collectAsStateWithLifecycle()
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -45,6 +49,8 @@ class MainActivity : ComponentActivity() {
                     permissionLauncher.launch(Manifest.permission.CAMERA)
                 }
 
+                val savedState = captureState as? CaptureState.Saved
+
                 MainScreen(
                     uiState = uiState,
                     lens = lens,
@@ -53,8 +59,15 @@ class MainActivity : ComponentActivity() {
                     onOpenSettings = { openAppSettings() },
                     onToggleLens = viewModel::onToggleLens,
                     onCapture = { viewModel.onCaptureRequested() },
-                    onShare = null,
+                    onShare = savedState?.let { saved ->
+                        {
+                            startActivity(buildShareConfig(saved.uri).toChooserIntent())
+                            viewModel.onCaptureConsumed()
+                        }
+                    },
                     onFaceDetected = viewModel::onFaceDetected,
+                    captureRequested = captureState is CaptureState.Capturing,
+                    onComposited = viewModel::onCompositedBitmap,
                 )
             }
         }

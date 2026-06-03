@@ -3,16 +3,22 @@
 
 package it.marcelpetrick.catears.camera
 
+import android.graphics.Bitmap
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
+import it.marcelpetrick.catears.R
+import it.marcelpetrick.catears.capture.OverlayCompositor
+import it.marcelpetrick.catears.capture.decodeDrawableToBitmap
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PlacementSmoother
@@ -21,62 +27,65 @@ import it.marcelpetrick.catears.domain.computeOverlayPlacement
 import it.marcelpetrick.catears.domain.imageToViewBoundingBox
 import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
+
+private const val EAR_ASSET_WIDTH = 200
+private const val EAR_ASSET_HEIGHT = 100
 
 /**
- * Full-screen CameraX preview composable with live face-tracked overlay placement.
+ * Full-screen CameraX preview composable with live face-tracked overlay placement and capture.
  *
- * Binds the camera on first composition (or when [lens] changes), runs ML Kit face
- * detection on the analysis stream, transforms each detected face into view space,
- * smooths the result, and reports an [OverlayPlacement] (or null) via [onFaceDetected].
+ * - Runs ML Kit face detection on the analysis stream, transforms each face to view space,
+ *   smooths it, and reports an [OverlayPlacement] (or null) via [onFaceDetected].
+ * - When [captureRequested] flips true, grabs the current preview frame (view-space, WYSIWYG),
+ *   composites the cat-ear overlay at the latest placement, and returns the result via [onComposited].
  */
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 @Composable
-fun CameraPreview(lens: LensSelector, onFaceDetected: (OverlayPlacement?) -> Unit, modifier: Modifier = Modifier) {
+fun CameraPreview(
+    lens: LensSelector,
+    onFaceDetected: (OverlayPlacement?) -> Unit,
+    captureRequested: Boolean,
+    onComposited: (Bitmap?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember { Executors.newSingleThreadExecutor() }
     val detector = remember { MlKitFaceDetectorImpl() }
     val smoother = remember { PlacementSmoother() }
     val controller = remember { CameraXControllerImpl() }
+    val latestPlacement = remember { AtomicReference<OverlayPlacement?>(null) }
+    val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
+
+    LaunchedEffect(captureRequested) {
+        if (captureRequested) {
+            onComposited(captureComposited(context, previewViewRef.get(), latestPlacement.get()))
+        }
+    }
 
     AndroidView(
         factory = { ctx ->
             val previewView = PreviewView(ctx).apply {
                 implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             }
-            controller.previewView = previewView
-            controller.lifecycleOwner = lifecycleOwner
-            controller.faceDetector = detector
-            controller.onFaceResult = { face, imageWidth, imageHeight ->
-                val placement = face?.let {
-                    val ctxTransform = TransformContext(
-                        imageWidth = imageWidth,
-                        imageHeight = imageHeight,
-                        viewWidth = previewView.width.coerceAtLeast(1),
-                        viewHeight = previewView.height.coerceAtLeast(1),
-                        isFrontCamera = lens == LensSelector.Front,
-                    )
-                    val viewBox = imageToViewBoundingBox(it.boundingBox, ctxTransform)
-                    smoother.smooth(computeOverlayPlacement(viewBox, it.headEulerAngleZ))
-                }
-                if (placement == null) smoother.reset()
+            previewViewRef.set(previewView)
+            wireController(controller, previewView, lifecycleOwner, detector) { face, w, h ->
+                val transform = TransformContext(
+                    imageWidth = w,
+                    imageHeight = h,
+                    viewWidth = previewView.width.coerceAtLeast(1),
+                    viewHeight = previewView.height.coerceAtLeast(1),
+                    isFrontCamera = lens == LensSelector.Front,
+                )
+                val placement = facePlacement(face, transform, smoother)
+                latestPlacement.set(placement)
                 onFaceDetected(placement)
             }
-
-            val providerFuture: ListenableFuture<ProcessCameraProvider> =
-                ProcessCameraProvider.getInstance(ctx)
-
-            providerFuture.addListener(
-                {
-                    controller.setCameraProvider(providerFuture.get())
-                    controller.bindPreview(lens)
-                },
-                executor,
-            )
+            startCamera(ctx, controller, executor, lens)
             previewView
         },
-        update = { _ ->
-            controller.bindPreview(lens)
-        },
+        update = { controller.bindPreview(lens) },
         modifier = modifier,
     )
 
@@ -87,4 +96,62 @@ fun CameraPreview(lens: LensSelector, onFaceDetected: (OverlayPlacement?) -> Uni
             executor.shutdown()
         }
     }
+}
+
+/** Grabs the view-space preview frame and composites the cat-ear overlay at [placement]. */
+private fun captureComposited(
+    context: android.content.Context,
+    previewView: PreviewView?,
+    placement: OverlayPlacement?,
+): Bitmap? {
+    val frame = previewView?.bitmap ?: return null
+    val ears = placement?.let {
+        decodeDrawableToBitmap(context, R.drawable.ic_cat_ears, EAR_ASSET_WIDTH, EAR_ASSET_HEIGHT)
+    }
+    return if (placement != null && ears != null) OverlayCompositor.composite(frame, ears, placement) else frame
+}
+
+/** Transforms a detected face to a smoothed view-space [OverlayPlacement]. */
+private fun facePlacement(
+    face: it.marcelpetrick.catears.domain.FaceModel?,
+    transform: TransformContext,
+    smoother: PlacementSmoother,
+): OverlayPlacement? {
+    if (face == null) {
+        smoother.reset()
+        return null
+    }
+    val viewBox = imageToViewBoundingBox(face.boundingBox, transform)
+    return smoother.smooth(computeOverlayPlacement(viewBox, face.headEulerAngleZ))
+}
+
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
+private fun wireController(
+    controller: CameraXControllerImpl,
+    previewView: PreviewView,
+    lifecycleOwner: androidx.lifecycle.LifecycleOwner,
+    detector: MlKitFaceDetectorImpl,
+    onFace: (it.marcelpetrick.catears.domain.FaceModel?, Int, Int) -> Unit,
+) {
+    controller.previewView = previewView
+    controller.lifecycleOwner = lifecycleOwner
+    controller.faceDetector = detector
+    controller.onFaceResult = onFace
+}
+
+private fun startCamera(
+    context: android.content.Context,
+    controller: CameraXControllerImpl,
+    executor: java.util.concurrent.Executor,
+    lens: LensSelector,
+) {
+    val providerFuture: ListenableFuture<ProcessCameraProvider> =
+        ProcessCameraProvider.getInstance(context)
+    providerFuture.addListener(
+        {
+            controller.setCameraProvider(providerFuture.get())
+            controller.bindPreview(lens)
+        },
+        executor,
+    )
 }

@@ -4,7 +4,8 @@
 package it.marcelpetrick.catears.ui
 
 import app.cash.turbine.test
-import it.marcelpetrick.catears.domain.BoundingBox
+import io.mockk.mockk
+import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test
 
 class MainViewModelTest {
 
-    private fun viewModel() = MainViewModel()
+    private fun viewModel() = MainViewModel(imageSaver = mockk<ImageSaver>(relaxed = true))
 
     @Test
     fun `initial state is Initialising`() = runTest {
@@ -130,24 +131,11 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onCaptureResult with bytes transitions to Success`() = runTest {
-        val vm = viewModel()
-        val bytes = byteArrayOf(1, 2, 3)
-        vm.captureState.test {
-            assertEquals(CaptureState.Idle, awaitItem())
-            vm.onCaptureResult(bytes)
-            val state = awaitItem()
-            assert(state is CaptureState.Success)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `onCaptureResult null transitions to Failed`() = runTest {
+    fun `onCompositedBitmap null transitions to Failed`() = runTest {
         val vm = viewModel()
         vm.captureState.test {
             assertEquals(CaptureState.Idle, awaitItem())
-            vm.onCaptureResult(null)
+            vm.onCompositedBitmap(null)
             assertEquals(CaptureState.Failed, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }

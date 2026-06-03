@@ -133,6 +133,7 @@ user decision before proceeding).
 |----|--------|------|---------------------|
 | 11.0 | DONE | Capture use case + UI | Capture button + CameraX `ImageCapture` produces a still frame. |
 | 11.1 | DONE | Composite overlay | Camera frame + overlay composited into one bitmap; testable parts factored and tested. |
+| 11.2 | DONE | Capture → composite → save → share integration | Capture button grabs the view-space preview frame, composites the ear overlay (WYSIWYG, coords already in view space), saves via `ImageSaver`, and enables the Share FAB with the saved URI. |
 
 ### WP 12 — Save captured image
 
