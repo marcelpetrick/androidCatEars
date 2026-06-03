@@ -11,7 +11,7 @@ import it.marcelpetrick.catears.domain.LensSelector
  * Concrete implementations bind CameraX use cases to the lifecycle;
  * the interface allows test doubles in unit tests without a device.
  */
-interface CameraControllerSeam {
+interface CameraControllerSeam : AutoCloseable {
 
     /** Bind the camera preview (and analysis) use cases. */
     fun bindPreview(lens: LensSelector)
@@ -25,4 +25,7 @@ interface CameraControllerSeam {
         bindPreview(lens)
     }
 
+    override fun close() {
+        unbind()
+    }
 }

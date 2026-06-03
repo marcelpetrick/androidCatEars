@@ -51,7 +51,7 @@ exploitable remote vulnerabilities.
 5. `CaptureState.Saved` stores `android.net.Uri` inside the domain package,
    violating the documented framework-free domain boundary. **Status: fixed.**
 6. `CameraXControllerImpl` owns executors but never shuts them down, leaking
-   threads across activity disposal/recreation.
+   threads across activity disposal/recreation. **Status: fixed.**
 7. The capture button remains active while a capture/save is already in progress,
    so repeated taps can enqueue overlapping saves and inconsistent UI state.
 8. `MainViewModel` hardcodes `Dispatchers.IO`, `System.currentTimeMillis()`, and

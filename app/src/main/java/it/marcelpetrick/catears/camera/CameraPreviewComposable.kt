@@ -94,7 +94,7 @@ fun CameraPreview(
 
     DisposableEffect(Unit) {
         onDispose {
-            controller.unbind()
+            controller.close()
             detector.close()
         }
     }

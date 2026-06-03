@@ -36,4 +36,10 @@ class CameraControllerSeamTest {
         assertEquals(listOf("unbind", "bind:Front"), fake.calls)
     }
 
+    @Test
+    fun `close unbinds by default`() {
+        val fake = FakeSeam()
+        fake.close()
+        assertEquals(listOf("unbind"), fake.calls)
+    }
 }

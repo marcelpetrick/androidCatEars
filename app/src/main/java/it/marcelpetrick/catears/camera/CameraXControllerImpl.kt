@@ -106,6 +106,11 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         cameraProvider?.unbindAll()
     }
 
+    override fun close() {
+        unbind()
+        analysisExecutor.shutdown()
+    }
+
     private companion object {
         const val ROTATION_90 = 90
         const val ROTATION_270 = 270
