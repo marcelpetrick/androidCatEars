@@ -117,10 +117,10 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 10.0 | TODO | Placeholder asset (Q4) | Generic, self-generated GPLv3-safe cat-ear asset committed; simple asset model. Replaceable later. |
-| 10.1 | TODO | Placement math | Position/scale/rotation from face geometry, in `domain`; unit-tested. |
-| 10.2 | TODO | Overlay layer | Compose `Canvas` overlay draws the ears over the preview using the placement math. |
-| 10.3 | TODO | Jitter smoothing | Smoothing reduces overlay jitter; smoothing logic unit-tested. |
+| 10.0 | DONE | Placeholder asset (Q4) | Generic, self-generated GPLv3-safe cat-ear asset committed; simple asset model. Replaceable later. |
+| 10.1 | DONE | Placement math | Position/scale/rotation from face geometry, in `domain`; unit-tested. |
+| 10.2 | IN PROGRESS | Overlay layer | Compose `Canvas` overlay draws the ears over the preview using the placement math. |
+| 10.3 | DONE | Jitter smoothing | Smoothing reduces overlay jitter; smoothing logic unit-tested. |
 
 ---
 
