@@ -19,6 +19,7 @@ exploitable remote vulnerabilities.
 4. The project has no dependency vulnerability gate. Dependency updates and CVE
    checks rely on manual review. **Status: fixed.**
 5. The project has no CodeQL or equivalent static security analysis workflow.
+   **Status: fixed.**
 6. The project has no committed secret-scanning workflow. `.gitignore` blocks
    common keystore names, but CI does not detect accidentally committed secrets.
 7. The app allows screenshots and Recents thumbnails of the live camera preview.

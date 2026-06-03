@@ -74,3 +74,13 @@ be verified, the workflow fails before publishing.
 
 It uses GitHub's dependency review action to fail the PR when a changed dependency introduces a
 known vulnerability at **moderate** severity or above.
+
+---
+
+## 4. CodeQL — `codeql.yml`
+
+**Trigger:** automatically on pushes and pull requests to `master` / `main`, plus a weekly scheduled
+scan.
+
+It builds the debug APK and runs CodeQL's Java/Kotlin analysis, publishing findings to GitHub code
+scanning.
