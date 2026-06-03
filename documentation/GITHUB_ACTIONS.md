@@ -16,9 +16,11 @@ This project has several workflows under [`.github/workflows/`](../.github/workf
 4. `:app:lint` — Android Lint
 5. `:app:test` — unit tests
 6. `:app:koverVerify` — coverage ≥ 95% on the domain/logic scope
+7. `cyclonedxBom` — aggregate CycloneDX SBOM generation
 
-It uploads test, coverage, and lint reports as build artefacts. A red CI run blocks merging.
-The workflow invokes `./scripts/ci.sh` directly so local and GitHub checks cannot drift silently.
+It uploads test, coverage, lint, and CycloneDX SBOM reports as build artefacts.
+A red CI run blocks merging. The workflow invokes `./scripts/ci.sh` directly so
+local and GitHub checks cannot drift silently.
 
 ---
 
@@ -33,14 +35,19 @@ The workflow invokes `./scripts/ci.sh` directly so local and GitHub checks canno
 3. Requires `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and
    `RELEASE_KEY_PASSWORD` repository secrets.
 4. Builds `androidCatEars-<version>-release.aab` — the signed Play Store app bundle.
-5. Verifies the AAB signature with `jarsigner -verify -strict`.
-6. Publishes a **GitHub Release**:
+5. Generates CycloneDX SBOM release artifacts:
+   - `androidCatEars-<version>.cdx.json`
+   - `androidCatEars-<version>.cdx.xml`
+   - SHA-256 checksum files for both SBOMs
+6. Verifies the AAB signature with `jarsigner -verify -strict`.
+7. Publishes a **GitHub Release**:
    - Tag: `v<version>` (e.g. `v0.1.25`)
    - Title: `androidCatEars <version>`
    - Body mentions the version number and what each download is.
-   - The release AAB attached for download.
+   - The release AAB, debug APK, CycloneDX SBOMs, and SBOM checksums attached for download.
 
-So an operator can download the `.aab` for Play Console upload.
+So an operator can download the `.aab` for Play Console upload and the
+CycloneDX SBOMs for release supply-chain records.
 
 ### How to cut a release
 
@@ -53,18 +60,25 @@ So an operator can download the `.aab` for Play Console upload.
 ### Signing note
 
 The release workflow decodes `RELEASE_KEYSTORE_BASE64` into a runner-local keystore file, passes
-that path to Gradle as `RELEASE_STORE_FILE`, and verifies the signed AAB before publishing. Debug
-APKs are development artifacts and are not attached to GitHub Releases.
+that path to Gradle as `RELEASE_STORE_FILE`, and verifies the signed AAB before publishing. The
+debug APK is attached for sideload testing only and must not be used as a production artifact.
+
+### SBOM note
+
+The release workflow runs `./scripts/generate-sbom.sh release-artefacts`, which
+wraps `./gradlew cyclonedxBom`. The same script is locally triggerable and
+produces the same versioned CycloneDX JSON/XML files plus SHA-256 checksums.
 
 ---
 
 ## Best practices used
 
-- `actions/checkout@v4`, `actions/setup-java@v4` (Temurin JDK 17), `gradle/actions/setup-gradle@v4`
+- `actions/checkout@v6`, `actions/setup-java@v5` (Temurin JDK 17), `gradle/actions/setup-gradle@v6`
   for Gradle caching.
 - `softprops/action-gh-release@v2` for publishing releases.
 - Least-privilege `permissions: contents: write` (only what's needed to create a release/tag).
 - The release reuses the exact same quality gate as CI before building artefacts.
+- Release artifacts include CycloneDX SBOM JSON/XML files and SHA-256 checksums.
 - Workflows set explicit `timeout-minutes`; branch/PR workflows cancel superseded runs via
   `concurrency` so the newest signal stays visible.
 

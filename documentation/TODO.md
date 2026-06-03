@@ -12,7 +12,6 @@ See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
 4. Add README screenshots (14.4) once the app is captured on a device or webcam-backed emulator.
 5. GitHub Actions release workflow exists (release.yml); verify it runs once pushed to GitHub.
 6. WP 18.0: Robolectric host-side tests — **blocked on JDK 26** (Robolectric 4.14.1 / ASM 9.7 only supports up to Java 24 class files). Install JDK 21 and configure Gradle toolchains, or wait for Robolectric with ASM 9.9+.
-7. `actions/checkout` is still at v4 in all workflows — Dependabot did not flag it, but bump to v5 once it is released and stable.
 
 ## Resolved (recent reviews)
 
@@ -26,6 +25,7 @@ See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
 - ~~WP 17.0 :domain module extraction~~ DONE (0.1.84): pure domain moved to standalone JVM module.
 - ~~WP 17.1 golden-fixture tests~~ DONE (0.1.85): 8 parameterized cases for computeOverlayPlacement.
 - ~~WP 18.4 supply chain~~ DONE (0.1.87): Dependabot weekly Gradle + Actions PRs configured.
+- ~~`actions/checkout` bumped to v6~~ DONE (v0.1.106): latest is v6.0.3; all 5 workflows updated.
 - ~~Git commit stamp in title bar~~ DONE (v0.1.101): `BuildConfig.GIT_COMMIT` shown alongside version.
 - ~~Ear-style label on switcher FAB~~ DONE (v0.1.101): `ExtendedFloatingActionButton` shows style name.
 - ~~README usage updated for style switcher~~ DONE (v0.1.101).
