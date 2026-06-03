@@ -4,6 +4,7 @@
 package it.marcelpetrick.catears.camera
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 private const val EAR_ASSET_WIDTH = 200
 private const val EAR_ASSET_HEIGHT = 100
+private const val TAG = "CatEars"
 
 /**
  * Full-screen CameraX preview composable with live face-tracked overlay placement and capture.
@@ -96,17 +98,50 @@ fun CameraPreview(
     }
 }
 
-/** Grabs the view-space preview frame and composites the cat-ear overlay at [placement]. */
+/**
+ * Grabs the view-space preview frame and composites the cat-ear overlay at [placement].
+ *
+ * Bulletproof by design: if there is no preview frame yet, returns null (capture fails
+ * gracefully); if no face was detected ([placement] is null), returns the plain frame and
+ * applies **no** ears; if compositing itself fails, falls back to the plain frame. Never throws.
+ */
 private fun captureComposited(
     context: android.content.Context,
     previewView: PreviewView?,
     placement: OverlayPlacement?,
 ): Bitmap? {
-    val frame = previewView?.bitmap ?: return null
-    val ears = placement?.let {
-        decodeDrawableToBitmap(context, R.drawable.ic_cat_ears, EAR_ASSET_WIDTH, EAR_ASSET_HEIGHT)
+    val frame = previewView?.bitmap
+    if (frame == null) {
+        Log.w(TAG, "Capture skipped: preview frame not ready")
+        return null
     }
-    return if (placement != null && ears != null) OverlayCompositor.composite(frame, ears, placement) else frame
+    return when (placement) {
+        null -> {
+            Log.d(TAG, "Capturing without ears: no face detected")
+            frame
+        }
+
+        else -> compositeEarsOrFrame(context, frame, placement)
+    }
+}
+
+/** Composites the ears onto [frame]; any failure (or a missing asset) yields the plain frame. */
+@Suppress("TooGenericExceptionCaught")
+private fun compositeEarsOrFrame(
+    context: android.content.Context,
+    frame: Bitmap,
+    placement: OverlayPlacement,
+): Bitmap = try {
+    val ears = decodeDrawableToBitmap(context, R.drawable.ic_cat_ears, EAR_ASSET_WIDTH, EAR_ASSET_HEIGHT)
+    if (ears != null) {
+        OverlayCompositor.composite(frame, ears, placement)
+    } else {
+        Log.w(TAG, "Ear asset decode returned null; saving plain frame")
+        frame
+    }
+} catch (e: Exception) {
+    Log.e(TAG, "Compositing ears failed; saving plain frame", e)
+    frame
 }
 
 /** Transforms a detected face to a smoothed view-space [OverlayPlacement]. */
