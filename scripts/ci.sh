@@ -12,23 +12,27 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-echo "==> [1/6] Build (debug)"
-./gradlew assembleDebug
+current_step=""
+trap 'status=$?; echo ""; echo "FAILED: ${current_step:-unknown step}"; echo "Command: ${BASH_COMMAND}"; exit "$status"' ERR
 
-echo "==> [2/6] Format check (Spotless)"
-./gradlew spotlessCheck
+run_step() {
+  current_step="$1"
+  shift
+  echo "==> ${current_step}"
+  "$@"
+}
 
-echo "==> [3/6] Static analysis (detekt)"
-./gradlew detekt
+run_step "[1/6] Build (debug)" ./gradlew assembleDebug
 
-echo "==> [4/6] Android Lint"
-./gradlew :app:lint
+run_step "[2/6] Format check (Spotless)" ./gradlew spotlessCheck
 
-echo "==> [5/6] Unit tests"
-./gradlew :app:test
+run_step "[3/6] Static analysis (detekt)" ./gradlew detekt
 
-echo "==> [6/6] Coverage gate (Kover >= 95%)"
-./gradlew :app:koverVerify
+run_step "[4/6] Android Lint" ./gradlew :app:lint
+
+run_step "[5/6] Unit tests" ./gradlew :app:test
+
+run_step "[6/6] Coverage gate (Kover >= 95%)" ./gradlew :app:koverVerify
 
 echo ""
 echo "All checks passed."

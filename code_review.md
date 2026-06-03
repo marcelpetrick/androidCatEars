@@ -78,4 +78,5 @@ exploitable remote vulnerabilities.
    superseded runs can waste minutes and obscure the latest signal. **Status:
    fixed.**
 4. `scripts/ci.sh` exits on failure but does not print which command failed,
-   making local failure diagnosis less clear than it should be.
+   making local failure diagnosis less clear than it should be. **Status:
+   fixed.**
