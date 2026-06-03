@@ -96,6 +96,17 @@ sudo modprobe kvm_intel
 
 If VirtualBox VMs need to keep running, start the Android emulator first, then launch VirtualBox — they can coexist once KVM is initialised.
 
+### Crash with exit code 139 (segfault) when using `-gpu host`
+
+On laptops with hybrid GPU (e.g. Intel Iris Xe + NVIDIA discrete), the emulator can segfault
+when using `-gpu host` after a software-mode boot. Use `-gpu swiftshader_indirect` for stability:
+
+```bash
+emulator -avd CatEars34 -accel off -gpu swiftshader_indirect -memory 4096 -no-audio -no-boot-anim &
+```
+
+Once KVM is available (VirtualBox not conflicting), `-gpu host` works reliably with `-accel on`.
+
 ### Emulator starts but is very slow
 
 Without KVM, software emulation can take 5–10 minutes to boot. Always ensure KVM is working before starting the emulator (see above).
