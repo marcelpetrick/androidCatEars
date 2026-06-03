@@ -192,9 +192,9 @@ Design and rationale in [`OVERLAY_LAB.md`](OVERLAY_LAB.md). Resolves TODO #3
 |----|--------|------|---------------------|
 | 17.0 | DONE | Extract `:domain` module | Pure domain package moved to `domain/` JVM library module; `:app` depends on it via `project(":domain")`; package names unchanged; all CI gates green. |
 | 17.1 | DONE | Golden-fixture placement tests | `ComputeOverlayPlacementFixtureTest`: 8 `@ParameterizedTest` cases (frontal/roll/yaw/extreme-yaw/landmarks/tilt/partial-landmarks) via `@MethodSource`; each asserts all 5 EarAnchor fields within 0.01 tolerance. |
-| 17.2 | TODO | Sample image set + annotations | A curated `samples/` set (varied distance/tilt/lighting) with landmark annotations (hand-labelled or OpenCV/JavaCV-generated). |
-| 17.3 | TODO | Desktop visualiser module | `:overlay-lab` JVM module (Compose Desktop or Swing) renders the ear asset over each sample using shared `domain`; exports golden PNGs; optional live constant sliders. |
-| 17.4 | TODO | Tune & promote constants | Iterate ear width/offset/scale/rotation against fixtures + visuals until fit error is small; the tuned constants ship unchanged in `:app`. |
+| 17.2 | BLOCKED | Sample image set + annotations | Requires physical device capture or manual photo annotation — cannot be done without access to real face images. |
+| 17.3 | BLOCKED | Desktop visualiser module | Depends on 17.2 sample images; also requires Compose Desktop runtime not yet in the project. |
+| 17.4 | BLOCKED | Tune & promote constants | Depends on 17.2 and 17.3. |
 
 ### WP 18 — Test depth & supply chain
 
@@ -202,7 +202,7 @@ Rationale in [`PROJECT_REVIEW.md`](PROJECT_REVIEW.md) §3–4.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 18.0 | TODO | Host-side Android tests | Robolectric + Compose UI Test (`createComposeRule`) cover ViewModel wiring and screen states on the JVM. |
+| 18.0 | BLOCKED | Host-side Android tests | Robolectric 4.14.1 (ASM 9.7) cannot instrument classes compiled by JDK 26 (class version 70). Unblocks when: Robolectric ships with ASM 9.9+ supporting Java 26, OR the dev machine installs JDK 21 and the test toolchain is configured to use it via Gradle toolchains. |
 | 18.1 | TODO | Screenshot tests | Paparazzi (or Roborazzi) snapshots for `MainScreen` states, overlay, and light/dark theme. |
 | 18.2 | TODO | Instrumented happy path | `androidTest` source set: Compose UI Test happy path + UI Automator for the permission dialog. |
 | 18.3 | TODO | Emulator E2E in CI | Gradle Managed Devices + a CI job running `connectedCheck` on a headless AVD. |

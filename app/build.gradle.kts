@@ -153,7 +153,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    // Testing
+    // Testing — JUnit 5 (primary test framework)
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -161,6 +161,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
+
 }
 
 tasks.withType<Test> {
