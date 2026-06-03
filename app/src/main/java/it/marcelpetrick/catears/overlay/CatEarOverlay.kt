@@ -5,9 +5,12 @@ package it.marcelpetrick.catears.overlay
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,14 +59,26 @@ fun CatEarOverlay(placement: OverlayPlacement?, modifier: Modifier = Modifier) {
         label = "twitchTime",
     )
 
+    // Per-ear tilt animated with a spring so rapid head snaps have a comical elastic lag.
+    val leftTilt by animateFloatAsState(
+        targetValue = if (placement != null) placement.leftEar.tiltDegrees * LEFT_TILT_FACTOR else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "leftTilt",
+    )
+    val rightTilt by animateFloatAsState(
+        targetValue = if (placement != null) placement.rightEar.tiltDegrees * RIGHT_TILT_FACTOR else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "rightTilt",
+    )
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .drawWithContent {
                 drawContent()
                 if (placement != null) {
-                    drawEar(placement.leftEar, swayTime, twitchTime)
-                    drawEar(placement.rightEar, swayTime, twitchTime)
+                    drawEar(placement.leftEar.copy(tiltDegrees = leftTilt), swayTime, twitchTime)
+                    drawEar(placement.rightEar.copy(tiltDegrees = rightTilt), swayTime, twitchTime)
                 }
             },
     )
@@ -159,6 +174,12 @@ private const val TWITCH_PERIOD_MS = 5000
 private const val TWITCH_AMPLITUDE = 4f
 private const val TWITCH_FREQ_MOD = 3f
 private val TWO_PI = (2.0 * PI).toFloat()
+
+// ---- spring tilt factors ----
+// Right ear tilts slightly more to exaggerate the comical effect; both < 1.0
+// so the ears have their own character rather than rigidly following the head.
+private const val LEFT_TILT_FACTOR = 0.6f
+private const val RIGHT_TILT_FACTOR = 1.0f
 
 // ---- colours ----
 private val EAR_COLOR = Color(0xFF8B5E3C)
