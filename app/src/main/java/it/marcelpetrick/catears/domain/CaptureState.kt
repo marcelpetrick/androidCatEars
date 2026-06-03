@@ -11,9 +11,6 @@ sealed interface CaptureState {
     /** Capture is in progress — shutter released, waiting for the frame. */
     data object Capturing : CaptureState
 
-    /** Capture succeeded; holds the raw JPEG bytes ready for compositing. */
-    data class Success(val jpegBytes: ByteArray) : CaptureState
-
     /** Capture composited and saved; holds the gallery URI for sharing. */
     data class Saved(val uri: android.net.Uri) : CaptureState
 
