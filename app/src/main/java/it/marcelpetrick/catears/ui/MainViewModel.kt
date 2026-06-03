@@ -18,11 +18,18 @@ class MainViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Initialising)
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    /** Called by the UI once the Android permission result is known. */
-    fun onPermissionResult(granted: Boolean) {
-        _uiState.value = when (permissionResultToState(granted)) {
+    /**
+     * Called by the UI once the Android permission result is known.
+     *
+     * @param granted Whether the CAMERA permission was granted.
+     * @param showRationale Whether [ActivityCompat.shouldShowRequestPermissionRationale] returned
+     *   true — used to distinguish Denied from PermanentlyDenied.
+     */
+    fun onPermissionResult(granted: Boolean, showRationale: Boolean) {
+        _uiState.value = when (permissionResultToState(granted, showRationale)) {
             PermissionState.Granted -> MainUiState.Ready
             PermissionState.Denied -> MainUiState.PermissionRequired
+            PermissionState.PermanentlyDenied -> MainUiState.PermissionPermanentlyDenied
             PermissionState.Unknown -> MainUiState.Initialising
         }
     }

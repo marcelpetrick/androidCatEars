@@ -21,23 +21,34 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onPermissionResult true transitions to Ready`() = runTest {
+    fun `granted true transitions to Ready`() = runTest {
         val vm = viewModel()
         vm.uiState.test {
             assertEquals(MainUiState.Initialising, awaitItem())
-            vm.onPermissionResult(granted = true)
+            vm.onPermissionResult(granted = true, showRationale = false)
             assertEquals(MainUiState.Ready, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `onPermissionResult false transitions to PermissionRequired`() = runTest {
+    fun `granted false with rationale transitions to PermissionRequired`() = runTest {
         val vm = viewModel()
         vm.uiState.test {
             assertEquals(MainUiState.Initialising, awaitItem())
-            vm.onPermissionResult(granted = false)
+            vm.onPermissionResult(granted = false, showRationale = true)
             assertEquals(MainUiState.PermissionRequired, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `granted false without rationale transitions to PermissionPermanentlyDenied`() = runTest {
+        val vm = viewModel()
+        vm.uiState.test {
+            assertEquals(MainUiState.Initialising, awaitItem())
+            vm.onPermissionResult(granted = false, showRationale = false)
+            assertEquals(MainUiState.PermissionPermanentlyDenied, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -47,9 +58,9 @@ class MainViewModelTest {
         val vm = viewModel()
         vm.uiState.test {
             assertEquals(MainUiState.Initialising, awaitItem())
-            vm.onPermissionResult(granted = false)
+            vm.onPermissionResult(granted = false, showRationale = true)
             assertEquals(MainUiState.PermissionRequired, awaitItem())
-            vm.onPermissionResult(granted = true)
+            vm.onPermissionResult(granted = true, showRationale = false)
             assertEquals(MainUiState.Ready, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }

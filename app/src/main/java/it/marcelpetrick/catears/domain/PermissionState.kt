@@ -5,11 +5,22 @@ package it.marcelpetrick.catears.domain
 
 /** Models whether the camera permission has been granted. Pure domain — no Android deps. */
 sealed interface PermissionState {
+    /** Not yet checked — the app has not issued a permission request. */
     data object Unknown : PermissionState
+
+    /** User granted the CAMERA permission. */
     data object Granted : PermissionState
+
+    /** User denied once — can still request again. */
     data object Denied : PermissionState
+
+    /** User denied and selected "Don't ask again" — must open Settings. */
+    data object PermanentlyDenied : PermissionState
 }
 
-/** Maps an Android permission result to our domain model. */
-fun permissionResultToState(granted: Boolean): PermissionState =
-    if (granted) PermissionState.Granted else PermissionState.Denied
+/** Maps a raw granted flag to a [PermissionState]; caller supplies whether rationale should show. */
+fun permissionResultToState(granted: Boolean, showRationale: Boolean): PermissionState = when {
+    granted -> PermissionState.Granted
+    showRationale -> PermissionState.Denied
+    else -> PermissionState.PermanentlyDenied
+}

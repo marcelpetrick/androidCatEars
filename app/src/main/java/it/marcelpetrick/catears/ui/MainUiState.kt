@@ -6,15 +6,22 @@ package it.marcelpetrick.catears.ui
 /**
  * Full UI state for the main screen.
  *
- * Initially the screen is in [Initialising]; once the permission check
- * has resolved it transitions to [PermissionRequired] or [Ready].
+ * Transitions:
+ *   Initialising → PermissionRequired | PermissionPermanentlyDenied | Ready
+ *   PermissionRequired → Ready | PermissionPermanentlyDenied
  */
 sealed interface MainUiState {
     /** App is starting up — show nothing or a splash. */
     data object Initialising : MainUiState
 
-    /** Camera permission not yet granted. */
+    /** Camera permission not granted; can request it. */
     data object PermissionRequired : MainUiState
+
+    /**
+     * Camera permission denied with "Don't ask again"; cannot request again.
+     * Must guide the user to app settings.
+     */
+    data object PermissionPermanentlyDenied : MainUiState
 
     /** Camera permission granted; ready to show the preview. */
     data object Ready : MainUiState

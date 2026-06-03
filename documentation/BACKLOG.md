@@ -82,8 +82,8 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 6.0 | TODO | Permission state model | Camera-permission states modelled in `domain`; unit-tested without a device. |
-| 6.1 | TODO | Permission UI | `CAMERA` in manifest; Compose flow for granted/denied/permanently-denied (with settings deep-link). |
+| 6.0 | DONE | Permission state model | Camera-permission states modelled in `domain`; unit-tested without a device. |
+| 6.1 | DONE | Permission UI | `CAMERA` in manifest; Compose flow for granted/denied/permanently-denied (with settings deep-link). |
 
 ### WP 7 — Live camera preview (CameraX)
 

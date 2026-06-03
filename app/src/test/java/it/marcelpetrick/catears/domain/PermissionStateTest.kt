@@ -9,19 +9,25 @@ import org.junit.jupiter.api.Test
 class PermissionStateTest {
 
     @Test
-    fun `permissionResultToState true returns Granted`() {
-        assertEquals(PermissionState.Granted, permissionResultToState(true))
+    fun `permissionResultToState granted true returns Granted`() {
+        assertEquals(PermissionState.Granted, permissionResultToState(granted = true, showRationale = false))
     }
 
     @Test
-    fun `permissionResultToState false returns Denied`() {
-        assertEquals(PermissionState.Denied, permissionResultToState(false))
+    fun `permissionResultToState granted false with rationale returns Denied`() {
+        assertEquals(PermissionState.Denied, permissionResultToState(granted = false, showRationale = true))
+    }
+
+    @Test
+    fun `permissionResultToState granted false without rationale returns PermanentlyDenied`() {
+        assertEquals(
+            PermissionState.PermanentlyDenied,
+            permissionResultToState(granted = false, showRationale = false),
+        )
     }
 
     @Test
     fun `Unknown is the initial unchecked state`() {
-        // PermissionState.Unknown represents "not yet checked" — it is the
-        // initial state before any permission request has been issued.
         val state: PermissionState = PermissionState.Unknown
         assertEquals(PermissionState.Unknown, state)
     }
