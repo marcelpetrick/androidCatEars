@@ -121,6 +121,9 @@ android {
 }
 
 dependencies {
+    // Pure domain module — no Android dependencies
+    implementation(project(":domain"))
+
     // AndroidX core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime)

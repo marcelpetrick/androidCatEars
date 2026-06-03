@@ -86,9 +86,9 @@ run_step "Static analysis (detekt)" ./gradlew detekt
 
 run_step "Android Lint" ./gradlew :app:lint
 
-run_step "Unit tests" ./gradlew :app:test
+run_step "Unit tests" ./gradlew :app:test :domain:test
 
-run_step "Coverage gate (Kover >= 95%)" ./gradlew :app:koverVerify
+run_step "Coverage gate (Kover >= 95%)" ./gradlew :domain:koverVerify
 
 print_summary
 echo "All checks passed."

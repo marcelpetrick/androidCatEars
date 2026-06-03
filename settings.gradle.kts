@@ -26,3 +26,4 @@ dependencyResolutionManagement {
 rootProject.name = "androidCatEars"
 
 include(":app")
+include(":domain")

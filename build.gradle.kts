@@ -20,6 +20,7 @@ extra["appVersionCode"] = major * 100_000 + minor * 1_000 + patch
 plugins {
     alias(libs.plugins.android.application) apply false
     // kotlin-android is intentionally absent: AGP 9.0+ provides Kotlin support built-in
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ksp) apply false
@@ -78,6 +79,8 @@ configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
         files(
             "$rootDir/app/src/main/java",
             "$rootDir/app/src/test/java",
+            "$rootDir/domain/src/main/kotlin",
+            "$rootDir/domain/src/test/kotlin",
         ),
     )
 }
