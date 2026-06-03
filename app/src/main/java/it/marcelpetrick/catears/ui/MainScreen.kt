@@ -34,6 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -223,6 +225,13 @@ private fun CameraContent(
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
 ) {
+    val haptic = LocalHapticFeedback.current
+    val onCaptureTap: () -> Unit = {
+        if (captureEnabled) {
+            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+            onCapture()
+        }
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
             lens = lens,
@@ -234,51 +243,51 @@ private fun CameraContent(
             modifier = Modifier.fillMaxSize(),
         )
         CatEarOverlay(placements = overlayPlacements)
-        // FAB row lives inside a nav-bar-inset container so buttons stay visible
-        // above the gesture navigation bar on edge-to-edge layouts.
-        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-            // Style switcher stacked above camera-switch FAB on the end side
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.End,
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = onCycleEarStyle,
-                    icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
-                    text = { Text(earStyle.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }) },
+        CameraFabRow(earStyle, onCycleEarStyle, onToggleLens, onCaptureTap, captureEnabled, onShare)
+    }
+}
+
+@Composable
+private fun CameraFabRow(
+    earStyle: EarStyle,
+    onCycleEarStyle: () -> Unit,
+    onToggleLens: () -> Unit,
+    onCapture: () -> Unit,
+    captureEnabled: Boolean,
+    onShare: (() -> Unit)?,
+) {
+    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+        Column(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.End,
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = onCycleEarStyle,
+                icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
+                text = { Text(earStyle.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }) },
+            )
+            FloatingActionButton(onClick = onToggleLens) {
+                Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
+            }
+        }
+        FloatingActionButton(
+            onClick = onCapture,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+        ) {
+            if (captureEnabled) {
+                Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-                FloatingActionButton(onClick = onToggleLens) {
-                    Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
-                }
             }
-            FloatingActionButton(
-                onClick = { if (captureEnabled) onCapture() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-            ) {
-                if (captureEnabled) {
-                    Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
-                } else {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-            }
-            if (onShare != null) {
-                FloatingActionButton(
-                    onClick = onShare,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(16.dp),
-                ) {
-                    Icon(imageVector = Icons.Filled.Share, contentDescription = "Share photo")
-                }
+        }
+        if (onShare != null) {
+            FloatingActionButton(onClick = onShare, modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
+                Icon(imageVector = Icons.Filled.Share, contentDescription = "Share photo")
             }
         }
     }

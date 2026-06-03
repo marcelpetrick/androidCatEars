@@ -293,8 +293,8 @@ are already clean enough to extend).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 23.0 | TODO | Multi-face data model | Replace single `FaceModel?` with `List<FaceModel>` throughout the analysis pipeline. `OverlayPlacement` becomes `List<OverlayPlacement>`. Update `PlacementSmoother` to smooth a list keyed by face-tracking ID. `computeOverlayPlacement` is called once per face. All unit tests updated; all gates green. |
-| 23.1 | TODO | Multi-face rendering | `CatEarOverlay` iterates `List<OverlayPlacement>` and draws one pair of ears per entry. `OverlayCompositor.composite` does the same for the capture path. Each face inherits the active `EarStyle`. Up to 4 simultaneous faces supported (ML Kit limit); no visible change when only one face is present. |
+| 23.0 | DONE | Multi-face data model | Replace single `FaceModel?` with `List<FaceModel>` throughout the analysis pipeline. `OverlayPlacement` becomes `List<OverlayPlacement>`. Update `PlacementSmoother` to smooth a list keyed by face-tracking ID. `computeOverlayPlacement` is called once per face. All unit tests updated; all gates green. |
+| 23.1 | DONE | Multi-face rendering | `CatEarOverlay` iterates `List<OverlayPlacement>` and draws one pair of ears per entry. `OverlayCompositor.composite` does the same for the capture path. Each face inherits the active `EarStyle`. Up to 4 simultaneous faces supported (ML Kit limit); no visible change when only one face is present. |
 | 23.2 | TODO | Per-face style assignment (optional stretch) | Allow each detected face to independently cycle its `EarStyle` — e.g., tapping near a face rotates that face's style. Requires mapping tap coordinates to the nearest face anchor. |
 
 ---
@@ -322,7 +322,7 @@ Individually small improvements that collectively lift the "first launch" and
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 25.0 | TODO | README screenshots / demo GIF (WP 14.4) | Capture at least two screenshots (ears visible, different styles) plus one animated GIF on a real device or webcam-backed emulator. Add to `media/` and embed in README. Supersedes the existing WP 14.4 TODO entry. |
-| 25.1 | TODO | Haptic feedback on capture | Single `HapticFeedbackConstants.CONFIRM` vibration on shutter tap via Compose `LocalHapticFeedback`. Costs one line; noticeably improves the capture feel. |
+| 25.1 | DONE | Haptic feedback on capture | Single `HapticFeedbackConstants.CONFIRM` vibration on shutter tap via Compose `LocalHapticFeedback`. Costs one line; noticeably improves the capture feel. |
 | 25.2 | TODO | Ear colour customisation | Let users pick a base hue for the active ear style via a compact colour-wheel or preset swatches (bottom-sheet or in-camera overlay). `EarAnchor` gains an optional `tintColor: Color`; renderers apply it as a `BlendMode.Modulate` or tint parameter. |
 | 25.3 | TODO | First-launch onboarding screen | Single illustrated screen shown once (persisted via `DataStore<Preferences>`): shows an example of the ear overlay and the three main controls (capture, switch, style). Dismisses to the normal camera view. |
 
