@@ -265,8 +265,71 @@ Each task keeps all quality gates green.
 | 21.5 | DONE | Style D — Canine Floppy renderer | Implement `drawCanineFloppyEar()`: teardrop path anchored at `anchor.y`, bottom of flap at `anchor.y + 1.2 × anchor.size`, hanging to the outer side. Sway becomes a pendulum swing (±4°) on a single `animateFloatAsState` with `spring(stiffness = StiffnessLow)`. Visual check against `06_canine_floppy.png`. |
 | 21.6 | DONE | Style E — Canine Perky renderer | Implement `drawCaninePerkyEar()`: short wide triangle with `drawArc` rounded cap at the tip, warm cream (#D4B896) outer fill, coral interior, cross-hatch texture on outer surface (4 diagonal lines). Visual check against `07_canine_perky.png`. |
 
+### WP 22 — Expression-reactive ears
+
+ML Kit's face detector (already running) returns `smilingProbability` and
+`leftEyeOpenProbability` / `rightEyeOpenProbability` every frame when
+`CLASSIFICATION_MODE_ALL` is set. Mapping these to ear animations makes the
+overlay feel alive and responsive in a way that pure pose-tracking doesn't.
+
+**Prerequisite order**: 22.0 → 22.1 → 22.2
+Each task keeps all quality gates green.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 22.0 | TODO | Expose expression probabilities in `FaceModel` | Add `smilingProbability: Float?`, `leftEyeOpenProbability: Float?`, `rightEyeOpenProbability: Float?` to `FaceModel` (default `null` for backward compat). Enable `CLASSIFICATION_MODE_ALL` in `MlKitFaceDetectorImpl` and populate the new fields. Unit-test new fields; all gates green. |
+| 22.1 | TODO | Surface expressions in `OverlayPlacement` | Add `smilingProbability: Float = 0f` and `eyeOpennessMean: Float = 1f` to `OverlayPlacement`. `computeOverlayPlacement` derives them from the new `FaceModel` fields. `PlacementSmoother` smooths both. Unit-tested; all gates green. |
+| 22.2 | TODO | Expression-driven ear animations in `CatEarOverlay` | Map expressions to ear behaviour: broad smile (>0.85) → both ears perk upward (tip-Y offset −20% with spring); wide eyes (>0.90) → ears shoot up briefly via `animateFloatAsState`; low eye-openness (<0.20, wink or blink) → ipsilateral ear flattens (xScale → 0.5 with spring). All animations layered on top of existing tilt/sway; no visible change when face is neutral. |
+
+---
+
+### WP 23 — Multi-face tracking
+
+Currently only one face gets ears (first face selected in `MlKitFaceDetectorImpl`).
+Supporting multiple faces is the main social/party use case.
+
+**Prerequisite**: WP 22 complete (or at least 22.0, since the model and pipeline
+are already clean enough to extend).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 23.0 | TODO | Multi-face data model | Replace single `FaceModel?` with `List<FaceModel>` throughout the analysis pipeline. `OverlayPlacement` becomes `List<OverlayPlacement>`. Update `PlacementSmoother` to smooth a list keyed by face-tracking ID. `computeOverlayPlacement` is called once per face. All unit tests updated; all gates green. |
+| 23.1 | TODO | Multi-face rendering | `CatEarOverlay` iterates `List<OverlayPlacement>` and draws one pair of ears per entry. `OverlayCompositor.composite` does the same for the capture path. Each face inherits the active `EarStyle`. Up to 4 simultaneous faces supported (ML Kit limit); no visible change when only one face is present. |
+| 23.2 | TODO | Per-face style assignment (optional stretch) | Allow each detected face to independently cycle its `EarStyle` — e.g., tapping near a face rotates that face's style. Requires mapping tap coordinates to the nearest face anchor. |
+
+---
+
+### WP 24 — Video recording with ears baked in
+
+A shareable MP4 with animated ears is significantly more viral than a still photo.
+CameraX provides a `VideoCapture` use case; the compositing challenge is applying
+the procedural ear overlay to every recorded frame.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 24.0 | TODO | CameraX `VideoCapture` integration | Add `VideoCapture` use case to `CameraXControllerImpl`; bind it alongside `Preview` and `ImageAnalysis`. Add start/stop recording API to the camera controller seam. Unit-testable parts covered; all gates green. |
+| 24.1 | TODO | Overlay compositor for video frames | Extend `OverlayCompositor` (or create `VideoFrameCompositor`) to composite ears onto each `Surface`-delivered `Bitmap` frame during recording. The current `OverlayPlacement` from the face detector is used for each frame; ears are rendered at the last known placement when no face is detected. |
+| 24.2 | TODO | Record button UI | Add a record/stop toggle FAB (or long-press on the capture button). Show a recording-time counter. On stop, save the MP4 to MediaStore and enable sharing via the existing share sheet. |
+| 24.3 | TODO | Animated GIF export (stretch) | Post-process a short recording segment into an animated GIF using a bundled encoder (e.g., gifencoder). Share via the existing share intent. |
+
+---
+
+### WP 25 — Product polish
+
+Individually small improvements that collectively lift the "first launch" and
+"daily use" quality significantly.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 25.0 | TODO | README screenshots / demo GIF (WP 14.4) | Capture at least two screenshots (ears visible, different styles) plus one animated GIF on a real device or webcam-backed emulator. Add to `media/` and embed in README. Supersedes the existing WP 14.4 TODO entry. |
+| 25.1 | TODO | Haptic feedback on capture | Single `HapticFeedbackConstants.CONFIRM` vibration on shutter tap via Compose `LocalHapticFeedback`. Costs one line; noticeably improves the capture feel. |
+| 25.2 | TODO | Ear colour customisation | Let users pick a base hue for the active ear style via a compact colour-wheel or preset swatches (bottom-sheet or in-camera overlay). `EarAnchor` gains an optional `tintColor: Color`; renderers apply it as a `BlendMode.Modulate` or tint parameter. |
+| 25.3 | TODO | First-launch onboarding screen | Single illustrated screen shown once (persisted via `DataStore<Preferences>`): shows an example of the ear overlay and the three main controls (capture, switch, style). Dismisses to the normal camera view. |
+
+---
+
 ### Future backlog (not yet broken down)
 
-Video recording · multi-face tracking · extra filters (glasses, hats) ·
-expression reactions · custom AI models (ONNX/TFLite) · overlay marketplace · social features.
+Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
+overlay marketplace · social features.
 Each becomes its own set of tasks when prioritised — see [`VISION.md`](VISION.md) "Future Ideas".
