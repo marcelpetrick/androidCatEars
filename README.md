@@ -34,6 +34,21 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 | Min SDK        | Android 14 (API 34)             |
 | Target SDK     | Android 16 (API 36)             |
 
+## Quality Gate
+
+```bash
+# Format (auto-fix)
+./gradlew spotlessApply
+
+# Check formatting + static analysis + Android lint in one command
+./gradlew qualityCheck
+
+# Individual tools
+./gradlew spotlessCheck   # ktlint via Spotless
+./gradlew detekt          # detekt static analysis
+./gradlew :app:lint       # Android Lint
+```
+
 ## License
 
 [GPL v3](LICENSE)

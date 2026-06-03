@@ -46,6 +46,15 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        lintConfig = file("lint.xml")
+        abortOnError = true
+        warningsAsErrors = true
+        checkDependencies = true
+        htmlReport = true
+        xmlReport = false
+    }
 }
 
 dependencies {

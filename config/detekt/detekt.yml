@@ -1,0 +1,37 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: true
+
+style:
+  active: true
+  MagicNumber:
+    active: true
+    ignoreAnnotated:
+      - Composable
+      - Preview
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  UnusedPrivateMember:
+    active: true
+    # @Preview functions are invoked by the Android Studio preview system, not by app code
+    ignoreAnnotated:
+      - Preview
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    # Composable functions follow PascalCase — ignore the camelCase naming rule for them
+    ignoreAnnotated:
+      - Composable
+
+complexity:
+  active: true
+  LongParameterList:
+    active: true
+    ignoreAnnotated:
+      - Composable

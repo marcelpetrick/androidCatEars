@@ -45,9 +45,10 @@ user decision before proceeding).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 2.0 | TODO | Formatter (ktlint/spotless) | Format tooling wired into Gradle; `spotlessApply` formats; `spotlessCheck` passes on existing code. |
-| 2.1 | TODO | Static analysis (detekt) | detekt with a committed config; `./gradlew detekt` passes clean. |
-| 2.2 | TODO | Android Lint + aggregation | Lint configured; `spotlessCheck`/`detekt`/`lint` aggregated under `check`; README documents commands. |
+| 2.0 | DONE | Formatter (ktlint/spotless) | Format tooling wired into Gradle; `spotlessApply` formats; `spotlessCheck` passes on existing code. |
+| 2.1 | DONE | Static analysis (detekt) | detekt with a committed config; `./gradlew detekt` passes clean. |
+| 2.2 | DONE | Android Lint + aggregation | Lint configured; `spotlessCheck`/`detekt`/`lint` aggregated under `check`; README documents commands. |
+| 2.3 | TODO | Upgrade SDK/Kotlin/JUnit when available | Remove suppressed lint rules from `lint.xml`: upgrade compileSdk/targetSdk to 37 (needs `platforms;android-37` via sdkmanager), Kotlin 2.3.21→2.4.0 + matching KSP, JUnit 5.11.4→6.x. Re-enable `OldTargetApi`, `GradleDependency`, `NewerVersionAvailable` in lint.xml after upgrade. |
 
 ### WP 3 — Testing & coverage harness
 

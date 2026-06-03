@@ -27,7 +27,9 @@ fun CatEarsTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColors
+
         else -> LightColors
     }
 
