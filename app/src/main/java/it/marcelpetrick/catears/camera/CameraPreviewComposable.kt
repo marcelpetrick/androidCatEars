@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import it.marcelpetrick.catears.R
@@ -26,7 +27,6 @@ import it.marcelpetrick.catears.domain.TransformContext
 import it.marcelpetrick.catears.domain.computeOverlayPlacement
 import it.marcelpetrick.catears.domain.imageToViewBoundingBox
 import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 private const val EAR_ASSET_WIDTH = 200
@@ -51,7 +51,6 @@ fun CameraPreview(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val executor = remember { Executors.newSingleThreadExecutor() }
     val detector = remember { MlKitFaceDetectorImpl() }
     val smoother = remember { PlacementSmoother() }
     val controller = remember { CameraXControllerImpl() }
@@ -82,7 +81,7 @@ fun CameraPreview(
                 latestPlacement.set(placement)
                 onFaceDetected(placement)
             }
-            startCamera(ctx, controller, executor, lens)
+            startCamera(ctx, controller, lens)
             previewView
         },
         update = { controller.bindPreview(lens) },
@@ -93,7 +92,6 @@ fun CameraPreview(
         onDispose {
             controller.unbind()
             detector.close()
-            executor.shutdown()
         }
     }
 }
@@ -139,19 +137,18 @@ private fun wireController(
     controller.onFaceResult = onFace
 }
 
-private fun startCamera(
-    context: android.content.Context,
-    controller: CameraXControllerImpl,
-    executor: java.util.concurrent.Executor,
-    lens: LensSelector,
-) {
+private fun startCamera(context: android.content.Context, controller: CameraXControllerImpl, lens: LensSelector) {
     val providerFuture: ListenableFuture<ProcessCameraProvider> =
         ProcessCameraProvider.getInstance(context)
+    // CameraX binding registers a lifecycle observer, which must happen on the
+    // main thread; run the provider callback on the main executor. Binding on a
+    // background thread throws "Method addObserver must be called on the main
+    // thread" and crashes the moment the preview starts.
     providerFuture.addListener(
         {
             controller.setCameraProvider(providerFuture.get())
             controller.bindPreview(lens)
         },
-        executor,
+        ContextCompat.getMainExecutor(context),
     )
 }
