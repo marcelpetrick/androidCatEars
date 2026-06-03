@@ -91,4 +91,33 @@ class FaceModelTest {
         )
         assertEquals(0f, face.headEulerAngleY)
     }
+
+    @Test
+    fun `FaceModel expression probabilities default to null`() {
+        val face = FaceModel(
+            boundingBox = box,
+            leftEyePosition = null,
+            rightEyePosition = null,
+            headEulerAngleZ = 0f,
+        )
+        assertEquals(null, face.smilingProbability)
+        assertEquals(null, face.leftEyeOpenProbability)
+        assertEquals(null, face.rightEyeOpenProbability)
+    }
+
+    @Test
+    fun `FaceModel holds expression probabilities when set`() {
+        val face = FaceModel(
+            boundingBox = box,
+            leftEyePosition = null,
+            rightEyePosition = null,
+            headEulerAngleZ = 0f,
+            smilingProbability = 0.92f,
+            leftEyeOpenProbability = 0.88f,
+            rightEyeOpenProbability = 0.05f,
+        )
+        assertEquals(0.92f, face.smilingProbability)
+        assertEquals(0.88f, face.leftEyeOpenProbability)
+        assertEquals(0.05f, face.rightEyeOpenProbability)
+    }
 }

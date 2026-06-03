@@ -26,7 +26,7 @@ class MlKitFaceDetectorImpl @Inject constructor() : FaceDetectorSeam {
         FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
             .setMinFaceSize(MINIMUM_FACE_SIZE)
             .build(),
     )
@@ -75,5 +75,8 @@ private fun com.google.mlkit.vision.face.Face.toFaceModel(): FaceModel {
             ?.position?.let { Point2D(it.x, it.y) },
         rightEarPosition = getLandmark(com.google.mlkit.vision.face.FaceLandmark.RIGHT_EAR)
             ?.position?.let { Point2D(it.x, it.y) },
+        smilingProbability = smilingProbability,
+        leftEyeOpenProbability = leftEyeOpenProbability,
+        rightEyeOpenProbability = rightEyeOpenProbability,
     )
 }

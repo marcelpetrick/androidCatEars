@@ -16,6 +16,9 @@ package it.marcelpetrick.catears.domain
  * @param headEulerAngleY Yaw angle in degrees (positive = head turned right); used for perspective scaling.
  * @param leftEarPosition Side-of-skull anchor where the left ear attaches; null if not detected.
  * @param rightEarPosition Side-of-skull anchor where the right ear attaches; null if not detected.
+ * @param smilingProbability Probability [0..1] that the face is smiling; null if classification disabled.
+ * @param leftEyeOpenProbability Probability [0..1] that the left eye is open; null if classification disabled.
+ * @param rightEyeOpenProbability Probability [0..1] that the right eye is open; null if classification disabled.
  */
 data class FaceModel(
     val boundingBox: BoundingBox,
@@ -25,6 +28,9 @@ data class FaceModel(
     val headEulerAngleY: Float = 0f,
     val leftEarPosition: Point2D? = null,
     val rightEarPosition: Point2D? = null,
+    val smilingProbability: Float? = null,
+    val leftEyeOpenProbability: Float? = null,
+    val rightEyeOpenProbability: Float? = null,
 )
 
 /** Axis-aligned rectangle in pixel coordinates. */
