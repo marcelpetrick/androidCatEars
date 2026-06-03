@@ -236,8 +236,7 @@ the README for daily commands, then use the table below for deeper topics.
 | [`documentation/TOOLING.md`](documentation/TOOLING.md) | Installed SDK/tooling log |
 | [`documentation/SPDX.md`](documentation/SPDX.md) | SPDX/license header convention |
 | [`documentation/agents.md`](documentation/agents.md) | Binding engineering rules for contributors |
-| [`CHANGELOG.md`](CHANGELOG.md) | Notable changes by milestone |
-| [`TODO.md`](TODO.md) | Lightweight review radar for follow-ups |
+| [`documentation/TODO.md`](documentation/TODO.md) | Lightweight review radar for follow-ups |
 
 ---
 

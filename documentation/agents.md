@@ -67,7 +67,7 @@ After roughly every **10 commits**, pause and do a short review of the current s
 1. Compare the **IS** (what the code currently does) against [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md)
    and [`VISION.md`](VISION.md).
 2. Note anything missing, risky, deferred, or worth doing that is not already a backlog task.
-3. Record findings in [`TODO.md`](TODO.md) as a **simple enumerated list of one-liners** (no prose).
+3. Record findings in [`TODO.md`](documentation/TODO.md) as a **simple enumerated list of one-liners** (no prose).
    Keep it current: remove items once they become backlog tasks or are done.
 4. Commit the review as its own atomic `docs(todo): …` commit.
 

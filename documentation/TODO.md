@@ -1,8 +1,8 @@
 # TODO — Review Radar
 
 Lightweight, one-line follow-ups from periodic reviews (every ~10 commits).
-See [`agents.md`](documentation/agents.md) "Periodic review". Detailed work lives in
-[`documentation/BACKLOG.md`](documentation/BACKLOG.md).
+See [`agents.md`](agents.md) "Periodic review". Detailed work lives in
+[`BACKLOG.md`](BACKLOG.md).
 
 ## Open
 
