@@ -24,6 +24,7 @@ data class EarAnchor(val x: Float, val y: Float, val size: Float, val tiltDegree
  * @param smilingProbability Smoothed smile probability [0..1]; 0 when unknown.
  * @param eyeOpennessMean Smoothed mean eye-openness [0..1]; 1 when unknown.
  * @param trackingId ML Kit face-tracking ID propagated from [FaceModel]; used as a stable Compose key.
+ * @param tint Optional hue recolouring applied to both ears; defaults to [EarTint.NATURAL].
  */
 data class OverlayPlacement(
     val leftEar: EarAnchor,
@@ -33,6 +34,7 @@ data class OverlayPlacement(
     val smilingProbability: Float = 0f,
     val eyeOpennessMean: Float = 1f,
     val trackingId: Int? = null,
+    val tint: EarTint = EarTint.NATURAL,
 )
 
 /**

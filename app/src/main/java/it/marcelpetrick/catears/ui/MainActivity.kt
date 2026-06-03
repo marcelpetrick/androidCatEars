@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
                 val overlayPlacements by viewModel.overlayPlacements.collectAsStateWithLifecycle()
                 val captureState by viewModel.captureState.collectAsStateWithLifecycle()
                 val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
+                val earTint by viewModel.earTint.collectAsStateWithLifecycle()
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -87,6 +88,8 @@ class MainActivity : ComponentActivity() {
                     onFaceDetected = viewModel::onFaceDetected,
                     earStyle = earStyle,
                     onCycleEarStyle = viewModel::onCycleEarStyle,
+                    earTint = earTint,
+                    onCycleEarTint = viewModel::onCycleEarTint,
                     captureRequested = captureState is CaptureState.Capturing,
                     captureEnabled = captureState !is CaptureState.Capturing,
                     onComposited = viewModel::onCompositedBitmap,

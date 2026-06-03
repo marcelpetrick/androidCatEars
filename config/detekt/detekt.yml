@@ -13,7 +13,8 @@ style:
     # Color.kt is a table of ARGB literals by definition, so naming each hex
     # value adds noise without meaning.
     excludes: ['**/test/**', '**/androidTest/**', '**/*.kts', '**/ui/theme/Color.kt',
-               '**/overlay/CatEarOverlay.kt', '**/capture/OverlayCompositor.kt']
+               '**/overlay/CatEarOverlay.kt', '**/capture/OverlayCompositor.kt',
+               '**/domain/EarTint.kt']
     ignoreAnnotated:
       - Composable
       - Preview

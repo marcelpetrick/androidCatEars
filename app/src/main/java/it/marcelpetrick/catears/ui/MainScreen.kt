@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -28,6 +29,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +49,7 @@ import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.EarStyle
+import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
@@ -66,6 +69,8 @@ fun MainScreen(
     onFaceDetected: (List<OverlayPlacement>) -> Unit,
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
+    earTint: EarTint,
+    onCycleEarTint: () -> Unit,
     captureRequested: Boolean,
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
@@ -89,6 +94,8 @@ fun MainScreen(
                     onFaceDetected = onFaceDetected,
                     earStyle = earStyle,
                     onCycleEarStyle = onCycleEarStyle,
+                    earTint = earTint,
+                    onCycleEarTint = onCycleEarTint,
                     captureRequested = captureRequested,
                     captureEnabled = captureEnabled,
                     onComposited = onComposited,
@@ -216,6 +223,8 @@ private fun CameraContent(
     onFaceDetected: (List<OverlayPlacement>) -> Unit,
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
+    earTint: EarTint,
+    onCycleEarTint: () -> Unit,
     captureRequested: Boolean,
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
@@ -243,7 +252,16 @@ private fun CameraContent(
             modifier = Modifier.fillMaxSize(),
         )
         CatEarOverlay(placements = overlayPlacements)
-        CameraFabRow(earStyle, onCycleEarStyle, onToggleLens, onCaptureTap, captureEnabled, onShare)
+        CameraFabRow(
+            earStyle,
+            onCycleEarStyle,
+            earTint,
+            onCycleEarTint,
+            onToggleLens,
+            onCaptureTap,
+            captureEnabled,
+            onShare,
+        )
     }
 }
 
@@ -251,6 +269,8 @@ private fun CameraContent(
 private fun CameraFabRow(
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
+    earTint: EarTint,
+    onCycleEarTint: () -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     captureEnabled: Boolean,
@@ -262,6 +282,12 @@ private fun CameraFabRow(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
+            SmallFloatingActionButton(onClick = onCycleEarTint) {
+                Icon(
+                    imageVector = Icons.Filled.Palette,
+                    contentDescription = "Cycle ear colour: ${earTint.name}",
+                )
+            }
             ExtendedFloatingActionButton(
                 onClick = onCycleEarStyle,
                 icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
@@ -309,6 +335,8 @@ private fun MainScreenReadyPreview() {
             onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
+            earTint = EarTint.NATURAL,
+            onCycleEarTint = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},
@@ -335,6 +363,8 @@ private fun MainScreenPermissionRequiredPreview() {
             onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
+            earTint = EarTint.NATURAL,
+            onCycleEarTint = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},
@@ -361,6 +391,8 @@ private fun MainScreenPermissionDeniedPreview() {
             onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
+            earTint = EarTint.NATURAL,
+            onCycleEarTint = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},

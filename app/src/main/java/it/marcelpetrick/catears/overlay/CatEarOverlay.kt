@@ -24,14 +24,20 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarStyle
+import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.domain.hueRotationMatrix
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -110,31 +116,48 @@ fun CatEarOverlay(placements: List<OverlayPlacement>, modifier: Modifier = Modif
 private fun SingleFaceEarOverlay(placement: OverlayPlacement) {
     val anim = rememberEarAnimState(placement)
     val style = placement.earStyle
+    val tintFilter: ColorFilter? = if (placement.tint == EarTint.NATURAL) {
+        null
+    } else {
+        ColorFilter.colorMatrix(ColorMatrix(hueRotationMatrix(placement.tint.hueDegrees)))
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .drawWithContent {
                 drawContent()
-                drawEar(
-                    placement.leftEar.copy(
-                        tiltDegrees = anim.leftTilt,
-                        y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
-                        xScale = placement.leftEar.xScale * anim.leftWinkScale,
-                    ),
-                    style,
-                    anim.swayTime,
-                    anim.twitchTime,
-                )
-                drawEar(
-                    placement.rightEar.copy(
-                        tiltDegrees = anim.rightTilt,
-                        y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
-                        xScale = placement.rightEar.xScale * anim.rightWinkScale,
-                    ),
-                    style,
-                    anim.swayTime,
-                    anim.twitchTime,
-                )
+                val drawEars: DrawScope.() -> Unit = {
+                    drawEar(
+                        placement.leftEar.copy(
+                            tiltDegrees = anim.leftTilt,
+                            y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
+                            xScale = placement.leftEar.xScale * anim.leftWinkScale,
+                        ),
+                        style,
+                        anim.swayTime,
+                        anim.twitchTime,
+                    )
+                    drawEar(
+                        placement.rightEar.copy(
+                            tiltDegrees = anim.rightTilt,
+                            y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
+                            xScale = placement.rightEar.xScale * anim.rightWinkScale,
+                        ),
+                        style,
+                        anim.swayTime,
+                        anim.twitchTime,
+                    )
+                }
+                if (tintFilter == null) {
+                    drawEars()
+                } else {
+                    val paint = Paint().apply { colorFilter = tintFilter }
+                    drawIntoCanvas { canvas ->
+                        canvas.saveLayer(Rect(Offset.Zero, size), paint)
+                        drawEars()
+                        canvas.restore()
+                    }
+                }
             },
     )
 }

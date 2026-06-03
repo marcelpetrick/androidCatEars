@@ -323,7 +323,7 @@ Individually small improvements that collectively lift the "first launch" and
 |----|--------|------|---------------------|
 | 25.0 | TODO | README screenshots / demo GIF (WP 14.4) | Capture at least two screenshots (ears visible, different styles) plus one animated GIF on a real device or webcam-backed emulator. Add to `media/` and embed in README. Supersedes the existing WP 14.4 TODO entry. |
 | 25.1 | DONE | Haptic feedback on capture | Single `HapticFeedbackConstants.CONFIRM` vibration on shutter tap via Compose `LocalHapticFeedback`. Costs one line; noticeably improves the capture feel. |
-| 25.2 | TODO | Ear colour customisation | Let users pick a base hue for the active ear style via a compact colour-wheel or preset swatches (bottom-sheet or in-camera overlay). `EarAnchor` gains an optional `tintColor: Color`; renderers apply it as a `BlendMode.Modulate` or tint parameter. |
+| 25.2 | DONE | Ear colour customisation | Let users pick a base hue for the active ear style via a compact colour-wheel or preset swatches (bottom-sheet or in-camera overlay). `EarAnchor` gains an optional `tintColor: Color`; renderers apply it as a `BlendMode.Modulate` or tint parameter. |
 | 25.3 | TODO | First-launch onboarding screen | Single illustrated screen shown once (persisted via `DataStore<Preferences>`): shows an example of the ear overlay and the three main controls (capture, switch, style). Dismisses to the normal camera view. |
 
 ---

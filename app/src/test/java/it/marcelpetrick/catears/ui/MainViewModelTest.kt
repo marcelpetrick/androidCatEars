@@ -12,6 +12,7 @@ import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarStyle
+import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import kotlinx.coroutines.CoroutineDispatcher
@@ -262,6 +263,41 @@ class MainViewModelTest {
             awaitItem() // current CLASSIC placements
             vm.onCycleEarStyle()
             assertEquals(EarStyle.SHARP_FELINE, awaitItem().first().earStyle)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `initial earTint is NATURAL`() = runTest {
+        viewModel().earTint.test {
+            assertEquals(EarTint.NATURAL, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCycleEarTint advances to next tint`() = runTest {
+        val vm = viewModel()
+        vm.earTint.test {
+            assertEquals(EarTint.NATURAL, awaitItem())
+            vm.onCycleEarTint()
+            assertEquals(EarTint.entries[1], awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCycleEarTint injects tint into active placements`() = runTest {
+        val vm = viewModel()
+        val raw = OverlayPlacement(
+            leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
+            rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
+        )
+        vm.onFaceDetected(listOf(raw))
+        vm.overlayPlacements.test {
+            awaitItem() // NATURAL
+            vm.onCycleEarTint()
+            assertEquals(EarTint.entries[1], awaitItem().first().tint)
             cancelAndIgnoreRemainingEvents()
         }
     }

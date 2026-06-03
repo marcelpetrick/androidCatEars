@@ -5,13 +5,17 @@ package it.marcelpetrick.catears.capture
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import androidx.core.graphics.withMatrix
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarStyle
+import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.domain.hueRotationMatrix
 
 /**
  * Composites procedurally-drawn cat ears onto a captured camera frame.
@@ -52,8 +56,14 @@ object OverlayCompositor {
         if (placements.isEmpty()) return result
         val canvas = Canvas(result)
         for (p in placements) {
+            val tintLayer = p.tint != EarTint.NATURAL
+            if (tintLayer) {
+                val filter = ColorMatrixColorFilter(ColorMatrix(hueRotationMatrix(p.tint.hueDegrees)))
+                canvas.saveLayer(null, Paint().apply { colorFilter = filter })
+            }
             drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
             drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
+            if (tintLayer) canvas.restore()
         }
         return result
     }

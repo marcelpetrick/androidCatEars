@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.EarStyle
+import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
@@ -43,16 +44,34 @@ class MainViewModel @Inject constructor(
     private val _earStyle = MutableStateFlow(EarStyle.CLASSIC)
     val earStyle: StateFlow<EarStyle> = _earStyle.asStateFlow()
 
+    private val _earTint = MutableStateFlow(EarTint.NATURAL)
+    val earTint: StateFlow<EarTint> = _earTint.asStateFlow()
+
     /** Advances to the next [EarStyle] in cycle order, wrapping from last back to first. */
     fun onCycleEarStyle() {
         val styles = EarStyle.entries
         _earStyle.value = styles[(_earStyle.value.ordinal + 1) % styles.size]
-        _overlayPlacements.value = _overlayPlacements.value.map { it.copy(earStyle = _earStyle.value) }
+        applyAppearance()
+    }
+
+    /** Advances to the next [EarTint] in cycle order, wrapping from last back to first. */
+    fun onCycleEarTint() {
+        val tints = EarTint.entries
+        _earTint.value = tints[(_earTint.value.ordinal + 1) % tints.size]
+        applyAppearance()
+    }
+
+    private fun applyAppearance() {
+        _overlayPlacements.value = _overlayPlacements.value.map {
+            it.copy(earStyle = _earStyle.value, tint = _earTint.value)
+        }
     }
 
     /** Called from the face-detection callback with all smoothed placements for the frame. */
     fun onFaceDetected(placements: List<OverlayPlacement>) {
-        _overlayPlacements.value = placements.map { it.copy(earStyle = _earStyle.value) }
+        _overlayPlacements.value = placements.map {
+            it.copy(earStyle = _earStyle.value, tint = _earTint.value)
+        }
     }
 
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)
