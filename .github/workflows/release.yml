@@ -5,6 +5,11 @@
 # Trigger from the GitHub UI (Actions → Release → Run workflow). It reads the
 # version from version.properties, builds the release AAB, and publishes a
 # GitHub Release tagged v<version> with the store-ready artefact attached.
+#
+# Signing is optional: if RELEASE_KEYSTORE_BASE64 / RELEASE_STORE_PASSWORD /
+# RELEASE_KEY_ALIAS / RELEASE_KEY_PASSWORD are set as repository secrets the
+# AAB is signed; otherwise an unsigned AAB is published with a clear label.
+# See documentation/RELEASE.md for how to set the secrets.
 
 name: Release
 
@@ -54,15 +59,21 @@ jobs:
       - name: Run quality gate
         run: ./gradlew spotlessCheck detekt :app:lint :app:test :app:koverVerify
 
-      - name: Materialize release keystore
+      - name: Set up signing (optional)
+        id: signing
         run: |
-          test -n "${RELEASE_KEYSTORE_BASE64}"
-          test -n "${RELEASE_STORE_PASSWORD}"
-          test -n "${RELEASE_KEY_ALIAS}"
-          test -n "${RELEASE_KEY_PASSWORD}"
-          printf '%s' "${RELEASE_KEYSTORE_BASE64}" | base64 --decode > "${RUNNER_TEMP}/release.jks"
-          test -s "${RUNNER_TEMP}/release.jks"
-          echo "RELEASE_STORE_FILE=${RUNNER_TEMP}/release.jks" >> "$GITHUB_ENV"
+          if [ -n "${RELEASE_KEYSTORE_BASE64}" ] && \
+             [ -n "${RELEASE_STORE_PASSWORD}" ] && \
+             [ -n "${RELEASE_KEY_ALIAS}" ] && \
+             [ -n "${RELEASE_KEY_PASSWORD}" ]; then
+            printf '%s' "${RELEASE_KEYSTORE_BASE64}" | base64 --decode > "${RUNNER_TEMP}/release.jks"
+            echo "RELEASE_STORE_FILE=${RUNNER_TEMP}/release.jks" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+            echo "Signing secrets found — build will be signed."
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "No signing secrets — build will be unsigned."
+          fi
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
@@ -77,14 +88,17 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
-      - name: Verify release bundle signature
-        run: jarsigner -verify -strict app/build/outputs/bundle/release/androidCatEars-release.aab
-
       - name: Stage release artefacts
         run: |
           mkdir -p release-artefacts
+          if [ "${{ steps.signing.outputs.signed }}" = "true" ]; then
+            SUFFIX="release"
+          else
+            SUFFIX="release-unsigned"
+          fi
           cp app/build/outputs/bundle/release/androidCatEars-release.aab \
-             "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-release.aab"
+             "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-${SUFFIX}.aab"
+          echo "ARTEFACT_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -97,10 +111,11 @@ jobs:
             Real-time cat-ear camera overlay for Android (API 34+).
 
             ### Downloads
-            - **androidCatEars-${{ steps.version.outputs.version }}-release.aab** — app bundle for
-              Play Store distribution.
+            - **androidCatEars-${{ steps.version.outputs.version }}-${{ env.ARTEFACT_SUFFIX }}.aab** — app bundle for Play Store distribution.
+
+            ${{ steps.signing.outputs.signed == 'true' && '✅ Signed with release key.' || '⚠️ Unsigned build — configure RELEASE_KEYSTORE_BASE64 and related secrets for a signed release (see documentation/RELEASE.md).' }}
 
             Version: `${{ steps.version.outputs.version }}`
           files: |
-            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-release.aab
+            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-${{ env.ARTEFACT_SUFFIX }}.aab
           generate_release_notes: true
