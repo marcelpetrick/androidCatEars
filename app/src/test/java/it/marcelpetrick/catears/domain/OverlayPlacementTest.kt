@@ -11,80 +11,96 @@ private const val DELTA = 0.01f
 
 class OverlayPlacementTest {
 
-    // Face box: 100×100, centred at (200, 300) in view space.
+    // 100×100 face box centred at (200, 300).
     private val box = BoundingBox(left = 150f, top = 250f, right = 250f, bottom = 350f)
 
-    // Ear-landmark anchors in view space (ears are at the sides of the box).
+    // Ear landmarks at the sides of the box, at mid-height.
     private val leftEar = Point2D(box.left, box.centerY)
     private val rightEar = Point2D(box.right, box.centerY)
 
-    // ---- computeOverlayPlacement — fallback path (no ear landmarks) ----
+    // ---- computeOverlayPlacement — fallback (no ear landmarks) ----
 
     @Test
-    fun `overlay centerX matches face box centerX when no ear anchors`() {
-        val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
-        assertEquals(box.centerX, placement.centerX, DELTA)
+    fun `fallback —ears are symmetric about face box centre`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        val midX = (p.leftEar.x + p.rightEar.x) / 2f
+        assertEquals(box.centerX, midX, DELTA)
     }
 
     @Test
-    fun `overlay width is face width times widthRatio`() {
-        val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, widthRatio = 1.3f)
-        assertEquals(130f, placement.width, DELTA)
+    fun `fallback —ears are placed above the bounding box`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertTrue(p.leftEar.y < box.top) { "Left ear top should be above box top" }
+        assertTrue(p.rightEar.y < box.top) { "Right ear top should be above box top" }
     }
 
     @Test
-    fun `overlay rotation matches head euler angle`() {
-        val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 15f)
-        assertEquals(15f, placement.rotationDegrees, DELTA)
+    fun `fallback —ear size scales with face box width`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, widthRatio = 0.65f)
+        val expected = box.width * 0.65f
+        assertEquals(expected, p.leftEar.size, DELTA)
+        assertEquals(expected, p.rightEar.size, DELTA)
     }
 
     @Test
-    fun `overlay topY is above the face bounding box when no ear anchors`() {
-        val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
-        assertTrue(placement.topY < box.top) {
-            "topY (${placement.topY}) should be above face top (${box.top})"
-        }
+    fun `fallback —tilt matches head euler angle Z`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 15f)
+        assertEquals(15f, p.leftEar.tiltDegrees, DELTA)
+        assertEquals(15f, p.rightEar.tiltDegrees, DELTA)
     }
 
     @Test
-    fun `zero rotation produces zero rotation in placement`() {
-        val placement = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
-        assertEquals(0f, placement.rotationDegrees, DELTA)
+    fun `fallback —zero rotation produces zero tilt`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertEquals(0f, p.leftEar.tiltDegrees, DELTA)
+        assertEquals(0f, p.rightEar.tiltDegrees, DELTA)
+    }
+
+    @Test
+    fun `headEulerAngleY stored in placement`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 20f)
+        assertEquals(20f, p.headEulerAngleY, DELTA)
     }
 
     // ---- computeOverlayPlacement — ear-landmark anchor path ----
 
     @Test
-    fun `ear-anchor centerX is midpoint of the two ear landmarks`() {
-        val placement = computeOverlayPlacement(
+    fun `ear-anchor —left ear x is left landmark x`() {
+        val p = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
             leftEarAnchor = leftEar,
             rightEarAnchor = rightEar,
         )
-        val expected = (leftEar.x + rightEar.x) / 2f
-        assertEquals(expected, placement.centerX, DELTA)
+        assertEquals(leftEar.x, p.leftEar.x, DELTA)
     }
 
     @Test
-    fun `ear-anchor topY places cat-ear bottom at ear attachment height`() {
-        val overlayWidth = box.width * 1.3f
-        val overlayHeight = overlayWidth * 0.5f // EAR_ASPECT_RATIO
-        val earAttachY = (leftEar.y + rightEar.y) / 2f
-        val expectedTopY = earAttachY - overlayHeight
-
-        val placement = computeOverlayPlacement(
+    fun `ear-anchor —right ear x is right landmark x`() {
+        val p = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
             leftEarAnchor = leftEar,
             rightEarAnchor = rightEar,
         )
-        assertEquals(expectedTopY, placement.topY, DELTA)
+        assertEquals(rightEar.x, p.rightEar.x, DELTA)
     }
 
     @Test
-    fun `partially absent ear anchors fall back to bounding-box path`() {
-        // Only one anchor — fallback should be used (same as no anchors)
+    fun `ear-anchor —cat ear top is above the human ear attachment point`() {
+        val earSize = box.width * 0.65f
+        val p = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            leftEarAnchor = leftEar,
+            rightEarAnchor = rightEar,
+        )
+        assertEquals(leftEar.y - earSize, p.leftEar.y, DELTA)
+        assertEquals(rightEar.y - earSize, p.rightEar.y, DELTA)
+    }
+
+    @Test
+    fun `partial anchors fall back to bounding-box path`() {
         val withLeftOnly = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
@@ -92,8 +108,9 @@ class OverlayPlacementTest {
             rightEarAnchor = null,
         )
         val noAnchors = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
-        assertEquals(noAnchors.centerX, withLeftOnly.centerX, DELTA)
-        assertEquals(noAnchors.topY, withLeftOnly.topY, DELTA)
+        val midWithLeft = (withLeftOnly.leftEar.x + withLeftOnly.rightEar.x) / 2f
+        val midNoAnchor = (noAnchors.leftEar.x + noAnchors.rightEar.x) / 2f
+        assertEquals(midNoAnchor, midWithLeft, DELTA)
     }
 
     // ---- PlacementSmoother ----
@@ -101,7 +118,7 @@ class OverlayPlacementTest {
     @Test
     fun `first value returned as-is (no history)`() {
         val smoother = PlacementSmoother(alpha = 0.5f)
-        val input = OverlayPlacement(centerX = 100f, topY = 50f, width = 200f, rotationDegrees = 10f)
+        val input = makePlacement(lx = 100f, ly = 50f, rx = 200f, ry = 50f)
         val result = smoother.smooth(input)
         assertEquals(input, result)
     }
@@ -109,24 +126,23 @@ class OverlayPlacementTest {
     @Test
     fun `second value is interpolated towards input`() {
         val smoother = PlacementSmoother(alpha = 0.5f)
-        val first = OverlayPlacement(centerX = 0f, topY = 0f, width = 100f, rotationDegrees = 0f)
-        val second = OverlayPlacement(centerX = 100f, topY = 100f, width = 200f, rotationDegrees = 20f)
+        val first = makePlacement(lx = 0f, ly = 0f, rx = 100f, ry = 0f, size = 100f)
+        val second = makePlacement(lx = 100f, ly = 100f, rx = 200f, ry = 100f, size = 200f)
         smoother.smooth(first)
         val result = smoother.smooth(second)
         // lerp(0, 100, 0.5) = 50
-        assertEquals(50f, result.centerX, DELTA)
-        assertEquals(50f, result.topY, DELTA)
-        assertEquals(150f, result.width, DELTA)
-        assertEquals(10f, result.rotationDegrees, DELTA)
+        assertEquals(50f, result.leftEar.x, DELTA)
+        assertEquals(50f, result.leftEar.y, DELTA)
+        assertEquals(150f, result.rightEar.x, DELTA)
+        assertEquals(150f, result.rightEar.size, DELTA)
     }
 
     @Test
     fun `reset clears history so next value is returned as-is`() {
         val smoother = PlacementSmoother(alpha = 0.5f)
-        val first = OverlayPlacement(centerX = 0f, topY = 0f, width = 0f, rotationDegrees = 0f)
-        val second = OverlayPlacement(centerX = 100f, topY = 100f, width = 200f, rotationDegrees = 20f)
-        smoother.smooth(first)
+        smoother.smooth(makePlacement(lx = 0f, ly = 0f, rx = 100f, ry = 0f))
         smoother.reset()
+        val second = makePlacement(lx = 100f, ly = 100f, rx = 200f, ry = 100f)
         val result = smoother.smooth(second)
         assertEquals(second, result)
     }
@@ -134,12 +150,22 @@ class OverlayPlacementTest {
     @Test
     fun `smoother angle lerp takes shortest arc across zero`() {
         val smoother = PlacementSmoother(alpha = 0.5f)
-        // from -170° to +170° — shortest arc is 20° through ±180, not 340° the long way
-        val from = OverlayPlacement(centerX = 0f, topY = 0f, width = 0f, rotationDegrees = -170f)
-        val to = OverlayPlacement(centerX = 0f, topY = 0f, width = 0f, rotationDegrees = 170f)
-        smoother.smooth(from)
-        val result = smoother.smooth(to)
-        // diff = 340; normalised to -20; lerp(-170, -20*0.5) = -170 + (-10) = -180 or +180
-        assertTrue(result.rotationDegrees >= -180f && result.rotationDegrees <= 180f)
+        smoother.smooth(makePlacement(tilt = -170f))
+        val result = smoother.smooth(makePlacement(tilt = 170f))
+        assertTrue(result.leftEar.tiltDegrees >= -180f && result.leftEar.tiltDegrees <= 180f)
     }
+
+    // ---- helpers ----
+
+    private fun makePlacement(
+        lx: Float = 100f,
+        ly: Float = 50f,
+        rx: Float = 200f,
+        ry: Float = 50f,
+        size: Float = 80f,
+        tilt: Float = 0f,
+    ) = OverlayPlacement(
+        leftEar = EarAnchor(x = lx, y = ly, size = size, tiltDegrees = tilt),
+        rightEar = EarAnchor(x = rx, y = ry, size = size, tiltDegrees = tilt),
+    )
 }

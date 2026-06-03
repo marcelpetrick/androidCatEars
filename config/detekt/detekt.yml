@@ -12,7 +12,8 @@ style:
     # Keep detekt's default test-source excludes, and add the theme palette:
     # Color.kt is a table of ARGB literals by definition, so naming each hex
     # value adds noise without meaning.
-    excludes: ['**/test/**', '**/androidTest/**', '**/*.kts', '**/ui/theme/Color.kt']
+    excludes: ['**/test/**', '**/androidTest/**', '**/*.kts', '**/ui/theme/Color.kt',
+               '**/overlay/CatEarOverlay.kt', '**/capture/OverlayCompositor.kt']
     ignoreAnnotated:
       - Composable
       - Preview

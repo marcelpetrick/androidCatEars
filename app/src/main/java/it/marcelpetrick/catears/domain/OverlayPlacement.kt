@@ -4,66 +4,90 @@
 package it.marcelpetrick.catears.domain
 
 /**
- * Describes how to position and scale the cat-ear overlay in **view space**.
+ * Position and display parameters for one cat ear in view space.
  *
- * @param centerX X-coordinate of the midpoint between the two ears (view px).
- * @param topY Y-coordinate of the top of the ears (view px).
- * @param width Total width of the overlay spanning both ears (view px).
- * @param rotationDegrees Clockwise rotation to match head roll.
+ * @param x Horizontal centre of the ear (view px).
+ * @param y Top of the ear (view px); ear is drawn downward from this point.
+ * @param size Height (and implied width) of the ear in view px.
+ * @param tiltDegrees Clockwise rotation of this individual ear.
+ * @param xScale Horizontal squash factor for perspective illusion [0.4 .. 1.3].
  */
-data class OverlayPlacement(val centerX: Float, val topY: Float, val width: Float, val rotationDegrees: Float)
+data class EarAnchor(val x: Float, val y: Float, val size: Float, val tiltDegrees: Float, val xScale: Float = 1f)
 
 /**
- * Computes the cat-ear overlay placement from a face in view space.
+ * Describes where and how to render both cat ears in **view space**.
+ *
+ * @param leftEar Anchor for the left-side cat ear (as seen on screen).
+ * @param rightEar Anchor for the right-side cat ear.
+ * @param headEulerAngleY Head yaw in degrees; positive = head turned right.
+ */
+data class OverlayPlacement(val leftEar: EarAnchor, val rightEar: EarAnchor, val headEulerAngleY: Float = 0f)
+
+/**
+ * Computes independent [EarAnchor] positions for both cat ears.
  *
  * Anchoring strategy:
- * - When [leftEarAnchor] / [rightEarAnchor] (the ML Kit ear landmarks transformed to view space)
- *   are available, the cat-ear bottom is placed at those Y positions so it "grows out of" the
- *   skull at the natural ear attachment point — immune to bounding-box height noise.
- * - Fallback (landmarks absent): the old bounding-box-top heuristic is used so the function
- *   always returns a valid placement.
- * - Overlay width is always derived from the face bounding box for stable size scaling.
- * - Rotation matches [headEulerAngleZ].
+ * - When [leftEarAnchor] / [rightEarAnchor] are provided (ML Kit ear landmarks in view space)
+ *   each cat ear is placed above its corresponding human ear — immune to bounding-box noise.
+ * - Fallback (landmarks absent): positions derived from the bounding box centre so the ears
+ *   are symmetrically placed above the face.
+ * - Ear size is always derived from the face bounding box width for stable distance scaling.
  *
  * @param viewBox Face bounding box already transformed to view space.
- * @param headEulerAngleZ Head roll from ML Kit (degrees, positive = tilted right).
+ * @param headEulerAngleZ Head roll (degrees, positive = tilted right); applied to both ears.
+ * @param headEulerAngleY Head yaw (degrees, positive = head turned right); stored for 20.4.
  * @param leftEarAnchor View-space position of the left ear landmark; null = use fallback.
  * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
- * @param widthRatio How wide the overlay is relative to the face width. Default 1.3.
- * @param earHeightRatio Fallback only: how far above the box top the overlay bottom sits.
+ * @param widthRatio Width of one ear relative to face width. Default 0.65.
+ * @param earHeightRatio Fallback only: gap between box top and ear bottom (fraction of height).
  */
 fun computeOverlayPlacement(
     viewBox: BoundingBox,
     headEulerAngleZ: Float,
+    headEulerAngleY: Float = 0f,
     leftEarAnchor: Point2D? = null,
     rightEarAnchor: Point2D? = null,
-    widthRatio: Float = DEFAULT_WIDTH_RATIO,
+    widthRatio: Float = DEFAULT_EAR_WIDTH_RATIO,
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
 ): OverlayPlacement {
-    val overlayWidth = viewBox.width * widthRatio
-    val overlayHeight = overlayWidth * EAR_ASPECT_RATIO
+    val earSize = viewBox.width * widthRatio
 
-    val topY = if (leftEarAnchor != null && rightEarAnchor != null) {
-        // Anchor the cat-ear bottom to the average human-ear Y; ears then extend upward.
-        val earAttachY = (leftEarAnchor.y + rightEarAnchor.y) / 2f
-        earAttachY - overlayHeight
+    return if (leftEarAnchor != null && rightEarAnchor != null) {
+        OverlayPlacement(
+            leftEar = EarAnchor(
+                x = leftEarAnchor.x,
+                y = leftEarAnchor.y - earSize,
+                size = earSize,
+                tiltDegrees = headEulerAngleZ,
+            ),
+            rightEar = EarAnchor(
+                x = rightEarAnchor.x,
+                y = rightEarAnchor.y - earSize,
+                size = earSize,
+                tiltDegrees = headEulerAngleZ,
+            ),
+            headEulerAngleY = headEulerAngleY,
+        )
     } else {
         val earBottomY = viewBox.top - viewBox.height * earHeightRatio
-        earBottomY - overlayHeight
+        val topY = earBottomY - earSize
+        val halfSpacing = earSize * EAR_HALF_SPACING_RATIO
+        OverlayPlacement(
+            leftEar = EarAnchor(
+                x = viewBox.centerX - halfSpacing,
+                y = topY,
+                size = earSize,
+                tiltDegrees = headEulerAngleZ,
+            ),
+            rightEar = EarAnchor(
+                x = viewBox.centerX + halfSpacing,
+                y = topY,
+                size = earSize,
+                tiltDegrees = headEulerAngleZ,
+            ),
+            headEulerAngleY = headEulerAngleY,
+        )
     }
-
-    val centerX = if (leftEarAnchor != null && rightEarAnchor != null) {
-        (leftEarAnchor.x + rightEarAnchor.x) / 2f
-    } else {
-        viewBox.centerX
-    }
-
-    return OverlayPlacement(
-        centerX = centerX,
-        topY = topY,
-        width = overlayWidth,
-        rotationDegrees = headEulerAngleZ,
-    )
 }
 
 /**
@@ -79,10 +103,9 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
     fun smooth(next: OverlayPlacement): OverlayPlacement {
         val prev = last ?: return next.also { last = it }
         val smoothed = OverlayPlacement(
-            centerX = lerp(prev.centerX, next.centerX, alpha),
-            topY = lerp(prev.topY, next.topY, alpha),
-            width = lerp(prev.width, next.width, alpha),
-            rotationDegrees = lerpAngle(prev.rotationDegrees, next.rotationDegrees, alpha),
+            leftEar = smoothAnchor(prev.leftEar, next.leftEar),
+            rightEar = smoothAnchor(prev.rightEar, next.rightEar),
+            headEulerAngleY = lerp(prev.headEulerAngleY, next.headEulerAngleY, alpha),
         )
         last = smoothed
         return smoothed
@@ -92,11 +115,18 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
         last = null
     }
 
+    private fun smoothAnchor(prev: EarAnchor, next: EarAnchor): EarAnchor = EarAnchor(
+        x = lerp(prev.x, next.x, alpha),
+        y = lerp(prev.y, next.y, alpha),
+        size = lerp(prev.size, next.size, alpha),
+        tiltDegrees = lerpAngle(prev.tiltDegrees, next.tiltDegrees, alpha),
+        xScale = lerp(prev.xScale, next.xScale, alpha),
+    )
+
     private fun lerp(from: Float, to: Float, t: Float): Float = from + (to - from) * t
 
     private fun lerpAngle(from: Float, to: Float, t: Float): Float {
         var diff = to - from
-        // Normalise to [-180, 180] so the smoother takes the shortest arc
         while (diff > HALF_CIRCLE) diff -= FULL_CIRCLE
         while (diff < -HALF_CIRCLE) diff += FULL_CIRCLE
         return from + diff * t
@@ -109,6 +139,6 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
     }
 }
 
-private const val DEFAULT_WIDTH_RATIO = 1.3f
+private const val DEFAULT_EAR_WIDTH_RATIO = 0.65f
 private const val DEFAULT_EAR_HEIGHT_RATIO = 0.1f
-private const val EAR_ASPECT_RATIO = 0.5f // ears are roughly half as tall as wide
+private const val EAR_HALF_SPACING_RATIO = 0.35f

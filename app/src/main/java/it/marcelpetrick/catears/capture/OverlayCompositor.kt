@@ -7,73 +7,97 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Path
+import androidx.core.graphics.withMatrix
+import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.OverlayPlacement
 
 /**
- * Composites a cat-ear overlay onto a captured camera frame.
+ * Composites procedurally-drawn cat ears onto a captured camera frame.
  *
- * The pure transform math lives in [DrawTransform] / [computeDrawTransform] so it
- * can be unit-tested on the JVM without Android classes. The [composite] and
- * [applyToMatrix] functions require real Android Bitmap/Canvas and are excluded
- * from Kover coverage.
+ * The pure geometry helpers ([EarGeometry], [computeOuterPath], [computeInnerPath]) are
+ * JVM-testable. The [composite] function requires Android [Bitmap]/[Canvas] and is
+ * excluded from Kover coverage.
  */
 object OverlayCompositor {
 
     /**
-     * Pure data class holding all values needed to draw the overlay.
-     * No Android dependencies — fully testable on the JVM.
+     * Pure geometry for one ear — all values in canvas pixel coordinates.
+     * No Android dependencies; fully testable on the JVM.
      */
-    data class DrawTransform(
-        val scaleX: Float,
-        val scaleY: Float,
-        val rotateDegrees: Float,
-        val rotatePivotX: Float,
-        val rotatePivotY: Float,
-        val translateX: Float,
-        val translateY: Float,
+    data class EarGeometry(
+        val outerPath: FloatArray, // triangle vertices: [x0,y0, x1,y1, x2,y2]
+        val innerPath: FloatArray,
     )
 
-    /**
-     * Computes the scale, rotation, and translation needed to draw the overlay
-     * at the position described by [placement]. Pure Kotlin — no Android classes.
-     */
-    fun computeDrawTransform(placement: OverlayPlacement, overlayWidth: Int, overlayHeight: Int): DrawTransform {
-        val scaleX = placement.width / overlayWidth.toFloat()
-        val renderedHeight = placement.width * OVERLAY_ASPECT
-        val scaleY = renderedHeight / overlayHeight.toFloat()
-
-        return DrawTransform(
-            scaleX = scaleX,
-            scaleY = scaleY,
-            rotateDegrees = placement.rotationDegrees,
-            rotatePivotX = placement.width / 2f,
-            rotatePivotY = renderedHeight / 2f,
-            translateX = placement.centerX - placement.width / 2f,
-            translateY = placement.topY,
+    /** Computes the six vertices for the outer and inner ear triangles. */
+    fun computeEarGeometry(anchor: EarAnchor): EarGeometry {
+        val cx = anchor.x
+        val top = anchor.y
+        val s = anchor.size
+        val outerHalf = s * OUTER_HALF_BASE
+        val innerHalf = s * INNER_HALF_BASE
+        val innerTop = top + s * INNER_TOP_OFFSET
+        val innerBottom = top + s * INNER_BOTTOM_OFFSET
+        return EarGeometry(
+            outerPath = floatArrayOf(cx, top, cx - outerHalf, top + s, cx + outerHalf, top + s),
+            innerPath = floatArrayOf(cx, innerTop, cx - innerHalf, innerBottom, cx + innerHalf, innerBottom),
         )
     }
 
-    /** Builds an Android [Matrix] from a [DrawTransform]. */
-    fun applyToMatrix(transform: DrawTransform): Matrix = Matrix().apply {
-        postScale(transform.scaleX, transform.scaleY)
-        postRotate(transform.rotateDegrees, transform.rotatePivotX, transform.rotatePivotY)
-        postTranslate(transform.translateX, transform.translateY)
-    }
-
     /**
-     * Draws [overlayBitmap] onto [frame] according to [placement] and returns
-     * the composited result as a new [Bitmap]. Returns a copy of [frame] if
-     * [placement] is null. The caller must recycle the returned bitmap.
+     * Draws [overlayPlacement] cat ears onto [frame] and returns the composited result.
+     * Returns a copy of [frame] when [overlayPlacement] is null.
+     * The caller is responsible for recycling the returned bitmap.
      */
-    fun composite(frame: Bitmap, overlayBitmap: Bitmap, placement: OverlayPlacement?): Bitmap {
+    fun composite(frame: Bitmap, overlayPlacement: OverlayPlacement?): Bitmap {
         val result = frame.copy(Bitmap.Config.ARGB_8888, true)
-        if (placement == null) return result
+        if (overlayPlacement == null) return result
 
-        val transform = computeDrawTransform(placement, overlayBitmap.width, overlayBitmap.height)
-        val matrix = applyToMatrix(transform)
-        Canvas(result).drawBitmap(overlayBitmap, matrix, Paint(Paint.ANTI_ALIAS_FLAG))
+        val canvas = Canvas(result)
+        drawEarOnCanvas(canvas, overlayPlacement.leftEar)
+        drawEarOnCanvas(canvas, overlayPlacement.rightEar)
         return result
     }
 
-    private const val OVERLAY_ASPECT = 0.5f
+    private fun drawEarOnCanvas(canvas: Canvas, anchor: EarAnchor) {
+        val geo = computeEarGeometry(anchor)
+        val pivotX = anchor.x
+        val pivotY = anchor.y + anchor.size / 2f
+
+        val matrix = Matrix().apply {
+            postRotate(anchor.tiltDegrees, pivotX, pivotY)
+            postScale(anchor.xScale, 1f, pivotX, pivotY)
+        }
+
+        canvas.withMatrix(matrix) {
+            drawPath(trianglePath(geo.outerPath), outerPaint)
+            drawPath(trianglePath(geo.innerPath), innerPaint)
+        }
+    }
+
+    private fun trianglePath(vertices: FloatArray): Path = Path().apply {
+        moveTo(vertices[0], vertices[1])
+        lineTo(vertices[2], vertices[3])
+        lineTo(vertices[4], vertices[5])
+        close()
+    }
+
+    // Computed with pure bit-ops to avoid android.graphics.Color at class-load time;
+    // lazy so they're never initialized during JVM unit tests.
+    private val outerPaint: Paint by lazy {
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = OUTER_COLOR }
+    }
+    private val innerPaint: Paint by lazy {
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = INNER_COLOR }
+    }
+
+    private const val OUTER_HALF_BASE = 0.42f
+    private const val INNER_HALF_BASE = 0.24f
+    private const val INNER_TOP_OFFSET = 0.28f
+    private const val INNER_BOTTOM_OFFSET = 0.78f
+
+    // ARGB packed as (alpha shl 24) or (r shl 16) or (g shl 8) or b — pure arithmetic.
+    private val OUTER_COLOR: Int = (0xFF shl 24) or (0x8B shl 16) or (0x5E shl 8) or 0x3C
+    private val INNER_COLOR: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xA0 shl 8) or 0xA0
 }

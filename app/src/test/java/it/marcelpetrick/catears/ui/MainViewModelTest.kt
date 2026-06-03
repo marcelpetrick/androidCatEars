@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import kotlinx.coroutines.CoroutineDispatcher
@@ -110,7 +111,10 @@ class MainViewModelTest {
     @Test
     fun `onFaceDetected updates overlayPlacement`() = runTest {
         val vm = viewModel()
-        val placement = OverlayPlacement(centerX = 100f, topY = 50f, width = 200f, rotationDegrees = 0f)
+        val placement = OverlayPlacement(
+            leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
+            rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
+        )
         vm.overlayPlacement.test {
             assertNull(awaitItem())
             vm.onFaceDetected(placement)
@@ -184,7 +188,10 @@ class MainViewModelTest {
     @Test
     fun `onFaceDetected null clears placement`() = runTest {
         val vm = viewModel()
-        val placement = OverlayPlacement(centerX = 100f, topY = 50f, width = 200f, rotationDegrees = 0f)
+        val placement = OverlayPlacement(
+            leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
+            rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
+        )
         vm.overlayPlacement.test {
             assertNull(awaitItem())
             vm.onFaceDetected(placement)

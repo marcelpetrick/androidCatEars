@@ -3,71 +3,65 @@
 
 package it.marcelpetrick.catears.capture
 
-import it.marcelpetrick.catears.capture.OverlayCompositor.DrawTransform
-import it.marcelpetrick.catears.capture.OverlayCompositor.computeDrawTransform
-import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.capture.OverlayCompositor.computeEarGeometry
+import it.marcelpetrick.catears.domain.EarAnchor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
 
-private const val DELTA = 0.01f
+private const val DELTA = 0.5f
 
 class OverlayCompositorTest {
 
-    // Face bounding box: 120 px wide, centred at x=200, top at y=50
-    private val placement = OverlayPlacement(centerX = 200f, topY = 50f, width = 120f, rotationDegrees = 0f)
-
-    // ---- computeDrawTransform (pure Kotlin, no Android classes) ----
-
-    private fun transform(overlayW: Int = 120, overlayH: Int = 60, p: OverlayPlacement = placement): DrawTransform =
-        computeDrawTransform(p, overlayW, overlayH)
+    // Ear centred at x=200, top at y=50, size=100.
+    private val anchor = EarAnchor(x = 200f, y = 50f, size = 100f, tiltDegrees = 0f)
 
     @Test
-    fun `scaleX fits overlay width to placement width`() {
-        // overlayWidth=120, placement.width=120 → scaleX=1.0
-        assertEquals(1.0f, transform(overlayW = 120).scaleX, DELTA)
+    fun `outer triangle apex is at ear anchor centre-top`() {
+        val geo = computeEarGeometry(anchor)
+        assertEquals(anchor.x, geo.outerPath[0], DELTA)
+        assertEquals(anchor.y, geo.outerPath[1], DELTA)
     }
 
     @Test
-    fun `scaleX scales correctly for different asset width`() {
-        // overlayWidth=200, placement.width=120 → scaleX=0.6
-        assertEquals(0.6f, transform(overlayW = 200).scaleX, DELTA)
+    fun `outer triangle base is at anchor bottom`() {
+        val geo = computeEarGeometry(anchor)
+        val expectedBaseY = anchor.y + anchor.size
+        assertEquals(expectedBaseY, geo.outerPath[3], DELTA) // left base y
+        assertEquals(expectedBaseY, geo.outerPath[5], DELTA) // right base y
     }
 
     @Test
-    fun `scaleY derived from overlay aspect ratio`() {
-        // renderedHeight = 120 * 0.5 = 60; overlayHeight=60 → scaleY=1.0
-        assertEquals(1.0f, transform(overlayH = 60).scaleY, DELTA)
+    fun `outer triangle is symmetric about anchor x`() {
+        val geo = computeEarGeometry(anchor)
+        val leftX = geo.outerPath[2]
+        val rightX = geo.outerPath[4]
+        // both sides equidistant from centre
+        assertEquals(anchor.x - leftX, rightX - anchor.x, DELTA)
     }
 
     @Test
-    fun `translateX positions left edge correctly`() {
-        // centerX=200, width=120 → left=140
-        assertEquals(140f, transform().translateX, DELTA)
+    fun `inner triangle apex is above its base`() {
+        val geo = computeEarGeometry(anchor)
+        val innerApexY = geo.innerPath[1]
+        val innerBaseY = geo.innerPath[3]
+        assert(innerApexY < innerBaseY) { "Inner ear apex should be above its base" }
     }
 
     @Test
-    fun `translateY is placement topY`() {
-        assertEquals(50f, transform().translateY, DELTA)
+    fun `inner triangle is narrower than outer triangle`() {
+        val geo = computeEarGeometry(anchor)
+        val outerWidth = geo.outerPath[4] - geo.outerPath[2]
+        val innerWidth = geo.innerPath[4] - geo.innerPath[2]
+        assert(innerWidth < outerWidth) { "Inner ear triangle should be narrower than outer" }
     }
 
     @Test
-    fun `rotateDegrees matches placement headEulerAngle`() {
-        val rotated = placement.copy(rotationDegrees = 15f)
-        assertEquals(15f, transform(p = rotated).rotateDegrees, DELTA)
-    }
-
-    @Test
-    fun `pivot is at centre of rendered overlay`() {
-        val t = transform()
-        assertEquals(60f, t.rotatePivotX, DELTA) // width/2
-        assertEquals(30f, t.rotatePivotY, DELTA) // renderedHeight/2 = (120*0.5)/2
-    }
-
-    @Test
-    fun `zero rotation produces zero skew in transform`() {
-        val t = transform(p = placement.copy(rotationDegrees = 0f))
-        // With zero rotation the rotate pivot is irrelevant but rotateDegrees must be 0
-        assert(abs(t.rotateDegrees) < DELTA) { "Expected 0 rotation, got ${t.rotateDegrees}" }
+    fun `geometry scales proportionally with ear size`() {
+        val small = computeEarGeometry(anchor.copy(size = 50f))
+        val large = computeEarGeometry(anchor.copy(size = 100f))
+        // base width of outer triangle should scale linearly with size
+        val smallWidth = small.outerPath[4] - small.outerPath[2]
+        val largeWidth = large.outerPath[4] - large.outerPath[2]
+        assertEquals(2f, largeWidth / smallWidth, DELTA)
     }
 }
