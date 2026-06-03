@@ -23,20 +23,33 @@ Point the camera at your face and get cat ears — instantly, on-device, no clou
 
 ## Tech Stack
 
-| Concern        | Technology               |
-|----------------|--------------------------|
-| Language       | Kotlin                   |
-| UI             | Jetpack Compose          |
-| Camera         | CameraX                  |
-| Face detection | ML Kit Face Detection    |
-| Build          | Gradle (Kotlin DSL)      |
-| Min SDK        | Android 14 (API 34)      |
+| Concern        | Technology                      |
+|----------------|---------------------------------|
+| Language       | Kotlin 2.3.21                   |
+| UI             | Jetpack Compose (BOM 2026.05.01)|
+| Camera         | CameraX 1.6.1                   |
+| Face detection | ML Kit Face Detection 16.1.7    |
+| DI             | Hilt 2.59.2                     |
+| Build          | Gradle 9.5.1 (Kotlin DSL)       |
+| Min SDK        | Android 14 (API 34)             |
+| Target SDK     | Android 16 (API 36)             |
 
 ## License
 
 [GPL v3](LICENSE)
 
 ---
+
+## Prerequisites
+
+- JDK 17+ (tested with OpenJDK 26.0.1)
+- Android SDK — set `sdk.dir` in `local.properties` (not committed):
+  ```properties
+  sdk.dir=/path/to/Android/Sdk
+  ```
+  Required SDK components: `platforms;android-36`, `build-tools;36.0.0`.
+  Install via: `sdkmanager "platforms;android-36" "build-tools;36.0.0"`
+- `./gradlew` is self-contained (downloads Gradle 9.5.1 on first run).
 
 ## Build
 

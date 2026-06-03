@@ -25,4 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "androidCatEars"
 
-// :app module added in task 0.4
+include(":app")

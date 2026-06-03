@@ -18,7 +18,7 @@ extra["appVersionCode"] = major * 100_000 + minor * 1_000 + patch
 
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android)      apply false
+    // kotlin-android is intentionally absent: AGP 9.0+ provides Kotlin support built-in
     alias(libs.plugins.kotlin.compose)      apply false
     alias(libs.plugins.hilt)                apply false
     alias(libs.plugins.ksp)                 apply false

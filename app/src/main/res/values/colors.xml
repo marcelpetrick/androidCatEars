@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<resources>
+    <color name="ic_launcher_background">#FF6D3B</color>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<resources>
+    <!-- Base application theme — Compose handles real theming; this is the window backdrop. -->
+    <style name="Theme.AndroidCatEars" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
