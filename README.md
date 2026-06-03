@@ -63,6 +63,24 @@ drift silently.
 If a local gate step fails, `scripts/ci.sh` prints the failed step and command.
 GitHub CI uploads test, coverage, and lint reports as workflow artifacts.
 
+Example summary from a successful local run:
+
+```text
++----+----------------------------------+----------+----------+
+| #  | Step                             | Status   | Wall     |
++----+----------------------------------+----------+----------+
+| 1  | Build (debug)                    | PASSED   | 00:00    |
+| 2  | Format check (Spotless)          | PASSED   | 00:01    |
+| 3  | Static analysis (detekt)         | PASSED   | 00:01    |
+| 4  | Android Lint                     | PASSED   | 00:00    |
+| 5  | Unit tests                       | PASSED   | 00:01    |
+| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:00    |
++----+----------------------------------+----------+----------+
+| Total                                 | PASSED   | 00:03    |
++---------------------------------------+----------+----------+
+All checks passed.
+```
+
 GitHub Actions also runs security/release workflows:
 
 - `ci.yml` — push/PR quality gate using `scripts/ci.sh`.

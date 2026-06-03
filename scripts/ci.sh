@@ -7,32 +7,88 @@
 #
 # Usage: ./scripts/ci.sh
 
-set -Eeuo pipefail
+set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-current_step=""
-trap 'status=$?; echo ""; echo "FAILED: ${current_step:-unknown step}"; echo "Command: ${BASH_COMMAND}"; exit "$status"' ERR
+STEP_NAMES=()
+STEP_STATUSES=()
+STEP_DURATIONS=()
 
-run_step() {
-  current_step="$1"
-  shift
-  echo "==> ${current_step}"
-  "$@"
+format_duration() {
+  local seconds="$1"
+  printf '%02d:%02d' $((seconds / 60)) $((seconds % 60))
 }
 
-run_step "[1/6] Build (debug)" ./gradlew assembleDebug
+print_summary() {
+  local total=0
+  local overall="PASSED"
 
-run_step "[2/6] Format check (Spotless)" ./gradlew spotlessCheck
+  for i in "${!STEP_NAMES[@]}"; do
+    total=$((total + STEP_DURATIONS[i]))
+    if [[ "${STEP_STATUSES[i]}" != "PASSED" ]]; then
+      overall="FAILED"
+    fi
+  done
 
-run_step "[3/6] Static analysis (detekt)" ./gradlew detekt
+  echo ""
+  echo "+----+----------------------------------+----------+----------+"
+  echo "| #  | Step                             | Status   | Wall     |"
+  echo "+----+----------------------------------+----------+----------+"
+  for i in "${!STEP_NAMES[@]}"; do
+    printf '| %-2d | %-32s | %-8s | %-8s |\n' \
+      "$((i + 1))" \
+      "${STEP_NAMES[i]}" \
+      "${STEP_STATUSES[i]}" \
+      "$(format_duration "${STEP_DURATIONS[i]}")"
+  done
+  echo "+----+----------------------------------+----------+----------+"
+  printf '| %-37s | %-8s | %-8s |\n' "Total" "$overall" "$(format_duration "$total")"
+  echo "+---------------------------------------+----------+----------+"
+}
 
-run_step "[4/6] Android Lint" ./gradlew :app:lint
+run_step() {
+  local step_name="$1"
+  shift
+  local started
+  local finished
+  local duration
 
-run_step "[5/6] Unit tests" ./gradlew :app:test
+  echo "==> ${step_name}"
+  started="$(date +%s)"
+  if "$@"; then
+    finished="$(date +%s)"
+    duration=$((finished - started))
+    STEP_NAMES+=("$step_name")
+    STEP_STATUSES+=("PASSED")
+    STEP_DURATIONS+=("$duration")
+  else
+    local status=$?
+    finished="$(date +%s)"
+    duration=$((finished - started))
+    STEP_NAMES+=("$step_name")
+    STEP_STATUSES+=("FAILED")
+    STEP_DURATIONS+=("$duration")
+    print_summary
+    echo ""
+    echo "FAILED: ${step_name}"
+    echo "Command: $*"
+    exit "$status"
+  fi
+}
 
-run_step "[6/6] Coverage gate (Kover >= 95%)" ./gradlew :app:koverVerify
+run_step "Build (debug)" ./gradlew assembleDebug
 
-echo ""
+run_step "Format check (Spotless)" ./gradlew spotlessCheck
+
+run_step "Static analysis (detekt)" ./gradlew detekt
+
+run_step "Android Lint" ./gradlew :app:lint
+
+run_step "Unit tests" ./gradlew :app:test
+
+run_step "Coverage gate (Kover >= 95%)" ./gradlew :app:koverVerify
+
+print_summary
 echo "All checks passed."
