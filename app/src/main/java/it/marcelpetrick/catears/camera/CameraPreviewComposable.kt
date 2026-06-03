@@ -142,6 +142,8 @@ private fun facePlacement(
     val viewBox = imageToViewBoundingBox(face.boundingBox, transform)
     val leftEar = face.leftEarPosition?.let { imageToViewCoordinates(it, transform) }
     val rightEar = face.rightEarPosition?.let { imageToViewCoordinates(it, transform) }
+    val eyeOpennessMean = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
+        .takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 1f
     return smoother.smooth(
         computeOverlayPlacement(
             viewBox = viewBox,
@@ -149,6 +151,8 @@ private fun facePlacement(
             headEulerAngleY = face.headEulerAngleY,
             leftEarAnchor = leftEar,
             rightEarAnchor = rightEar,
+            smilingProbability = face.smilingProbability ?: 0f,
+            eyeOpennessMean = eyeOpennessMean,
         ),
     )
 }

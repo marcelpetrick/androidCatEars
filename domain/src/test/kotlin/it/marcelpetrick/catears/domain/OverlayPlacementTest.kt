@@ -63,6 +63,36 @@ class OverlayPlacementTest {
     }
 
     @Test
+    fun `expression probabilities default to neutral`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertEquals(0f, p.smilingProbability, DELTA)
+        assertEquals(1f, p.eyeOpennessMean, DELTA)
+    }
+
+    @Test
+    fun `expression probabilities are stored in placement`() {
+        val p = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            smilingProbability = 0.9f,
+            eyeOpennessMean = 0.1f,
+        )
+        assertEquals(0.9f, p.smilingProbability, DELTA)
+        assertEquals(0.1f, p.eyeOpennessMean, DELTA)
+    }
+
+    @Test
+    fun `smoother interpolates expression probabilities`() {
+        val smoother = PlacementSmoother(alpha = 0.5f)
+        val first = makePlacement().copy(smilingProbability = 0f, eyeOpennessMean = 1f)
+        val second = makePlacement().copy(smilingProbability = 1f, eyeOpennessMean = 0f)
+        smoother.smooth(first)
+        val result = smoother.smooth(second)
+        assertEquals(0.5f, result.smilingProbability, DELTA)
+        assertEquals(0.5f, result.eyeOpennessMean, DELTA)
+    }
+
+    @Test
     fun `zero yaw produces symmetric xScale of 1 on both ears`() {
         val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 0f)
         assertEquals(1f, p.leftEar.xScale, DELTA)

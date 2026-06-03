@@ -21,12 +21,16 @@ data class EarAnchor(val x: Float, val y: Float, val size: Float, val tiltDegree
  * @param rightEar Anchor for the right-side cat ear.
  * @param headEulerAngleY Head yaw in degrees; positive = head turned right.
  * @param earStyle Visual rendering style to apply to both ears.
+ * @param smilingProbability Smoothed smile probability [0..1]; 0 when unknown.
+ * @param eyeOpennessMean Smoothed mean eye-openness [0..1]; 1 when unknown.
  */
 data class OverlayPlacement(
     val leftEar: EarAnchor,
     val rightEar: EarAnchor,
     val headEulerAngleY: Float = 0f,
     val earStyle: EarStyle = EarStyle.CLASSIC,
+    val smilingProbability: Float = 0f,
+    val eyeOpennessMean: Float = 1f,
 )
 
 /**
@@ -46,6 +50,8 @@ data class OverlayPlacement(
  * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
  * @param widthRatio Width of one ear relative to face width. Default 0.65.
  * @param earHeightRatio Fallback only: gap between box top and ear bottom (fraction of height).
+ * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
+ * @param eyeOpennessMean Mean of left+right eye-open probabilities [0..1]; 1 when absent.
  */
 fun computeOverlayPlacement(
     viewBox: BoundingBox,
@@ -55,6 +61,8 @@ fun computeOverlayPlacement(
     rightEarAnchor: Point2D? = null,
     widthRatio: Float = DEFAULT_EAR_WIDTH_RATIO,
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
+    smilingProbability: Float = 0f,
+    eyeOpennessMean: Float = 1f,
 ): OverlayPlacement {
     val earSize = viewBox.width * widthRatio
     // Positive yaw (head turning right) → right ear nearer, left ear farther.
@@ -79,6 +87,8 @@ fun computeOverlayPlacement(
                 xScale = rightXScale,
             ),
             headEulerAngleY = headEulerAngleY,
+            smilingProbability = smilingProbability,
+            eyeOpennessMean = eyeOpennessMean,
         )
     } else {
         val earBottomY = viewBox.top - viewBox.height * earHeightRatio
@@ -100,6 +110,8 @@ fun computeOverlayPlacement(
                 xScale = rightXScale,
             ),
             headEulerAngleY = headEulerAngleY,
+            smilingProbability = smilingProbability,
+            eyeOpennessMean = eyeOpennessMean,
         )
     }
 }
@@ -120,6 +132,8 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
             leftEar = smoothAnchor(prev.leftEar, next.leftEar),
             rightEar = smoothAnchor(prev.rightEar, next.rightEar),
             headEulerAngleY = lerp(prev.headEulerAngleY, next.headEulerAngleY, alpha),
+            smilingProbability = lerp(prev.smilingProbability, next.smilingProbability, alpha),
+            eyeOpennessMean = lerp(prev.eyeOpennessMean, next.eyeOpennessMean, alpha),
         )
         last = smoothed
         return smoothed
