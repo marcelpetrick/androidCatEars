@@ -15,6 +15,16 @@ base {
     archivesName = "androidCatEars"
 }
 
+// Short git commit hash (first 7 chars) injected into BuildConfig; "unknown" if git is unavailable.
+val gitCommitHash: String =
+    providers
+        .exec {
+            commandLine("git", "rev-parse", "--short=7", "HEAD")
+        }.standardOutput.asText
+        .map { it.trim() }
+        .orElse("unknown")
+        .get()
+
 android {
     namespace = "it.marcelpetrick.catears"
     compileSdk = 36
@@ -25,6 +35,7 @@ android {
         targetSdk = 36
         versionCode = rootProject.extra["appVersionCode"] as Int
         versionName = rootProject.extra["appVersionName"] as String
+        buildConfigField("String", "GIT_COMMIT", "\"$gitCommitHash\"")
     }
 
     buildTypes {
@@ -51,6 +62,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     lint {
@@ -126,6 +138,8 @@ kover {
                     "*_GeneratedInjector*",
                     "dagger.hilt.*",
                     "hilt_aggregated_deps.*",
+                    // Generated BuildConfig — no logic
+                    "it.marcelpetrick.catears.BuildConfig",
                     // Application class (framework entry point, no logic)
                     "it.marcelpetrick.catears.CatEarsApplication",
                     "it.marcelpetrick.catears.CatEarsApplication*",

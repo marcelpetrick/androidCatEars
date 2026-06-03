@@ -50,22 +50,29 @@ fun MainScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when (uiState) {
-            MainUiState.Initialising -> InitialisingContent()
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (uiState) {
+                MainUiState.Initialising -> InitialisingContent()
 
-            MainUiState.PermissionRequired -> PermissionRequiredContent(onRequestPermission)
+                MainUiState.PermissionRequired -> PermissionRequiredContent(onRequestPermission)
 
-            MainUiState.PermissionPermanentlyDenied -> PermissionDeniedContent(onOpenSettings)
+                MainUiState.PermissionPermanentlyDenied -> PermissionDeniedContent(onOpenSettings)
 
-            MainUiState.Ready -> CameraContent(
-                lens = lens,
-                overlayPlacement = overlayPlacement,
-                onFaceDetected = onFaceDetected,
-                captureRequested = captureRequested,
-                onComposited = onComposited,
-                onToggleLens = onToggleLens,
-                onCapture = onCapture,
-                onShare = onShare,
+                MainUiState.Ready -> CameraContent(
+                    lens = lens,
+                    overlayPlacement = overlayPlacement,
+                    onFaceDetected = onFaceDetected,
+                    captureRequested = captureRequested,
+                    onComposited = onComposited,
+                    onToggleLens = onToggleLens,
+                    onCapture = onCapture,
+                    onShare = onShare,
+                )
+            }
+            VersionLabel(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp),
             )
         }
     }
