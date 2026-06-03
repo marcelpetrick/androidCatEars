@@ -60,6 +60,19 @@ recommendation rather than guessing.
 - All work stays **inside the project directory** (see "Local Environment & Tooling").
 - The backlog is always an accurate reflection of remaining work.
 
+### Periodic review (every 10 commits)
+
+After roughly every **10 commits**, pause and do a short review of the current state vs. the plan:
+
+1. Compare the **IS** (what the code currently does) against [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md)
+   and [`VISION.md`](VISION.md).
+2. Note anything missing, risky, deferred, or worth doing that is not already a backlog task.
+3. Record findings in [`TODO.md`](TODO.md) as a **simple enumerated list of one-liners** (no prose).
+   Keep it current: remove items once they become backlog tasks or are done.
+4. Commit the review as its own atomic `docs(todo): …` commit.
+
+This keeps a lightweight, always-visible radar of follow-ups separate from the detailed backlog.
+
 ---
 
 ## Git Identity
