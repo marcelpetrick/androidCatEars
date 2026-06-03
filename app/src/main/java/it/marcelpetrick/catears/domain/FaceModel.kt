@@ -13,12 +13,18 @@ package it.marcelpetrick.catears.domain
  * @param leftEyePosition Landmark position of the left eye (as seen by the camera).
  * @param rightEyePosition Landmark position of the right eye (as seen by the camera).
  * @param headEulerAngleZ Roll angle of the head in degrees (positive = tilted right).
+ * @param headEulerAngleY Yaw angle in degrees (positive = head turned right); used for perspective scaling.
+ * @param leftEarPosition Side-of-skull anchor where the left ear attaches; null if not detected.
+ * @param rightEarPosition Side-of-skull anchor where the right ear attaches; null if not detected.
  */
 data class FaceModel(
     val boundingBox: BoundingBox,
     val leftEyePosition: Point2D?,
     val rightEyePosition: Point2D?,
     val headEulerAngleZ: Float,
+    val headEulerAngleY: Float = 0f,
+    val leftEarPosition: Point2D? = null,
+    val rightEarPosition: Point2D? = null,
 )
 
 /** Axis-aligned rectangle in pixel coordinates. */

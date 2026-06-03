@@ -32,18 +32,26 @@ class FaceModelTest {
 
     @Test
     fun `FaceModel holds all fields`() {
-        val left = Point2D(30f, 50f)
-        val right = Point2D(80f, 50f)
+        val leftEye = Point2D(30f, 50f)
+        val rightEye = Point2D(80f, 50f)
+        val leftEar = Point2D(10f, 60f)
+        val rightEar = Point2D(100f, 60f)
         val face = FaceModel(
             boundingBox = box,
-            leftEyePosition = left,
-            rightEyePosition = right,
+            leftEyePosition = leftEye,
+            rightEyePosition = rightEye,
             headEulerAngleZ = 5f,
+            headEulerAngleY = 12f,
+            leftEarPosition = leftEar,
+            rightEarPosition = rightEar,
         )
         assertEquals(box, face.boundingBox)
-        assertEquals(left, face.leftEyePosition)
-        assertEquals(right, face.rightEyePosition)
+        assertEquals(leftEye, face.leftEyePosition)
+        assertEquals(rightEye, face.rightEyePosition)
         assertEquals(5f, face.headEulerAngleZ)
+        assertEquals(12f, face.headEulerAngleY)
+        assertEquals(leftEar, face.leftEarPosition)
+        assertEquals(rightEar, face.rightEarPosition)
     }
 
     @Test
@@ -56,5 +64,31 @@ class FaceModelTest {
         )
         assertEquals(null, face.leftEyePosition)
         assertEquals(null, face.rightEyePosition)
+        assertEquals(null, face.leftEarPosition)
+        assertEquals(null, face.rightEarPosition)
+        assertEquals(0f, face.headEulerAngleY)
+    }
+
+    @Test
+    fun `FaceModel ear tip positions default to null`() {
+        val face = FaceModel(
+            boundingBox = box,
+            leftEyePosition = null,
+            rightEyePosition = null,
+            headEulerAngleZ = 0f,
+        )
+        assertEquals(null, face.leftEarPosition)
+        assertEquals(null, face.rightEarPosition)
+    }
+
+    @Test
+    fun `FaceModel headEulerAngleY defaults to zero`() {
+        val face = FaceModel(
+            boundingBox = box,
+            leftEyePosition = null,
+            rightEyePosition = null,
+            headEulerAngleZ = 0f,
+        )
+        assertEquals(0f, face.headEulerAngleY)
     }
 }

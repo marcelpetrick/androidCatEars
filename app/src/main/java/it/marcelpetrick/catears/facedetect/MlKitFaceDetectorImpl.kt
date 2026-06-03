@@ -70,5 +70,10 @@ private fun com.google.mlkit.vision.face.Face.toFaceModel(): FaceModel {
         rightEyePosition = getLandmark(com.google.mlkit.vision.face.FaceLandmark.RIGHT_EYE)
             ?.position?.let { Point2D(it.x, it.y) },
         headEulerAngleZ = headEulerAngleZ,
+        headEulerAngleY = headEulerAngleY,
+        leftEarPosition = getLandmark(com.google.mlkit.vision.face.FaceLandmark.LEFT_EAR)
+            ?.position?.let { Point2D(it.x, it.y) },
+        rightEarPosition = getLandmark(com.google.mlkit.vision.face.FaceLandmark.RIGHT_EAR)
+            ?.position?.let { Point2D(it.x, it.y) },
     )
 }
