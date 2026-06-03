@@ -15,6 +15,10 @@ class CoordinateTransformTest {
         TransformContext(imageWidth = 640, imageHeight = 480, viewWidth = 1280, viewHeight = 960, isFrontCamera = false)
     private val frontCtx =
         TransformContext(imageWidth = 640, imageHeight = 480, viewWidth = 1280, viewHeight = 960, isFrontCamera = true)
+    private val croppedCtx =
+        TransformContext(imageWidth = 400, imageHeight = 300, viewWidth = 1080, viewHeight = 1920, isFrontCamera = false)
+    private val croppedFrontCtx =
+        TransformContext(imageWidth = 400, imageHeight = 300, viewWidth = 1080, viewHeight = 1920, isFrontCamera = true)
 
     // ---- imageToViewCoordinates ----
 
@@ -52,6 +56,27 @@ class CoordinateTransformTest {
         // x=0 in image → scaledX=0 → mirrored = viewW - 0 = viewW
         val result = imageToViewCoordinates(Point2D(0f, 0f), frontCtx)
         assertEquals(1280f, result.x, DELTA)
+        assertEquals(0f, result.y, DELTA)
+    }
+
+    @Test
+    fun `fill-center transform preserves aspect ratio and crops horizontal overflow`() {
+        val result = imageToViewCoordinates(Point2D(200f, 150f), croppedCtx)
+        assertEquals(540f, result.x, DELTA)
+        assertEquals(960f, result.y, DELTA)
+    }
+
+    @Test
+    fun `fill-center transform keeps crop offset for off-centre points`() {
+        val result = imageToViewCoordinates(Point2D(0f, 0f), croppedCtx)
+        assertEquals(-740f, result.x, DELTA)
+        assertEquals(0f, result.y, DELTA)
+    }
+
+    @Test
+    fun `front camera mirrors after fill-center crop mapping`() {
+        val result = imageToViewCoordinates(Point2D(0f, 0f), croppedFrontCtx)
+        assertEquals(1820f, result.x, DELTA)
         assertEquals(0f, result.y, DELTA)
     }
 

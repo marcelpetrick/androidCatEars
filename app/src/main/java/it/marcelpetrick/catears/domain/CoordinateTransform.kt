@@ -7,19 +7,24 @@ package it.marcelpetrick.catears.domain
  * Transforms a [Point2D] from **image space** to **view space**.
  *
  * ML Kit returns face landmarks in image pixel coordinates (origin = top-left
- * of the image buffer). The PreviewView renders the image scaled and, for the
- * front camera, mirrored horizontally. This function converts a point so it
- * lines up with what the user sees on screen.
+ * of the image buffer). PreviewView's default scale type preserves aspect ratio
+ * and fills the view, cropping the overflowing axis. This function applies that
+ * same uniform scale + crop offset and, for the front camera, mirrors
+ * horizontally so points line up with what the user sees on screen.
  */
 fun imageToViewCoordinates(point: Point2D, ctx: TransformContext): Point2D {
-    val scaleX = ctx.viewWidth.toFloat() / ctx.imageWidth.toFloat()
-    val scaleY = ctx.viewHeight.toFloat() / ctx.imageHeight.toFloat()
+    val scale = maxOf(
+        ctx.viewWidth.toFloat() / ctx.imageWidth.toFloat(),
+        ctx.viewHeight.toFloat() / ctx.imageHeight.toFloat(),
+    )
+    val offsetX = (ctx.viewWidth - ctx.imageWidth * scale) / 2f
+    val offsetY = (ctx.viewHeight - ctx.imageHeight * scale) / 2f
 
-    val scaledX = point.x * scaleX
-    val scaledY = point.y * scaleY
+    val mappedX = point.x * scale + offsetX
+    val mappedY = point.y * scale + offsetY
 
-    val mirroredX = if (ctx.isFrontCamera) ctx.viewWidth - scaledX else scaledX
-    return Point2D(x = mirroredX, y = scaledY)
+    val mirroredX = if (ctx.isFrontCamera) ctx.viewWidth - mappedX else mappedX
+    return Point2D(x = mirroredX, y = mappedY)
 }
 
 /**

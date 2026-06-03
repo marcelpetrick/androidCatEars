@@ -39,7 +39,7 @@ exploitable remote vulnerabilities.
 
 1. `imageToViewCoordinates()` independently scales X/Y to the whole
    `PreviewView` and ignores CameraX aspect-ratio preservation and crop/fit
-   offsets, so overlay placement can be wrong on real screens.
+   offsets, so overlay placement can be wrong on real screens. **Status: fixed.**
 2. `CameraPreview` manually constructs `CameraXControllerImpl` and
    `MlKitFaceDetectorImpl`, bypassing the Hilt/seam architecture promised in the
    docs.
