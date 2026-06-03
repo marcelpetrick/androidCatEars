@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
                     onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                     onOpenSettings = { openAppSettings() },
                     onToggleLens = viewModel::onToggleLens,
+                    onCapture = { viewModel.onCaptureRequested() },
                 )
             }
         }

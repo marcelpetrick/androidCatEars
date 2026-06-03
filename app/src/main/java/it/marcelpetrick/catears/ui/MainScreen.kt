@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +41,7 @@ fun MainScreen(
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleLens: () -> Unit,
+    onCapture: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -54,6 +56,7 @@ fun MainScreen(
                 lens = lens,
                 overlayPlacement = overlayPlacement,
                 onToggleLens = onToggleLens,
+                onCapture = onCapture,
             )
         }
     }
@@ -119,7 +122,12 @@ private fun PermissionDeniedContent(onOpenSettings: () -> Unit) {
 }
 
 @Composable
-private fun CameraContent(lens: LensSelector, overlayPlacement: OverlayPlacement?, onToggleLens: () -> Unit) {
+private fun CameraContent(
+    lens: LensSelector,
+    overlayPlacement: OverlayPlacement?,
+    onToggleLens: () -> Unit,
+    onCapture: () -> Unit,
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(lens = lens, modifier = Modifier.fillMaxSize())
         CatEarOverlay(placement = overlayPlacement)
@@ -130,6 +138,14 @@ private fun CameraContent(lens: LensSelector, overlayPlacement: OverlayPlacement
                 .padding(16.dp),
         ) {
             Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
+        }
+        FloatingActionButton(
+            onClick = onCapture,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp),
+        ) {
+            Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
         }
     }
 }
@@ -145,6 +161,7 @@ private fun MainScreenReadyPreview() {
             onRequestPermission = {},
             onOpenSettings = {},
             onToggleLens = {},
+            onCapture = {},
         )
     }
 }
@@ -160,6 +177,7 @@ private fun MainScreenPermissionRequiredPreview() {
             onRequestPermission = {},
             onOpenSettings = {},
             onToggleLens = {},
+            onCapture = {},
         )
     }
 }
@@ -175,6 +193,7 @@ private fun MainScreenPermissionDeniedPreview() {
             onRequestPermission = {},
             onOpenSettings = {},
             onToggleLens = {},
+            onCapture = {},
         )
     }
 }

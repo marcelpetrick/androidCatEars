@@ -5,6 +5,7 @@ package it.marcelpetrick.catears.ui
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
@@ -33,6 +34,28 @@ class MainViewModel @Inject constructor() : ViewModel() {
     /** Called from the face-detection callback with the smoothed placement, or null if no face. */
     fun onFaceDetected(placement: OverlayPlacement?) {
         _overlayPlacement.value = placement
+    }
+
+    private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)
+    val captureState: StateFlow<CaptureState> = _captureState.asStateFlow()
+
+    /** Signals the start of a capture; the camera implementation calls [onCaptureResult]. */
+    fun onCaptureRequested() {
+        _captureState.value = CaptureState.Capturing
+    }
+
+    /** Called by the camera layer with the raw JPEG bytes, or null on failure. */
+    fun onCaptureResult(jpegBytes: ByteArray?) {
+        _captureState.value = if (jpegBytes != null) {
+            CaptureState.Success(jpegBytes)
+        } else {
+            CaptureState.Failed
+        }
+    }
+
+    /** Resets the capture state back to Idle (called after the result has been consumed). */
+    fun onCaptureConsumed() {
+        _captureState.value = CaptureState.Idle
     }
 
     /**

@@ -5,6 +5,7 @@ package it.marcelpetrick.catears.ui
 
 import app.cash.turbine.test
 import it.marcelpetrick.catears.domain.BoundingBox
+import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import kotlinx.coroutines.test.runTest
@@ -105,6 +106,62 @@ class MainViewModelTest {
             assertNull(awaitItem())
             vm.onFaceDetected(placement)
             assertEquals(placement, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `initial captureState is Idle`() = runTest {
+        viewModel().captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCaptureRequested transitions to Capturing`() = runTest {
+        val vm = viewModel()
+        vm.captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            vm.onCaptureRequested()
+            assertEquals(CaptureState.Capturing, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCaptureResult with bytes transitions to Success`() = runTest {
+        val vm = viewModel()
+        val bytes = byteArrayOf(1, 2, 3)
+        vm.captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            vm.onCaptureResult(bytes)
+            val state = awaitItem()
+            assert(state is CaptureState.Success)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCaptureResult null transitions to Failed`() = runTest {
+        val vm = viewModel()
+        vm.captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            vm.onCaptureResult(null)
+            assertEquals(CaptureState.Failed, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onCaptureConsumed resets to Idle`() = runTest {
+        val vm = viewModel()
+        vm.captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            vm.onCaptureRequested()
+            assertEquals(CaptureState.Capturing, awaitItem())
+            vm.onCaptureConsumed()
+            assertEquals(CaptureState.Idle, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

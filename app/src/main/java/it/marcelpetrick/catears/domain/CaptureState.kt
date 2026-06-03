@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+package it.marcelpetrick.catears.domain
+
+/** Models the lifecycle of a photo-capture operation. Pure domain — no Android deps. */
+sealed interface CaptureState {
+    /** No capture in progress. */
+    data object Idle : CaptureState
+
+    /** Capture is in progress — shutter released, waiting for the frame. */
+    data object Capturing : CaptureState
+
+    /** Capture succeeded; holds the raw JPEG bytes ready for compositing. */
+    data class Success(val jpegBytes: ByteArray) : CaptureState
+
+    /** Capture failed for any reason. */
+    data object Failed : CaptureState
+}
