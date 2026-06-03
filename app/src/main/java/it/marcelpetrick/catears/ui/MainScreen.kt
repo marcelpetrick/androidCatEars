@@ -25,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,6 +50,7 @@ fun MainScreen(
     onFaceDetected: (OverlayPlacement?) -> Unit,
     captureRequested: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
+    captureStatus: String?,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -74,7 +78,31 @@ fun MainScreen(
                     .align(Alignment.TopCenter)
                     .padding(top = 8.dp),
             )
+            if (captureStatus != null) {
+                CaptureStatusBanner(
+                    message = captureStatus,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 32.dp),
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun CaptureStatusBanner(message: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        color = MaterialTheme.colorScheme.inverseSurface,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.inverseOnSurface,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
     }
 }
 
@@ -202,6 +230,7 @@ private fun MainScreenReadyPreview() {
             onFaceDetected = {},
             captureRequested = false,
             onComposited = {},
+            captureStatus = null,
         )
     }
 }
@@ -222,6 +251,7 @@ private fun MainScreenPermissionRequiredPreview() {
             onFaceDetected = {},
             captureRequested = false,
             onComposited = {},
+            captureStatus = null,
         )
     }
 }
@@ -242,6 +272,7 @@ private fun MainScreenPermissionDeniedPreview() {
             onFaceDetected = {},
             captureRequested = false,
             onComposited = {},
+            captureStatus = null,
         )
     }
 }

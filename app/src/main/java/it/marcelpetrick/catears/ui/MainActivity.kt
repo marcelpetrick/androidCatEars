@@ -68,6 +68,11 @@ class MainActivity : ComponentActivity() {
                     onFaceDetected = viewModel::onFaceDetected,
                     captureRequested = captureState is CaptureState.Capturing,
                     onComposited = viewModel::onCompositedBitmap,
+                    captureStatus = when (captureState) {
+                        is CaptureState.Saved -> "Photo saved to gallery · tap share"
+                        CaptureState.Failed -> "Capture failed — please try again"
+                        else -> null
+                    },
                 )
             }
         }
