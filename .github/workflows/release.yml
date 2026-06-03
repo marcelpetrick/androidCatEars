@@ -3,8 +3,9 @@
 #
 # Manual release pipeline.
 # Trigger from the GitHub UI (Actions → Release → Run workflow). It reads the
-# version from version.properties, builds the release AAB, and publishes a
-# GitHub Release tagged v<version> with the store-ready artefact attached.
+# version from version.properties, builds the release AAB, generates CycloneDX
+# SBOMs, and publishes a GitHub Release tagged v<version> with the store-ready
+# artefact attached.
 #
 # Signing is optional: if RELEASE_KEYSTORE_BASE64 / RELEASE_STORE_PASSWORD /
 # RELEASE_KEY_ALIAS / RELEASE_KEY_PASSWORD are set as repository secrets the
@@ -57,7 +58,7 @@ jobs:
           echo "Releasing version ${VERSION}"
 
       - name: Run quality gate
-        run: ./gradlew spotlessCheck detekt :app:lint :app:test :app:koverVerify
+        run: ./gradlew spotlessCheck detekt :app:lint :app:test :domain:test :domain:koverVerify
 
       - name: Set up signing (optional)
         id: signing
@@ -106,6 +107,9 @@ jobs:
              "release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-debug.apk"
           echo "ARTEFACT_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
 
+      - name: Generate SBOM artefacts
+        run: ./scripts/generate-sbom.sh release-artefacts
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -119,6 +123,8 @@ jobs:
             ### Downloads
             - **androidCatEars-${{ steps.version.outputs.version }}-${{ env.ARTEFACT_SUFFIX }}.aab** — app bundle for Play Store distribution.
             - **androidCatEars-${{ steps.version.outputs.version }}-debug.apk** — debug APK for direct sideloading and testing. ⚠️ Debug build: not minified, debuggable flag set, do not use in production.
+            - **androidCatEars-${{ steps.version.outputs.version }}.cdx.json / .cdx.xml** — CycloneDX SBOMs for the release dependency graph.
+            - **androidCatEars-${{ steps.version.outputs.version }}.cdx.*.sha256** — checksums for SBOM verification.
 
             ${{ steps.signing.outputs.signed == 'true' && '✅ AAB signed with release key.' || '⚠️ Unsigned AAB — configure RELEASE_KEYSTORE_BASE64 and related secrets for a signed release (see documentation/RELEASE.md).' }}
 
@@ -128,4 +134,8 @@ jobs:
           files: |
             release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-${{ env.ARTEFACT_SUFFIX }}.aab
             release-artefacts/androidCatEars-${{ steps.version.outputs.version }}-debug.apk
+            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}.cdx.json
+            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}.cdx.xml
+            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}.cdx.json.sha256
+            release-artefacts/androidCatEars-${{ steps.version.outputs.version }}.cdx.xml.sha256
           generate_release_notes: true
