@@ -85,10 +85,12 @@ class MainActivity : ComponentActivity() {
                     },
                     onFaceDetected = viewModel::onFaceDetected,
                     captureRequested = captureState is CaptureState.Capturing,
+                    captureEnabled = captureState !is CaptureState.Capturing,
                     onComposited = viewModel::onCompositedBitmap,
                     cameraControllerFactory = { cameraControllerProvider.get() },
                     faceDetectorFactory = { faceDetectorProvider.get() },
                     captureStatus = when (captureState) {
+                        CaptureState.Capturing -> "Saving photo..."
                         is CaptureState.Saved -> "Photo saved to gallery · tap share"
                         CaptureState.Failed -> "Capture failed — please try again"
                         else -> null

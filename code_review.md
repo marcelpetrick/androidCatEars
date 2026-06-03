@@ -54,6 +54,7 @@ exploitable remote vulnerabilities.
    threads across activity disposal/recreation. **Status: fixed.**
 7. The capture button remains active while a capture/save is already in progress,
    so repeated taps can enqueue overlapping saves and inconsistent UI state.
+   **Status: fixed.**
 8. `MainViewModel` hardcodes `Dispatchers.IO`, `System.currentTimeMillis()`, and
    random suffix generation, making save behavior harder to test deterministically.
 9. `app/lint.xml` still suppresses `UnusedResources` with a comment from before

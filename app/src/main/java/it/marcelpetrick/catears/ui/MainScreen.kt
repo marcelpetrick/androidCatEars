@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
@@ -31,8 +32,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.camera.CameraPreview
+import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
@@ -51,6 +52,7 @@ fun MainScreen(
     onShare: (() -> Unit)?,
     onFaceDetected: (OverlayPlacement?) -> Unit,
     captureRequested: Boolean,
+    captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
     faceDetectorFactory: () -> MlKitFaceDetectorImpl,
@@ -71,6 +73,7 @@ fun MainScreen(
                     overlayPlacement = overlayPlacement,
                     onFaceDetected = onFaceDetected,
                     captureRequested = captureRequested,
+                    captureEnabled = captureEnabled,
                     onComposited = onComposited,
                     cameraControllerFactory = cameraControllerFactory,
                     faceDetectorFactory = faceDetectorFactory,
@@ -177,6 +180,7 @@ private fun CameraContent(
     overlayPlacement: OverlayPlacement?,
     onFaceDetected: (OverlayPlacement?) -> Unit,
     captureRequested: Boolean,
+    captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
     faceDetectorFactory: () -> MlKitFaceDetectorImpl,
@@ -204,12 +208,20 @@ private fun CameraContent(
             Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
         }
         FloatingActionButton(
-            onClick = onCapture,
+            onClick = { if (captureEnabled) onCapture() },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp),
         ) {
-            Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
+            if (captureEnabled) {
+                Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
         }
         if (onShare != null) {
             FloatingActionButton(
@@ -239,6 +251,7 @@ private fun MainScreenReadyPreview() {
             onShare = {},
             onFaceDetected = {},
             captureRequested = false,
+            captureEnabled = true,
             onComposited = {},
             cameraControllerFactory = { CameraXControllerImpl() },
             faceDetectorFactory = { MlKitFaceDetectorImpl() },
@@ -262,6 +275,7 @@ private fun MainScreenPermissionRequiredPreview() {
             onShare = {},
             onFaceDetected = {},
             captureRequested = false,
+            captureEnabled = true,
             onComposited = {},
             cameraControllerFactory = { CameraXControllerImpl() },
             faceDetectorFactory = { MlKitFaceDetectorImpl() },
@@ -285,6 +299,7 @@ private fun MainScreenPermissionDeniedPreview() {
             onShare = {},
             onFaceDetected = {},
             captureRequested = false,
+            captureEnabled = true,
             onComposited = {},
             cameraControllerFactory = { CameraXControllerImpl() },
             faceDetectorFactory = { MlKitFaceDetectorImpl() },

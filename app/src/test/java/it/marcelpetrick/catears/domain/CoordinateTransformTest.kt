@@ -16,7 +16,13 @@ class CoordinateTransformTest {
     private val frontCtx =
         TransformContext(imageWidth = 640, imageHeight = 480, viewWidth = 1280, viewHeight = 960, isFrontCamera = true)
     private val croppedCtx =
-        TransformContext(imageWidth = 400, imageHeight = 300, viewWidth = 1080, viewHeight = 1920, isFrontCamera = false)
+        TransformContext(
+            imageWidth = 400,
+            imageHeight = 300,
+            viewWidth = 1080,
+            viewHeight = 1920,
+            isFrontCamera = false,
+        )
     private val croppedFrontCtx =
         TransformContext(imageWidth = 400, imageHeight = 300, viewWidth = 1080, viewHeight = 1920, isFrontCamera = true)
 
