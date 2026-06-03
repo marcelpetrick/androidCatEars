@@ -4,6 +4,16 @@ This document defines the rules and conventions that all AI agents must follow w
 
 ---
 
+## Git Identity
+
+All commits must use the following identity:
+
+- **Author:** Marcel Petrick
+- **Email:** mail@marcelpetrick.it
+- All commits must carry a `Signed-off-by` trailer (`git commit -s` / `--signoff`).
+
+---
+
 ## Commit Messages
 
 - **Never** reference AI tools, models, assistants, harnesses, or code generators (e.g. Claude, Codex, Copilot, ChatGPT) in commit messages or PR descriptions.
