@@ -4,6 +4,29 @@ This document defines the rules and conventions that all AI agents must follow w
 
 ---
 
+## Work Format
+
+Work is organised as **atomic, focused tasks**, not large work packages.
+
+- The actionable backlog lives in [`BACKLOG.md`](BACKLOG.md), derived from the strategic
+  [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md). The plan says *what and why*; the backlog says
+  *the next concrete thing to do*.
+- **One task = one focused aspect = one atomic commit** (or a small, tightly related set). A task
+  never mixes unrelated concerns.
+- Work tasks **in order**. Pick the next `TODO`, mark it `IN PROGRESS`, and mark it `DONE` only when
+  the global Definition of Done is met. Do not start a task before its predecessors are done.
+- A task states its **goal and acceptance criteria, not a step-by-step recipe.** Agents have freedom
+  to choose the implementation, libraries-of-detail, and structure within the rules of this document
+  and the project's binding decisions.
+- If a task turns out to be **too large to stay atomic**, split it into sub-tasks in `BACKLOG.md`
+  *before* starting, rather than producing a sprawling commit.
+- When in doubt about scope, behaviour, or an architectural choice not already decided, **stop and
+  ask the user** with 2–3 concrete proposals and a recommendation.
+
+> This work format is provisional and will be refined as we learn what works in practice.
+
+---
+
 ## Git Identity
 
 All commits must use the following identity:
