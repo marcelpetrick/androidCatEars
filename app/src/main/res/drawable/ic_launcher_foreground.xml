@@ -1,18 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Placeholder launcher icon — replace in task 14.0 -->
+<!--
+  SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  Adaptive launcher icon foreground: a stylised cat face (ears, head,
+  inner ears, eyes, nose, whiskers). Self-authored, GPLv3-compatible.
+  All content stays within the 72×72 safe zone (inset 18) of the
+  108×108 viewport so no detail is clipped by launcher masks.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Simple cat-ear silhouette placeholder -->
+
+    <!-- Ears (white silhouette) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30 L38,14 L38,38 Z" />
+        android:pathData="M30,50 L36,26 L52,46 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30 L70,14 L70,38 Z" />
+        android:pathData="M78,50 L72,26 L56,46 Z" />
+
+    <!-- Head (white silhouette) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,40 m-18,0 a18,18 0 1,0 36,0 a18,18 0 1,0 -36,0" />
+        android:pathData="M54,60 m-21,0 a21,21 0 1,0 42,0 a21,21 0 1,0 -42,0" />
+
+    <!-- Inner ears (soft accent) -->
+    <path
+        android:fillColor="#FFB399"
+        android:pathData="M37,44 L40,31 L48,45 Z" />
+    <path
+        android:fillColor="#FFB399"
+        android:pathData="M71,44 L68,31 L60,45 Z" />
+
+    <!-- Eyes -->
+    <path
+        android:fillColor="#3A2A20"
+        android:pathData="M46,58 m-3.2,0 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0" />
+    <path
+        android:fillColor="#3A2A20"
+        android:pathData="M62,58 m-3.2,0 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0" />
+
+    <!-- Nose -->
+    <path
+        android:fillColor="#FF8FA3"
+        android:pathData="M51,64 L57,64 L54,68 Z" />
+
+    <!-- Whiskers -->
+    <path
+        android:strokeColor="#3A2A20"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M42,65 L28,63" />
+    <path
+        android:strokeColor="#3A2A20"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M42,69 L29,71" />
+    <path
+        android:strokeColor="#3A2A20"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M66,65 L80,63" />
+    <path
+        android:strokeColor="#3A2A20"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M66,69 L79,71" />
+
 </vector>
