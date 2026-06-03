@@ -4,7 +4,6 @@
 package it.marcelpetrick.catears.ui
 
 import android.Manifest
-import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -17,6 +16,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import it.marcelpetrick.catears.BuildConfig
@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
                     onCapture = { viewModel.onCaptureRequested() },
                     onShare = savedState?.let { saved ->
                         {
-                            startActivity(buildShareConfig(Uri.parse(saved.uriString)).toChooserIntent())
+                            startActivity(buildShareConfig(saved.uriString.toUri()).toChooserIntent())
                             viewModel.onCaptureConsumed()
                         }
                     },

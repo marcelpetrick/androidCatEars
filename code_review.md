@@ -59,6 +59,7 @@ exploitable remote vulnerabilities.
    random suffix generation, making save behavior harder to test deterministically.
    **Status: fixed.**
 9. `app/lint.xml` still suppresses `UnusedResources` with a comment from before
-   the cat-ear asset was wired, hiding real resource cleanup problems.
+   the cat-ear asset was wired, hiding real resource cleanup problems. **Status:
+   fixed.**
 10. `TODO.md` and emulator docs are stale relative to `BACKLOG.md` and the local
     webcam-capable emulator setup, so agents get contradictory project state.

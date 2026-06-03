@@ -27,7 +27,7 @@ import it.marcelpetrick.catears.domain.PlacementSmoother
 import it.marcelpetrick.catears.domain.TransformContext
 import it.marcelpetrick.catears.domain.computeOverlayPlacement
 import it.marcelpetrick.catears.domain.imageToViewBoundingBox
-import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
+import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import java.util.concurrent.atomic.AtomicReference
 
 private const val EAR_ASSET_WIDTH = 200
@@ -50,7 +50,7 @@ fun CameraPreview(
     captureRequested: Boolean,
     onComposited: (Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
-    faceDetectorFactory: () -> MlKitFaceDetectorImpl,
+    faceDetectorFactory: () -> FaceDetectorSeam,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -165,7 +165,7 @@ private fun wireController(
     controller: CameraXControllerImpl,
     previewView: PreviewView,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
-    detector: MlKitFaceDetectorImpl,
+    detector: FaceDetectorSeam,
     onFace: (it.marcelpetrick.catears.domain.FaceModel?, Int, Int) -> Unit,
 ) {
     controller.previewView = previewView

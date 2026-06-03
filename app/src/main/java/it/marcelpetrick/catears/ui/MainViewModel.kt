@@ -93,5 +93,4 @@ class MainViewModel @Inject constructor(
             PermissionState.Unknown -> MainUiState.Initialising
         }
     }
-
 }

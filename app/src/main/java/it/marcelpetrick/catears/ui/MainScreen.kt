@@ -3,6 +3,7 @@
 
 package it.marcelpetrick.catears.ui
 
+import androidx.camera.core.ImageProxy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +37,7 @@ import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
-import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
+import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import it.marcelpetrick.catears.overlay.CatEarOverlay
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
 
@@ -55,7 +56,7 @@ fun MainScreen(
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
-    faceDetectorFactory: () -> MlKitFaceDetectorImpl,
+    faceDetectorFactory: () -> FaceDetectorSeam,
     captureStatus: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -183,7 +184,7 @@ private fun CameraContent(
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
-    faceDetectorFactory: () -> MlKitFaceDetectorImpl,
+    faceDetectorFactory: () -> FaceDetectorSeam,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
@@ -254,7 +255,7 @@ private fun MainScreenReadyPreview() {
             captureEnabled = true,
             onComposited = {},
             cameraControllerFactory = { CameraXControllerImpl() },
-            faceDetectorFactory = { MlKitFaceDetectorImpl() },
+            faceDetectorFactory = { PreviewFaceDetector },
             captureStatus = null,
         )
     }
@@ -278,7 +279,7 @@ private fun MainScreenPermissionRequiredPreview() {
             captureEnabled = true,
             onComposited = {},
             cameraControllerFactory = { CameraXControllerImpl() },
-            faceDetectorFactory = { MlKitFaceDetectorImpl() },
+            faceDetectorFactory = { PreviewFaceDetector },
             captureStatus = null,
         )
     }
@@ -302,8 +303,17 @@ private fun MainScreenPermissionDeniedPreview() {
             captureEnabled = true,
             onComposited = {},
             cameraControllerFactory = { CameraXControllerImpl() },
-            faceDetectorFactory = { MlKitFaceDetectorImpl() },
+            faceDetectorFactory = { PreviewFaceDetector },
             captureStatus = null,
         )
     }
+}
+
+private object PreviewFaceDetector : FaceDetectorSeam {
+    override fun process(imageProxy: ImageProxy, onResult: (it.marcelpetrick.catears.domain.FaceModel?) -> Unit) {
+        imageProxy.close()
+        onResult(null)
+    }
+
+    override fun close() = Unit
 }
