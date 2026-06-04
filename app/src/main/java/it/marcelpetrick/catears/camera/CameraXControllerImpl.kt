@@ -72,6 +72,8 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     private val videoOverlayState = AtomicReference<VideoOverlayState?>(null)
     private var currentOverlayEffect: OverlayEffect? = null
 
+    @Volatile private var isFrontCamera: Boolean = false
+
     fun updateOverlayPlacements(placements: List<OverlayPlacement>, viewWidth: Int, viewHeight: Int) {
         videoOverlayState.set(VideoOverlayState(placements, viewWidth, viewHeight))
     }
@@ -89,6 +91,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         val surface = previewView
         if (provider == null || owner == null || surface == null) return
 
+        isFrontCamera = lens == LensSelector.Front
         val selector = when (lens) {
             LensSelector.Front -> CameraSelector.DEFAULT_FRONT_CAMERA
             LensSelector.Rear -> CameraSelector.DEFAULT_BACK_CAMERA
@@ -129,17 +132,20 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             if (state != null && state.placements.isNotEmpty()) {
                 val fW = frame.getSize().width.toFloat()
                 val fH = frame.getSize().height.toFloat()
-                val canvas = frame.getOverlayCanvas()
-                canvas.withMatrix(
-                    viewToBufferMatrix(
-                        fW,
-                        fH,
-                        state.viewWidth.toFloat(),
-                        state.viewHeight.toFloat(),
-                        frame.getRotationDegrees(),
-                    ),
-                ) {
-                    OverlayCompositor.drawEarsOnCanvas(canvas, state.placements)
+                val matrix = viewToBufferMatrix(
+                    fW,
+                    fH,
+                    state.viewWidth.toFloat(),
+                    state.viewHeight.toFloat(),
+                    frame.getRotationDegrees(),
+                )
+                // Front-camera view is shown mirrored on screen but the video buffer is not.
+                // Flip the view-space x axis before rotating so ears land on the correct sides.
+                if (isFrontCamera && !frame.isMirroring()) {
+                    matrix.preScale(-1f, 1f, state.viewWidth / 2f, state.viewHeight / 2f)
+                }
+                frame.getOverlayCanvas().withMatrix(matrix) {
+                    OverlayCompositor.drawEarsOnCanvas(frame.getOverlayCanvas(), state.placements)
                 }
             }
             true
