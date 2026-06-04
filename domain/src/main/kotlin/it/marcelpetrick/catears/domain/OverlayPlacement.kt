@@ -23,6 +23,8 @@ data class EarAnchor(val x: Float, val y: Float, val size: Float, val tiltDegree
  * @param earStyle Visual rendering style to apply to both ears.
  * @param smilingProbability Smoothed smile probability [0..1]; 0 when unknown.
  * @param eyeOpennessMean Smoothed mean eye-openness [0..1]; 1 when unknown.
+ * @param leftEyeOpenness Smoothed left eye-openness [0..1]; 1 when unknown.
+ * @param rightEyeOpenness Smoothed right eye-openness [0..1]; 1 when unknown.
  * @param trackingId ML Kit face-tracking ID propagated from [FaceModel]; used as a stable Compose key.
  * @param tint Optional hue recolouring applied to both ears; defaults to [EarTint.NATURAL].
  */
@@ -33,6 +35,8 @@ data class OverlayPlacement(
     val earStyle: EarStyle = EarStyle.CLASSIC,
     val smilingProbability: Float = 0f,
     val eyeOpennessMean: Float = 1f,
+    val leftEyeOpenness: Float = eyeOpennessMean,
+    val rightEyeOpenness: Float = eyeOpennessMean,
     val trackingId: Int? = null,
     val tint: EarTint = EarTint.NATURAL,
 )
@@ -58,6 +62,8 @@ data class OverlayPlacement(
  * @param earHeightRatio Attachment depth for the ear bottom below box top (fraction of height).
  * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
  * @param eyeOpennessMean Mean of left+right eye-open probabilities [0..1]; 1 when absent.
+ * @param leftEyeOpenness Left eye-open probability [0..1]; falls back to [eyeOpennessMean].
+ * @param rightEyeOpenness Right eye-open probability [0..1]; falls back to [eyeOpennessMean].
  * @param trackingId Stable face-tracking ID for Compose keying; null when unavailable.
  */
 fun computeOverlayPlacement(
@@ -70,6 +76,8 @@ fun computeOverlayPlacement(
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
     smilingProbability: Float = 0f,
     eyeOpennessMean: Float = 1f,
+    leftEyeOpenness: Float = eyeOpennessMean,
+    rightEyeOpenness: Float = eyeOpennessMean,
     trackingId: Int? = null,
 ): OverlayPlacement {
     val earSize = viewBox.width * widthRatio
@@ -98,6 +106,8 @@ fun computeOverlayPlacement(
         headEulerAngleY = headEulerAngleY,
         smilingProbability = smilingProbability,
         eyeOpennessMean = eyeOpennessMean,
+        leftEyeOpenness = leftEyeOpenness,
+        rightEyeOpenness = rightEyeOpenness,
         trackingId = trackingId,
     )
 }
@@ -138,6 +148,8 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
             headEulerAngleY = lerp(prev.headEulerAngleY, next.headEulerAngleY, alpha),
             smilingProbability = lerp(prev.smilingProbability, next.smilingProbability, alpha),
             eyeOpennessMean = lerp(prev.eyeOpennessMean, next.eyeOpennessMean, alpha),
+            leftEyeOpenness = lerp(prev.leftEyeOpenness, next.leftEyeOpenness, alpha),
+            rightEyeOpenness = lerp(prev.rightEyeOpenness, next.rightEyeOpenness, alpha),
             trackingId = next.trackingId,
             earStyle = next.earStyle,
             tint = next.tint,

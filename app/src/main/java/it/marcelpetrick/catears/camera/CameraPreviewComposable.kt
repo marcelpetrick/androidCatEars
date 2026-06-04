@@ -204,6 +204,8 @@ private fun singleFacePlacement(
     val rightEye = face.rightEyePosition?.let { imageToViewCoordinates(it, transform) }
     val eyeOpennessMean = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
         .takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 1f
+    val leftEyeOpenness = face.leftEyeOpenProbability ?: 1f
+    val rightEyeOpenness = face.rightEyeOpenProbability ?: 1f
     return computeOverlayPlacement(
         viewBox = viewBox,
         headEulerAngleZ = face.headEulerAngleZ,
@@ -212,6 +214,8 @@ private fun singleFacePlacement(
         rightEyeAnchor = rightEye,
         smilingProbability = face.smilingProbability ?: 0f,
         eyeOpennessMean = eyeOpennessMean,
+        leftEyeOpenness = leftEyeOpenness,
+        rightEyeOpenness = rightEyeOpenness,
         trackingId = face.trackingId,
     )
 }
