@@ -46,11 +46,17 @@ Point the camera at a group — every detected face gets its own independently
 animated ears, each smoothed and tracked separately so they don't jump when
 faces overlap.
 
+### Party Mode for group selfies
+Turn on Party Mode and every tracked face gets a stable style/tint pairing.
+The first face starts classic brown, the next faces get their own looks, and
+the re-roll button reshuffles the group without changing face positions.
+
 ### Baked-in capture
 Tap the shutter to save a photo with the ears composited directly onto the
 frame. The same procedural geometry used in the live preview is applied at
 full resolution — what you see is exactly what you get. Share via any Android
-app with one more tap.
+app with one more tap. Five-second video clips can also be recorded with the
+overlay baked in.
 
 ---
 
@@ -58,9 +64,11 @@ app with one more tap.
 
 - Live camera preview with front/rear camera switching
 - On-device face detection via ML Kit (ear landmarks, head pose, expressions)
-- Animated 3D-look procedural ears — 10 styles, expression-reactive, multi-face
+- Animated 3D-look procedural ears — 10 styles, tint cycling, expression-reactive, multi-face
+- Party Mode with stable per-face style/tint assignments and manual re-roll
 - Still photo capture with the overlay baked in at full resolution
-- Save to gallery and share via the Android share sheet
+- Five-second MP4 recording with the overlay baked in
+- Save to gallery and share photos/videos via the Android share sheet
 
 ## Tech Stack
 
@@ -184,12 +192,18 @@ Install on a connected device or running emulator:
    and a paw icon) to cycle through all 10 ear styles — Classic, Sharp Feline,
    Rounded Feline, Lynx Tufted, Dense Fluffy, Canine Floppy, Canine Perky,
    Rabbit, Fox, Bear. Each tap advances to the next; it wraps back to Classic.
-4. Tap the **switch** button (bottom-right, below the style button) to flip
-   between front and rear cameras. Cat ears track a detected face in real time.
-5. Tap the **capture** button (bottom-centre) to take a photo with the ears
+4. Tap the **colour** button (palette icon) to cycle the ear tint.
+5. Tap the **Party Mode** button (celebration icon) for group selfies. Each
+   tracked face gets its own stable style/tint pairing; while Party Mode is on,
+   tap the **re-roll** button to reshuffle those pairings.
+6. Tap the **switch** button (bottom-right, below the style controls) to flip
+   between front and rear cameras. Cat ears track detected faces in real time.
+7. Tap the **record** button to save a five-second MP4 clip. Tap the red stop
+   button to end the clip early.
+8. Tap the **capture** button (bottom-centre) to take a photo with the ears
    baked in; it is saved to your gallery and a status banner confirms it.
-6. Tap the **share** button (bottom-left, appears after a capture) to send the
-   saved photo via the Android share sheet.
+9. Tap the **share** buttons (bottom-left, appearing after a capture or
+   recording) to send the saved photo or video via the Android share sheet.
 
 ### Make the ears react
 
@@ -200,7 +214,8 @@ The ears don't just sit there — they respond to your face. Try it:
 - **Smile big** → both ears perk up.
 - **Open your eyes wide** → the ears shoot up in surprise.
 - **Wink** → the ear on that side flattens, then springs back.
-- **Bring in a friend** → up to four faces each get their own animated ears at the same time.
+- **Bring in friends** → up to four faces each get animated ears at the same time.
+- **Turn on Party Mode** → each face keeps its own style/tint until you re-roll.
 
 > Face tracking needs a real face in view. The emulator can use a host webcam
 > (`-camera-front webcam0`) for local testing, but a physical Android 14+
