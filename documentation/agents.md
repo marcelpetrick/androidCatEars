@@ -166,6 +166,70 @@ under strict rules so the environment stays reproducible and traceable.
 
 ---
 
+## Static Analysis Configuration
+
+When a detekt rule triggers on code that is **necessarily large or complex by design** (e.g., a
+Composable function with many parameters, or a ViewModel that legitimately owns many public commands),
+add a **justified exclusion** to `config/detekt/detekt.yml` rather than working around it with
+artificial splitting or code suppressions.
+
+- `LongMethod` / `LongParameterList` — add `ignoreAnnotated: [Composable]` to suppress for
+  all Composable functions (Compose APIs are inherently verbose).
+- `TooManyFunctions` — add the specific file pattern to `excludes` when the file's function count
+  is justified (e.g., a large screen or ViewModel that has a clearly bounded scope).
+- Always add a one-line comment above the exclusion explaining *why* it is justified.
+- Never suppress with `@Suppress("...")` inline in source code unless the exclusion is truly
+  local and a config-level exclusion would be too broad.
+
+---
+
+## Dependency Management
+
+When evaluating version-bump proposals (Dependabot PRs, manually proposed upgrades):
+
+1. Cherry-pick each candidate **one at a time** onto a clean local branch.
+2. Run the full build + quality gate (`assembleDebug`, `detekt`, `spotlessCheck`, `:domain:koverVerify`).
+3. If it passes, **keep it** (squash the cherry-pick + any fixup into one tidy commit).
+4. If it fails, **revert** and document the reason (e.g., requires a higher `compileSdk` than currently
+   used, blocks a key dependency from upgrading, breaks a lint rule).
+5. After finishing all candidates, record the results in `BACKLOG.md` — both what was accepted and
+   what was rejected with the reason and the minimum pre-condition for future acceptance.
+6. If cancel-out pairs (cherry-pick + revert for the same change) accumulate in history, clean them
+   with `git rebase --onto <base-before-picks> <last-unneeded-commit> <branch>` — but **only** on
+   local-only commits (never rewrite anything already pushed).
+
+---
+
+## BLOCKED Tasks
+
+A task is `BLOCKED` when progress requires something outside the agent's control (a library
+releasing a new stable version, a physical device, an upstream API not yet available).
+
+- Mark the task `BLOCKED` in `BACKLOG.md` with a one-line note explaining the blocker and the
+  resolution condition (e.g., "BLOCKED — detekt 2.0 stable not yet released; re-evaluate once
+  published").
+- Do **not** implement a hacky workaround just to unblock a task. Move on to the next `TODO`
+  and revisit when the blocker clears.
+- Include the blocked task in periodic reviews so it does not go stale and forgotten.
+
+---
+
+## Platform APIs vs Bundled Assets
+
+Prefer OS-provided or SDK-provided APIs over bundled files wherever the platform supplies the
+right capability:
+
+- **Camera sounds** — use `android.media.MediaActionSound` (`SHUTTER_CLICK`, `START_VIDEO_RECORDING`,
+  `STOP_VIDEO_RECORDING`) rather than bundling audio files. It is always available from API 16,
+  handles mandatory-shutter jurisdictions automatically, and requires no permission.
+- **System icons and resources** — use Material Symbols / system vector drawables from the
+  Compose Material Icons library before reaching for custom assets.
+
+When a platform API exists and covers the use-case, using it is the correct choice for compliance,
+maintenance, and binary size.
+
+---
+
 ## Repository Hygiene (`.gitignore`)
 
 Commit only what is **necessary and not regenerable**. Anything a tool can regenerate must not be
