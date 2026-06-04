@@ -16,9 +16,13 @@ interface FaceDetectorSeam {
     /**
      * Process a single camera frame.
      *
-     * @param imageProxy The current camera frame (caller must close it when done).
-     * @param onResult Called on the calling thread once detection completes;
-     *   receives all detected [FaceModel]s (empty list when no face found, up to [MAX_FACES]).
+     * The implementation is responsible for closing [imageProxy] — either synchronously before
+     * returning or asynchronously once the underlying detector pipeline completes. The caller
+     * must not close it.
+     *
+     * @param imageProxy The current camera frame.
+     * @param onResult Called once detection completes; receives all detected [FaceModel]s
+     *   (empty list when no face found, up to [MAX_FACES]).
      */
     fun process(imageProxy: androidx.camera.core.ImageProxy, onResult: (List<FaceModel>) -> Unit)
 

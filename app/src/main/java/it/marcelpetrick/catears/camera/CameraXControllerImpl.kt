@@ -176,12 +176,14 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         val portrait = rotation == ROTATION_90 || rotation == ROTATION_270
         val width = if (portrait) proxy.height else proxy.width
         val height = if (portrait) proxy.width else proxy.height
+        // Per FaceDetectorSeam contract the implementation closes proxy (sync or async).
+        // We still guard against a synchronous throw that would skip the impl's own close.
         @Suppress("TooGenericExceptionCaught")
         try {
             detector.process(proxy) { face -> onFace(face, width, height) }
         } catch (e: Exception) {
             Log.e(TAG, "Face analysis failed for frame", e)
-            proxy.close()
+            runCatching { proxy.close() }
         }
     }
 
