@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -43,6 +44,7 @@ private const val TAG = "CatEars"
 @Composable
 fun CameraPreview(
     lens: LensSelector,
+    overlayPlacements: List<OverlayPlacement>,
     onFaceDetected: (List<OverlayPlacement>) -> Unit,
     captureRequested: Boolean,
     onComposited: (Bitmap?) -> Unit,
@@ -57,12 +59,12 @@ fun CameraPreview(
     val detector = remember { faceDetectorFactory() }
     val smoother = remember { MultiFaceSmoother() }
     val controller = remember { cameraControllerFactory() }
-    val latestPlacements = remember { AtomicReference<List<OverlayPlacement>>(emptyList()) }
+    val capturePlacements = rememberUpdatedState(overlayPlacements)
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
 
     LaunchedEffect(captureRequested) {
         if (captureRequested) {
-            onComposited(captureComposited(previewViewRef.get(), latestPlacements.get()))
+            onComposited(captureComposited(previewViewRef.get(), capturePlacements.value))
         }
     }
 
@@ -88,7 +90,6 @@ fun CameraPreview(
                     isFrontCamera = lens == LensSelector.Front,
                 )
                 val placements = facePlacements(faces, transform, smoother)
-                latestPlacements.set(placements)
                 onFaceDetected(placements)
             }
             startCamera(ctx, controller, lens)

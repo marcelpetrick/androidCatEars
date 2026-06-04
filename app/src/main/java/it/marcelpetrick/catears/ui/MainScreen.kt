@@ -271,6 +271,7 @@ private fun CameraContent(
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
             lens = lens,
+            overlayPlacements = overlayPlacements,
             onFaceDetected = onFaceDetected,
             captureRequested = captureRequested,
             onComposited = onComposited,
