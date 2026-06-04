@@ -10,12 +10,14 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import androidx.core.graphics.withMatrix
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.hueRotationMatrix
+import kotlin.math.sin
 
 /**
  * Composites procedurally-drawn cat ears onto a captured camera frame.
@@ -210,10 +212,20 @@ object OverlayCompositor {
         val s = anchor.size
         val halfBase = s * 0.38f
         val tipY = top + s * 0.20f
-        val outer = floatArrayOf(cx - halfBase, top + s, cx + halfBase, top + s, cx, tipY)
-        canvas.drawPath(trianglePath(outer), perkyOuterPaint)
-        // round cap via circle at tip
-        canvas.drawCircle(cx, tipY, halfBase * 0.4f, perkyOuterPaint)
+        // Arc tip matches CatEarOverlay.drawCaninePerkyEar (arcTo, not drawCircle).
+        val outer = Path().apply {
+            moveTo(cx - halfBase, top + s)
+            lineTo(cx + halfBase, top + s)
+            lineTo(cx + halfBase * 0.4f, tipY + s * 0.08f)
+            arcTo(
+                RectF(cx - halfBase * 0.4f, tipY - s * 0.10f, cx + halfBase * 0.4f, tipY + s * 0.18f),
+                0f,
+                -180f,
+            )
+            lineTo(cx - halfBase * 0.4f, tipY + s * 0.08f)
+            close()
+        }
+        canvas.drawPath(outer, perkyOuterPaint)
         val inner = floatArrayOf(
             cx - halfBase * 0.55f,
             top + s * 0.95f,
@@ -278,15 +290,13 @@ object OverlayCompositor {
             strokeWidth = s * 0.045f
             strokeCap = Paint.Cap.ROUND
         }
+        // swayTime=0 positions match CatEarOverlay.drawDenseFluffyEar at rest.
         for (i in 0..7) {
             val frac = i / 7f
-            canvas.drawLine(
-                cx - halfBase * frac,
-                top + s * frac,
-                cx - halfBase * frac - s * 0.10f,
-                top + s * frac - s * 0.08f,
-                furPaint,
-            )
+            val bx = cx - halfBase * frac
+            val by = top + s * frac
+            val sway = sin(FLUFFY_PHASES[i].toDouble()).toFloat() * s * 0.07f
+            canvas.drawLine(bx, by, bx - s * 0.10f + sway, by - s * 0.08f, furPaint)
         }
     }
 
@@ -385,6 +395,7 @@ object OverlayCompositor {
     private const val INNER_HALF_BASE = 0.24f
     private const val INNER_TOP_OFFSET = 0.28f
     private const val INNER_BOTTOM_OFFSET = 0.78f
+    private val FLUFFY_PHASES = floatArrayOf(0.0f, 0.8f, 1.6f, 2.4f, 0.4f, 1.2f, 2.0f, 0.6f)
 
     // ─── colours — pure bit-ops, no android.graphics.Color at load time ───────
     private val CLASSIC_OUTER: Int = (0xFF shl 24) or (0x8B shl 16) or (0x5E shl 8) or 0x3C
