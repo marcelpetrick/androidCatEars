@@ -157,10 +157,43 @@ drift.
 ./gradlew :app:koverVerify # domain coverage gate (fails if < 95%)
 ```
 
-GitHub Actions runs five additional workflows: CodeQL scanning, Dependabot
-updates, dependency-review on PRs, Gitleaks secret scan, and a manual release
-workflow that publishes signed AAB, debug APK, CycloneDX SBOM, and SHA-256
-checksums to GitHub Releases.
+If a local gate step fails, `scripts/ci.sh` prints the failed step and command.
+GitHub CI uploads test, coverage, lint, and CycloneDX SBOM reports as workflow
+artifacts.
+
+Example summary from a successful local run:
+
+```text
++----+----------------------------------+----------+----------+
+| #  | Step                             | Status   | Wall     |
++----+----------------------------------+----------+----------+
+| 1  | Build (debug)                    | PASSED   | 00:51    |
+| 2  | Format check (Spotless)          | PASSED   | 00:01    |
+| 3  | Static analysis (detekt)         | PASSED   | 00:01    |
+| 4  | Android Lint                     | PASSED   | 00:18    |
+| 5  | Unit tests                       | PASSED   | 00:08    |
+| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:01    |
+| 7  | SBOM (CycloneDX)                 | PASSED   | 00:06    |
++----+----------------------------------+----------+----------+
+| Total                                 | PASSED   | 01:26    |
++---------------------------------------+----------+----------+
+All checks passed.
+```
+
+GitHub Actions also runs security/release workflows:
+
+- `ci.yml` — push/PR quality gate using `scripts/ci.sh`.
+- `dependency-review.yml` — blocks vulnerable dependency changes on PRs.
+- `codeql.yml` — Java/Kotlin code scanning on push/PR and weekly schedule.
+- `secret-scan.yml` — Gitleaks scan for committed credentials.
+- `release.yml` — manual release publishing with AAB, debug APK, CycloneDX SBOMs, and checksums.
+
+CycloneDX SBOMs can also be generated locally:
+
+```bash
+./gradlew cyclonedxBom              # raw aggregate SBOM under build/reports/cyclonedx/
+./scripts/generate-sbom.sh          # versioned release-style SBOM files + SHA-256 checksums
+```
 
 See [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) for
 workflow triggers, secrets, timeouts, and release behavior.
