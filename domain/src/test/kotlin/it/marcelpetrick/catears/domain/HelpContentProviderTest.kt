@@ -88,6 +88,30 @@ class HelpContentProviderTest {
     }
 
     @Test
+    fun `Croatian content contains Croatian text`() {
+        val content = helpContent(HelpLanguage.CROATIAN)
+        assertTrue(content.closeLabel == "Zatvori")
+        assertTrue(content.featuresTitle == "Značajke")
+    }
+
+    @Test
+    fun `languages are ordered for the selector`() {
+        assertEquals(
+            listOf(HelpLanguage.ENGLISH, HelpLanguage.GERMAN, HelpLanguage.CROATIAN, HelpLanguage.MANDARIN),
+            HelpLanguage.entries,
+        )
+    }
+
+    @Test
+    fun `help content mentions current party and video features`() {
+        HelpLanguage.entries.forEach { lang ->
+            val content = helpContent(lang)
+            assertTrue(content.features.any { it.contains("Party", ignoreCase = true) || it.contains("派对") })
+            assertTrue(content.features.any { it.contains("5") || it.contains("Five") || it.contains("Fünf") })
+        }
+    }
+
+    @Test
     fun `Mandarin content contains Chinese characters`() {
         val content = helpContent(HelpLanguage.MANDARIN)
         assertTrue(content.closeLabel == "关闭")

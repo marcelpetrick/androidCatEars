@@ -3,4 +3,4 @@
 
 package it.marcelpetrick.catears.domain
 
-enum class HelpLanguage { ENGLISH, GERMAN, MANDARIN }
+enum class HelpLanguage { ENGLISH, GERMAN, CROATIAN, MANDARIN }

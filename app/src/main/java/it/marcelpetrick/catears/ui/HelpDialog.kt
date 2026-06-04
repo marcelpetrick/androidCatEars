@@ -130,5 +130,6 @@ private fun NumberedSection(title: String, items: List<String>) {
 private fun HelpLanguage.toDisplayLabel() = when (this) {
     HelpLanguage.ENGLISH -> "EN"
     HelpLanguage.GERMAN -> "DE"
+    HelpLanguage.CROATIAN -> "HR"
     HelpLanguage.MANDARIN -> "中文"
 }
