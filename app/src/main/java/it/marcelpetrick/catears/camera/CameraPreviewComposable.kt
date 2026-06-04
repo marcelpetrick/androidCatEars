@@ -64,6 +64,8 @@ fun CameraPreview(
     val currentOnCameraError by rememberUpdatedState(onCameraError)
     val capturePlacements = rememberUpdatedState(overlayPlacements)
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
+    // Stable reference so the factory-block closure always reads the current lens.
+    val currentLens by rememberUpdatedState(lens)
     val soundPlayer = remember {
         MediaActionSound().also {
             it.load(MediaActionSound.SHUTTER_CLICK)
@@ -117,7 +119,7 @@ fun CameraPreview(
                             imageHeight = h,
                             viewWidth = previewView.width.coerceAtLeast(1),
                             viewHeight = previewView.height.coerceAtLeast(1),
-                            isFrontCamera = lens == LensSelector.Front,
+                            isFrontCamera = currentLens == LensSelector.Front,
                         )
                         onFaceDetected(facePlacements(faces, transform, smoother))
                     },
