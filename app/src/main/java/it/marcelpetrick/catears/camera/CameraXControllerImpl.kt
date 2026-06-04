@@ -140,7 +140,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
                     matrix.preScale(-1f, 1f, state.viewWidth / 2f, state.viewHeight / 2f)
                 }
                 frame.getOverlayCanvas().withMatrix(matrix) {
-                    OverlayCompositor.drawEarsOnCanvas(frame.getOverlayCanvas(), state.placements)
+                    OverlayCompositor.drawEarsOnCanvas(this, state.placements)
                 }
             }
             true
