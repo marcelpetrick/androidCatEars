@@ -17,10 +17,24 @@ data class EarRenderStyleSpec(
     val furStrokeCount: Int,
     val supportsTufts: Boolean,
     val tintPolicy: EarTintPolicy,
+    val rendererKind: EarRendererKind = EarRendererKind.Procedural,
 ) {
     init {
         require(furStrokeCount >= 0) { "furStrokeCount must be >= 0" }
     }
+}
+
+/**
+ * Which renderer backs a style's visual fill.
+ *
+ * [Procedural] draws the ear with Canvas/DrawScope primitives (flat shapes, fur strokes).
+ * [Sprite] draws a pre-rendered transparent bitmap, scaled and transformed onto the placement.
+ * The domain only declares the kind; the app module resolves the actual drawable resource so
+ * this module stays free of Android resource references and remains JVM-testable.
+ */
+enum class EarRendererKind {
+    Procedural,
+    Sprite,
 }
 
 /** Color/material intent for a style, expressed as ARGB ints for framework-neutral sharing. */
@@ -82,6 +96,7 @@ private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when 
         furStrokeCount = 9,
         supportsTufts = false,
         tintPolicy = EarTintPolicy.OuterFurOnly,
+        rendererKind = EarRendererKind.Sprite,
     )
 
     EarStyle.SHARP_FELINE -> naturalFelineSpec(style, furStrokeCount = 7, supportsTufts = true)

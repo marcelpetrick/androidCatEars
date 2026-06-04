@@ -43,6 +43,27 @@ class EarRenderStyleSpecTest {
     }
 
     @Test
+    fun `classic style is sprite-backed and others default to procedural`() {
+        assertEquals(EarRendererKind.Sprite, earRenderStyleSpec(EarStyle.CLASSIC).rendererKind)
+        EarStyle.entries.filter { it != EarStyle.CLASSIC }.forEach { style ->
+            assertEquals(EarRendererKind.Procedural, earRenderStyleSpec(style).rendererKind, "$style")
+        }
+    }
+
+    @Test
+    fun `render kind defaults to procedural when unspecified`() {
+        val spec = EarRenderStyleSpec(
+            style = EarStyle.CLASSIC,
+            material = earRenderStyleSpec(EarStyle.CLASSIC).material,
+            anchor = earRenderStyleSpec(EarStyle.CLASSIC).anchor,
+            furStrokeCount = 1,
+            supportsTufts = false,
+            tintPolicy = EarTintPolicy.OuterFurOnly,
+        )
+        assertEquals(EarRendererKind.Procedural, spec.rendererKind)
+    }
+
+    @Test
     fun `anchor rejects impossible visible bounds`() {
         assertThrows(IllegalArgumentException::class.java) {
             EarAssetAnchor(baseLineRatio = 0.2f, tipRatio = 0.8f, visualPaddingRatio = 0f)

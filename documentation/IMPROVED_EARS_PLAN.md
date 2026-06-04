@@ -79,9 +79,37 @@ This is simpler code than what was built and visually 4× better.
 
 ---
 
+## Progress log
+
+Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
+
+- **2026-06-05 — WP S-2 done.** `EarRendererKind { Procedural, Sprite }` added to
+  `EarRenderStyleSpec` (domain) with a `Procedural` default so existing constructors are
+  unaffected. `CLASSIC` is marked `Sprite`; all other styles remain `Procedural`. Domain stays
+  Android-free — the actual `R.drawable` id is resolved in the app layer (see WP S-3). Tests
+  added in `EarRenderStyleSpecTest`: CLASSIC is Sprite / others Procedural, and the field
+  defaults to Procedural. `:domain:test` green.
+- **2026-06-05 — WP S-1 done.** Extracted `app/src/main/res/drawable/ear_classic.png`
+  (435×512 RGBA, ~220KB) from `03_glossy_stylized_3d.png` using `rembg` (u2net) for background
+  removal, then `scipy.ndimage` connected-component labelling to isolate the single right-side
+  ear (the proposal image contains both ears; the left-ear remnant was dropped). Auto-cropped to
+  visible bounds + 40px padding, scaled to 512px tall. Clean alpha, no fringe. The same pipeline
+  works for other proposals; reusable steps: `rembg` → component-label → keep largest with
+  centroid in target half → crop → resize.
+- **2026-06-05 — Plan rewritten.** Sprite-first strategy replaces the failed procedural
+  material-finish approach.
+
+### Reproducing the asset extraction
+
+`rembg` with CPU backend was installed via `pip3 install "rembg[cpu]" --break-system-packages`.
+The extraction reads a proposal PNG, removes the gray background, labels connected components,
+keeps the largest component whose centroid is in the right half, crops to content + padding, and
+resizes to 512px tall. For a new style, change the source filename and (if the target ear is on
+the left) the centroid-half test.
+
 ## Work packages
 
-### WP S-1 — Asset extraction (done during planning)
+### WP S-1 — Asset extraction — **DONE (2026-06-05)**
 
 **What:** Extract transparent-alpha PNG sprites from the proposal images using
 AI background removal (`rembg`). One sprite per style, covering the right ear.
@@ -96,30 +124,34 @@ The left ear is produced at render time by horizontal mirroring.
 - Ear fills ~90% of sprite canvas
 - Real alpha channel, no rectangular background
 
-### WP S-2 — Sprite model in `:domain`
+### WP S-2 — Sprite model in `:domain` — **DONE (2026-06-05)**
 
-**What:** Extend `EarRenderStyleSpec` with a `rendererKind` field and
-`spriteDrawableId` (null for procedural fallback styles).
+**What was built (differs slightly from the original sketch):** the domain stays Android-free,
+so it declares only *that* a style is sprite-backed — not which drawable. The `R.drawable` id is
+resolved in the app layer (WP S-3) by a small `EarStyle -> Int?` mapping. This keeps `:domain`
+free of generated `R` references and fully JVM-testable.
 
 ```kotlin
 enum class EarRendererKind { Procedural, Sprite }
 
 data class EarRenderStyleSpec(
     val style: EarStyle,
-    val rendererKind: EarRendererKind,   // Sprite or Procedural
-    val spriteDrawableId: Int?,          // null when rendererKind == Procedural
-    val material: EarMaterialSpec,       // retained — tint metadata
-    val anchor: EarAssetAnchor,          // retained — baseLineRatio, tipRatio
-    val tintPolicy: EarTintPolicy,       // retained
+    val material: EarMaterialSpec,
+    val anchor: EarAssetAnchor,
+    val furStrokeCount: Int,
+    val supportsTufts: Boolean,
+    val tintPolicy: EarTintPolicy,
+    val rendererKind: EarRendererKind = EarRendererKind.Procedural,  // new; default keeps old call sites valid
 )
 ```
 
-`EarAssetAnchor.baseLineRatio` is the fraction of sprite height where the
-ear base (the point that sits on the forehead/head line) is located in the
-bitmap. For a well-cropped sprite this is `1.0` (bottom edge).
+`CLASSIC.rendererKind == Sprite`; all others `Procedural`.
+`EarAssetAnchor.baseLineRatio` is the fraction of sprite height where the ear base (the point
+that sits on the forehead/head line) is located in the bitmap. For a well-cropped sprite this is
+`1.0` (bottom edge). The app-layer `EarStyle -> R.drawable` map is the place to add new sprites.
 
-**Acceptance:** All existing spec invariant tests pass. New: `rendererKind == Sprite`
-implies `spriteDrawableId != null`.
+**Acceptance (met):** all existing spec invariant tests pass; new tests assert CLASSIC is Sprite,
+others Procedural, and the field defaults to Procedural. `:domain:test` green.
 
 ### WP S-3 — Sprite live renderer in `CatEarOverlay`
 
