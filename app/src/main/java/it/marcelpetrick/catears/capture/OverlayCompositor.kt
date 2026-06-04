@@ -13,10 +13,15 @@ import android.graphics.Path
 import android.graphics.RectF
 import androidx.core.graphics.withMatrix
 import it.marcelpetrick.catears.domain.EarAnchor
+import it.marcelpetrick.catears.domain.EarMaterialSpec
+import it.marcelpetrick.catears.domain.EarRenderStyleSpec
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.domain.earRenderStyleSpec
 import it.marcelpetrick.catears.domain.hueRotationMatrix
+import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
@@ -33,6 +38,15 @@ object OverlayCompositor {
      * No Android dependencies; fully testable on the JVM.
      */
     data class EarGeometry(val outerPath: FloatArray, val innerPath: FloatArray)
+
+    private data class MaterialEarGeometry(
+        val tipX: Float,
+        val tipY: Float,
+        val leftBaseX: Float,
+        val leftBaseY: Float,
+        val rightBaseX: Float,
+        val rightBaseY: Float,
+    )
 
     /** Computes the six vertices for the outer and inner classic-ear triangles. */
     fun computeEarGeometry(anchor: EarAnchor): EarGeometry {
@@ -94,11 +108,13 @@ object OverlayCompositor {
     private fun drawEarOnCanvas(canvas: Canvas, anchor: EarAnchor, style: EarStyle) {
         val pivotX = anchor.x
         val pivotY = anchor.y + anchor.size / 2f
+        val spec = earRenderStyleSpec(style)
         val matrix = Matrix().apply {
             postRotate(anchor.tiltDegrees, pivotX, pivotY)
             postScale(anchor.xScale, 1f, pivotX, pivotY)
         }
         canvas.withMatrix(matrix) {
+            drawSoftEarShadow(this, anchor, spec.material)
             when (style) {
                 EarStyle.CLASSIC -> drawClassicEar(this, anchor)
                 EarStyle.SHARP_FELINE -> drawSharpFelineEar(this, anchor)
@@ -111,6 +127,115 @@ object OverlayCompositor {
                 EarStyle.FOX -> drawFoxEar(this, anchor)
                 EarStyle.BEAR -> drawBearEar(this, anchor)
             }
+            drawMaterialFinish(this, anchor, spec)
+        }
+    }
+
+    private fun drawSoftEarShadow(canvas: Canvas, anchor: EarAnchor, material: EarMaterialSpec) {
+        val s = anchor.size
+        val paint = fillPaint(colorWithAlpha(material.shadowArgb, SHADOW_ALPHA))
+        canvas.drawOval(
+            anchor.x - s * SHADOW_HALF_WIDTH,
+            anchor.y + s * SHADOW_TOP_RATIO,
+            anchor.x + s * SHADOW_HALF_WIDTH,
+            anchor.y + s * (SHADOW_TOP_RATIO + SHADOW_HEIGHT),
+            paint,
+        )
+    }
+
+    private fun drawMaterialFinish(canvas: Canvas, anchor: EarAnchor, spec: EarRenderStyleSpec) {
+        val s = anchor.size
+        val geometry = MaterialEarGeometry(
+            tipX = anchor.x + styleTipOffset(spec.style) * s,
+            tipY = anchor.y + styleTipYOffset(spec.style) * s,
+            leftBaseX = anchor.x - styleLeftBase(spec.style) * s,
+            leftBaseY = anchor.y + s,
+            rightBaseX = anchor.x + styleRightBase(spec.style) * s,
+            rightBaseY = anchor.y + s,
+        )
+        drawOuterRim(canvas, geometry, s, spec.material)
+        drawInnerRosyGlaze(canvas, geometry, s, spec.material)
+        drawFurTexture(canvas, geometry, s, spec)
+        if (spec.supportsTufts) {
+            drawMaterialTufts(canvas, geometry, s, spec.material)
+        }
+    }
+
+    private fun drawOuterRim(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
+        val rimPaint = strokePaint(colorWithAlpha(material.outerRimArgb, RIM_ALPHA), s * MATERIAL_RIM_WIDTH_RATIO)
+        canvas.drawLine(geometry.leftBaseX, geometry.leftBaseY, geometry.tipX, geometry.tipY, rimPaint)
+        canvas.drawLine(geometry.rightBaseX, geometry.rightBaseY, geometry.tipX, geometry.tipY, rimPaint)
+        val highlightPaint = strokePaint(
+            colorWithAlpha(material.outerHighlightArgb, HIGHLIGHT_ALPHA),
+            s * MATERIAL_HIGHLIGHT_WIDTH_RATIO,
+        )
+        canvas.drawLine(
+            geometry.tipX - s * HIGHLIGHT_TIP_X_OFFSET,
+            geometry.tipY + s * HIGHLIGHT_TIP_Y_OFFSET,
+            geometry.leftBaseX + s * HIGHLIGHT_BASE_X_OFFSET,
+            geometry.leftBaseY - s * HIGHLIGHT_BASE_Y_OFFSET,
+            highlightPaint,
+        )
+    }
+
+    private fun drawInnerRosyGlaze(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
+        val innerTopX = geometry.tipX
+        val innerTopY = geometry.tipY + s * MATERIAL_INNER_TOP_RATIO
+        val tipBlend = 1f - MATERIAL_INNER_BASE_BLEND
+        val innerLeftX =
+            geometry.leftBaseX * MATERIAL_INNER_BASE_BLEND + geometry.tipX * tipBlend
+        val innerRightX =
+            geometry.rightBaseX * MATERIAL_INNER_BASE_BLEND + geometry.tipX * tipBlend
+        val innerBaseY = geometry.leftBaseY - s * MATERIAL_INNER_BASE_LIFT_RATIO
+        val inner = Path().apply {
+            moveTo(innerTopX, innerTopY)
+            lineTo(innerLeftX, innerBaseY)
+            lineTo(innerRightX, innerBaseY)
+            close()
+        }
+        canvas.drawPath(inner, fillPaint(colorWithAlpha(material.innerBaseArgb, INNER_GLAZE_BOTTOM_ALPHA)))
+        val highlight = strokePaint(
+            colorWithAlpha(material.innerHighlightArgb, INNER_GLAZE_TOP_ALPHA),
+            s * MATERIAL_HIGHLIGHT_WIDTH_RATIO,
+        )
+        canvas.drawLine(innerTopX, innerTopY, innerLeftX, innerBaseY, highlight)
+    }
+
+    private fun drawFurTexture(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, spec: EarRenderStyleSpec) {
+        val paint = strokePaint(
+            colorWithAlpha(spec.material.outerHighlightArgb, MATERIAL_FUR_ALPHA),
+            s * MATERIAL_FUR_WIDTH_RATIO,
+        )
+        repeat(spec.furStrokeCount) { index ->
+            val fraction = (index + 1f) / (spec.furStrokeCount + 1f)
+            val leftEdge = index % 2 == 0
+            val startX = if (leftEdge) geometry.leftBaseX else geometry.rightBaseX
+            val startY = if (leftEdge) geometry.leftBaseY else geometry.rightBaseY
+            val edgeX = lerp(startX, geometry.tipX, fraction)
+            val edgeY = lerp(startY, geometry.tipY, fraction)
+            val inwardX = lerp(edgeX, geometry.tipX, MATERIAL_FUR_INWARD_BLEND)
+            val direction = if (leftEdge) 1f else -1f
+            canvas.drawLine(
+                edgeX,
+                edgeY,
+                inwardX + direction * s * MATERIAL_FUR_LENGTH_RATIO,
+                edgeY - s * MATERIAL_FUR_LIFT_RATIO,
+                paint,
+            )
+        }
+    }
+
+    private fun drawMaterialTufts(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
+        val paint = strokePaint(material.outerRimArgb, s * MATERIAL_TUFT_WIDTH_RATIO)
+        for (i in -1..1) {
+            val angle = Math.toRadians((MATERIAL_TUFT_FAN_DEG * i).toDouble()).toFloat()
+            canvas.drawLine(
+                geometry.tipX,
+                geometry.tipY,
+                geometry.tipX + sin(angle) * s * MATERIAL_TUFT_LENGTH_RATIO,
+                geometry.tipY - cos(angle) * s * MATERIAL_TUFT_LENGTH_RATIO,
+                paint,
+            )
         }
     }
 
@@ -364,6 +489,63 @@ object OverlayCompositor {
         close()
     }
 
+    private fun fillPaint(color: Int): Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = Paint.Style.FILL
+    }
+
+    private fun strokePaint(color: Int, width: Float): Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = Paint.Style.STROKE
+        strokeWidth = width
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    private fun colorWithAlpha(argb: Int, alpha: Float): Int {
+        val resolvedAlpha = ((argb ushr ALPHA_SHIFT) * alpha)
+            .roundToInt()
+            .coerceIn(MIN_COLOR_COMPONENT, MAX_COLOR_COMPONENT)
+        return (argb and RGB_MASK) or (resolvedAlpha shl ALPHA_SHIFT)
+    }
+
+    private fun lerp(from: Float, to: Float, fraction: Float): Float = from + (to - from) * fraction
+
+    private fun styleTipOffset(style: EarStyle): Float = when (style) {
+        EarStyle.SHARP_FELINE,
+        EarStyle.LYNX_TUFTED,
+        EarStyle.FOX,
+        -> FELINE_TIP_OFFSET_X
+
+        else -> 0f
+    }
+
+    private fun styleTipYOffset(style: EarStyle): Float = when (style) {
+        EarStyle.CANINE_PERKY -> PERKY_TIP_Y
+        else -> 0f
+    }
+
+    private fun styleLeftBase(style: EarStyle): Float = when (style) {
+        EarStyle.SHARP_FELINE -> FELINE_BASE_LEFT
+        EarStyle.LYNX_TUFTED -> LYNX_BASE_LEFT
+        EarStyle.DENSE_FLUFFY -> FLUFFY_LEFT_BASE
+        EarStyle.FOX -> FOX_HALF_BASE
+        EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
+        EarStyle.RABBIT -> RABBIT_HALF_WIDTH
+        EarStyle.BEAR -> BEAR_RADIUS_RATIO
+        else -> OUTER_HALF_BASE
+    }
+
+    private fun styleRightBase(style: EarStyle): Float = when (style) {
+        EarStyle.SHARP_FELINE -> FELINE_BASE_RIGHT
+        EarStyle.LYNX_TUFTED -> LYNX_BASE_RIGHT
+        EarStyle.DENSE_FLUFFY -> FLUFFY_RIGHT_BASE
+        EarStyle.FOX -> FOX_RIGHT_BASE
+        EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
+        EarStyle.RABBIT -> RABBIT_HALF_WIDTH
+        EarStyle.BEAR -> BEAR_RADIUS_RATIO
+        else -> OUTER_HALF_BASE
+    }
+
     // ─── tint paints — one per non-natural EarTint value, cached for hot-path reuse ─
     // saveLayer with a tight RectF avoids allocating a full-frame offscreen buffer.
     private val tintPaints: Map<EarTint, Paint> by lazy {
@@ -411,7 +593,51 @@ object OverlayCompositor {
     private const val INNER_HALF_BASE = 0.24f
     private const val INNER_TOP_OFFSET = 0.28f
     private const val INNER_BOTTOM_OFFSET = 0.78f
+    private const val FELINE_TIP_OFFSET_X = 0.08f
+    private const val FELINE_BASE_LEFT = 0.44f
+    private const val FELINE_BASE_RIGHT = 0.30f
+    private const val LYNX_BASE_LEFT = 0.48f
+    private const val LYNX_BASE_RIGHT = 0.34f
+    private const val FLUFFY_LEFT_BASE = 0.48f
+    private const val FLUFFY_RIGHT_BASE = 0.408f
+    private const val PERKY_HALF_BASE = 0.38f
+    private const val PERKY_TIP_Y = 0.20f
+    private const val RABBIT_HALF_WIDTH = 0.18f
+    private const val FOX_HALF_BASE = 0.32f
+    private const val FOX_RIGHT_BASE = 0.224f
+    private const val BEAR_RADIUS_RATIO = 0.32f
     private val FLUFFY_PHASES = floatArrayOf(0.0f, 0.8f, 1.6f, 2.4f, 0.4f, 1.2f, 2.0f, 0.6f)
+
+    // ─── material finish constants ───────────────────────────────────────────
+    private const val SHADOW_HALF_WIDTH = 0.46f
+    private const val SHADOW_TOP_RATIO = 0.68f
+    private const val SHADOW_HEIGHT = 0.36f
+    private const val SHADOW_ALPHA = 1f
+    private const val MATERIAL_RIM_WIDTH_RATIO = 0.035f
+    private const val MATERIAL_HIGHLIGHT_WIDTH_RATIO = 0.022f
+    private const val RIM_ALPHA = 0.72f
+    private const val HIGHLIGHT_ALPHA = 0.62f
+    private const val HIGHLIGHT_TIP_X_OFFSET = 0.07f
+    private const val HIGHLIGHT_TIP_Y_OFFSET = 0.12f
+    private const val HIGHLIGHT_BASE_X_OFFSET = 0.10f
+    private const val HIGHLIGHT_BASE_Y_OFFSET = 0.12f
+    private const val MATERIAL_INNER_TOP_RATIO = 0.22f
+    private const val MATERIAL_INNER_BASE_BLEND = 0.58f
+    private const val MATERIAL_INNER_BASE_LIFT_RATIO = 0.18f
+    private const val INNER_GLAZE_TOP_ALPHA = 0.72f
+    private const val INNER_GLAZE_BOTTOM_ALPHA = 0.52f
+    private const val MATERIAL_FUR_WIDTH_RATIO = 0.016f
+    private const val MATERIAL_FUR_INWARD_BLEND = 0.48f
+    private const val MATERIAL_FUR_LENGTH_RATIO = 0.12f
+    private const val MATERIAL_FUR_LIFT_RATIO = 0.035f
+    private const val MATERIAL_FUR_ALPHA = 0.56f
+    private const val MATERIAL_TUFT_FAN_DEG = 17f
+    private const val MATERIAL_TUFT_LENGTH_RATIO = 0.18f
+    private const val MATERIAL_TUFT_WIDTH_RATIO = 0.032f
+    private const val ALPHA_SHIFT = 24
+    private const val RGB_MASK = 0x00FFFFFF
+    private const val MIN_COLOR_COMPONENT = 0
+    private const val MAX_COLOR_COMPONENT = 255
 
     // ─── colours — pure bit-ops, no android.graphics.Color at load time ───────
     private val CLASSIC_OUTER: Int = (0xFF shl 24) or (0x8B shl 16) or (0x5E shl 8) or 0x3C
