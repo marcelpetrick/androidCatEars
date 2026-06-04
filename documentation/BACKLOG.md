@@ -394,6 +394,18 @@ silent, looping clip is far more viral than a still and keeps the scope testable
 
 ---
 
+### WP 30 — Release 0.1.119 regression bugs
+
+Two regressions were observed in release **0.1.119** during real-device use. The screenshot for
+30.0 is committed as [`../media/release0.1.119_earsTooHigh.jpg`](../media/release0.1.119_earsTooHigh.jpg).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 30.0 | TODO | Fix cat-ear head attachment after landmark anchoring change | In release 0.1.119 the ears are positioned too high above the skull; the bases no longer touch the visible top of the head. Short analysis: the vertical anchor was moved away from the human-ear landmarks, but the top-of-head offset now overcompensates and places `anchor.y + anchor.size` above the hairline. Tune the placement so cat ears attach to the head top while staying above human-ear height. Add or update placement fixture tests that prove the base point lands on/near the top-of-head attachment zone. |
+| 30.1 | TODO | Apply selected ear tint to saved captures | Saved images still render the default brown ears even when the live preview uses a selected hue such as lila. Short analysis: the live Compose renderer receives the active tint, but the capture/compositing path likely reconstructs or renders `OverlayPlacement` without propagating the selected `EarTint`/colour into `OverlayCompositor`. The captured bitmap must match the on-screen WYSIWYG preview for all ear styles and selected hues; add a focused compositor/unit test for a non-default tint. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
