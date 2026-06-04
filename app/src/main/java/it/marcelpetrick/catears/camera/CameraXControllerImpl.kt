@@ -68,6 +68,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     private val overlayEffectThread = HandlerThread("CatEarsOverlayEffect").also { it.start() }
     private val overlayEffectHandler = Handler(overlayEffectThread.looper)
     private val videoOverlayState = AtomicReference<VideoOverlayState?>(null)
+    private var currentOverlayEffect: OverlayEffect? = null
 
     fun updateOverlayPlacements(placements: List<OverlayPlacement>, viewWidth: Int, viewHeight: Int) {
         videoOverlayState.set(VideoOverlayState(placements, viewWidth, viewHeight))
@@ -93,7 +94,9 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         val preview = Preview.Builder().build().also { it.surfaceProvider = surface.surfaceProvider }
         val analysis = buildAnalysisUseCase()
         val vc = buildVideoUseCase()
+        currentOverlayEffect?.close()
         val effect = buildOverlayEffect()
+        currentOverlayEffect = effect
 
         // Binding can fail (camera busy, unsupported use-case combination, hardware quirks).
         // Never let that crash the app: log it and leave the preview unbound.
@@ -207,6 +210,8 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     override fun close() {
         stopVideoRecording()
         unbind()
+        currentOverlayEffect?.close()
+        currentOverlayEffect = null
         analysisExecutor.shutdown()
         overlayEffectThread.quitSafely()
     }
