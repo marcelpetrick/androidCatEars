@@ -49,7 +49,7 @@ fun CameraPreview(
     onFaceDetected: (List<OverlayPlacement>) -> Unit,
     captureRequested: Boolean,
     onComposited: (Bitmap?) -> Unit,
-    cameraControllerFactory: () -> CameraXControllerImpl,
+    controller: CameraXControllerImpl,
     faceDetectorFactory: () -> FaceDetectorSeam,
     modifier: Modifier = Modifier,
     recordingRequested: Boolean = false,
@@ -59,7 +59,6 @@ fun CameraPreview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val detector = remember { faceDetectorFactory() }
     val smoother = remember { MultiFaceSmoother() }
-    val controller = remember { cameraControllerFactory() }
     val capturePlacements = rememberUpdatedState(overlayPlacements)
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
     val soundPlayer = remember {

@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -263,6 +264,7 @@ private fun CameraContent(
     onShareVideo: (() -> Unit)?,
 ) {
     val haptic = LocalHapticFeedback.current
+    val controller = remember { cameraControllerFactory() }
     val onCaptureTap: () -> Unit = {
         if (captureEnabled) {
             haptic.performHapticFeedback(HapticFeedbackType.Confirm)
@@ -276,7 +278,7 @@ private fun CameraContent(
             onFaceDetected = onFaceDetected,
             captureRequested = captureRequested,
             onComposited = onComposited,
-            cameraControllerFactory = cameraControllerFactory,
+            controller = controller,
             faceDetectorFactory = faceDetectorFactory,
             recordingRequested = recordingState is RecordingState.Recording,
             onRecordingSaved = onRecordingSaved,
@@ -294,6 +296,7 @@ private fun CameraContent(
             onShare = onShare,
             recordingState = recordingState,
             onRecordTap = onRecordTap,
+            onStopRecording = { controller.stopVideoRecording() },
             onShareVideo = onShareVideo,
         )
     }
@@ -311,6 +314,7 @@ private fun CameraFabRow(
     onShare: (() -> Unit)?,
     recordingState: RecordingState,
     onRecordTap: () -> Unit,
+    onStopRecording: () -> Unit,
     onShareVideo: (() -> Unit)?,
 ) {
     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
@@ -319,7 +323,7 @@ private fun CameraFabRow(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            RecordButton(recordingState, onRecordTap)
+            RecordButton(recordingState, onRecordTap, onStopRecording)
             SmallFloatingActionButton(onClick = onCycleEarTint) {
                 Icon(Icons.Filled.Palette, contentDescription = "Cycle ear colour: ${earTint.name}")
             }
@@ -351,10 +355,10 @@ private fun CameraFabRow(
 }
 
 @Composable
-private fun RecordButton(recordingState: RecordingState, onRecordTap: () -> Unit) {
+private fun RecordButton(recordingState: RecordingState, onRecordTap: () -> Unit, onStopRecording: () -> Unit) {
     val isRecording = recordingState is RecordingState.Recording
     SmallFloatingActionButton(
-        onClick = onRecordTap,
+        onClick = if (isRecording) onStopRecording else onRecordTap,
         containerColor = if (isRecording) {
             MaterialTheme.colorScheme.error
         } else {

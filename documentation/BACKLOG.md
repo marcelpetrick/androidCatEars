@@ -499,6 +499,25 @@ the fix should be derived from the image data rather than guessed.
 
 ---
 
+### WP 35 — Bug: Stop button does not stop recording (review item 3)
+
+Found in `review20260604.md`. `onRecordTap()` in `MainViewModel` only transitions
+`Idle → Recording`; tapping the red Stop FAB while recording was a no-op because the
+guard `if (is Idle)` blocked all other states.
+
+**Fix:** hoist controller creation from `CameraPreview` into `CameraContent` so that both
+`CameraPreview` and `CameraFabRow` share the same `CameraXControllerImpl` instance.
+`RecordButton` receives a dedicated `onStopRecording` callback that calls
+`controller.stopVideoRecording()` directly, bypassing the ViewModel guard. The existing
+`onRecordingSaved` callback path (triggered by `VideoRecordEvent.Finalize`) handles the
+state transition to `Saved`/`Failed` as before — no ViewModel changes needed.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 35.0 | DONE | Wire Stop button to `controller.stopVideoRecording()` | Tapping the red Stop FAB during recording immediately stops the clip. The partial clip URI is delivered via `onRecordingSaved`; ViewModel transitions to `Saved`/`Failed` as normal. `onRecordTap()` in the ViewModel is unchanged. All quality gates pass. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
