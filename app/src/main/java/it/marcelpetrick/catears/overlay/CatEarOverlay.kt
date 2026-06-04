@@ -34,9 +34,12 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import it.marcelpetrick.catears.domain.EarAnchor
+import it.marcelpetrick.catears.domain.EarMaterialSpec
+import it.marcelpetrick.catears.domain.EarRenderStyleSpec
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.domain.earRenderStyleSpec
 import it.marcelpetrick.catears.domain.hueRotationMatrix
 import kotlin.math.PI
 import kotlin.math.cos
@@ -171,14 +174,46 @@ private const val WIDE_EYE_PERK_FRACTION = 0.12f
 private const val WINK_THRESHOLD = 0.20f
 private const val WINK_SCALE = 0.5f
 
+// --- material finish constants
+private const val SHADOW_HALF_WIDTH = 0.46f
+private const val SHADOW_WIDTH = 0.92f
+private const val SHADOW_TOP_RATIO = 0.68f
+private const val SHADOW_HEIGHT = 0.36f
+private const val MATERIAL_RIM_WIDTH_RATIO = 0.035f
+private const val MATERIAL_HIGHLIGHT_WIDTH_RATIO = 0.022f
+private const val RIM_ALPHA = 0.72f
+private const val HIGHLIGHT_ALPHA = 0.62f
+private const val HIGHLIGHT_TIP_X_OFFSET = 0.07f
+private const val HIGHLIGHT_TIP_Y_OFFSET = 0.12f
+private const val HIGHLIGHT_BASE_X_OFFSET = 0.10f
+private const val HIGHLIGHT_BASE_Y_OFFSET = 0.12f
+private const val MATERIAL_INNER_TOP_RATIO = 0.22f
+private const val MATERIAL_INNER_BASE_BLEND = 0.58f
+private const val MATERIAL_INNER_BASE_LIFT_RATIO = 0.18f
+private const val INNER_GLAZE_TOP_ALPHA = 0.72f
+private const val INNER_GLAZE_BOTTOM_ALPHA = 0.52f
+private const val MATERIAL_FUR_WIDTH_RATIO = 0.016f
+private const val MATERIAL_FUR_INWARD_BLEND = 0.48f
+private const val MATERIAL_FUR_PHASE_STEP = 0.63f
+private const val MATERIAL_FUR_SWAY_RATIO = 0.018f
+private const val MATERIAL_FUR_LENGTH_RATIO = 0.12f
+private const val MATERIAL_FUR_LIFT_RATIO = 0.035f
+private const val MATERIAL_FUR_ALPHA = 0.56f
+private const val MATERIAL_TUFT_FAN_DEG = 17f
+private const val MATERIAL_TUFT_SWAY_DEG = 4f
+private const val MATERIAL_TUFT_LENGTH_RATIO = 0.18f
+private const val MATERIAL_TUFT_WIDTH_RATIO = 0.032f
+
 private fun DrawScope.drawEar(anchor: EarAnchor, style: EarStyle, swayTime: Float, twitchTime: Float) {
     val cx = anchor.x
     val top = anchor.y
     val s = anchor.size
     val pivot = Offset(cx, top + s / 2f)
     val twitchAngle = sin(twitchTime) * TWITCH_AMPLITUDE * sin(twitchTime * TWITCH_FREQ_MOD)
+    val spec = earRenderStyleSpec(style)
     rotate(degrees = anchor.tiltDegrees + twitchAngle, pivot = pivot) {
         scale(scaleX = anchor.xScale, scaleY = 1f, pivot = pivot) {
+            drawSoftEarShadow(cx, top, s, spec.material)
             when (style) {
                 EarStyle.CLASSIC -> drawClassicEar(cx, top, s, swayTime)
                 EarStyle.SHARP_FELINE -> drawSharpFelineEar(cx, top, s, swayTime)
@@ -191,8 +226,176 @@ private fun DrawScope.drawEar(anchor: EarAnchor, style: EarStyle, swayTime: Floa
                 EarStyle.FOX -> drawFoxEar(cx, top, s, swayTime)
                 EarStyle.BEAR -> drawBearEar(cx, top, s)
             }
+            drawMaterialFinish(cx, top, s, spec, swayTime)
         }
     }
+}
+
+private fun DrawScope.drawSoftEarShadow(cx: Float, top: Float, s: Float, material: EarMaterialSpec) {
+    drawOval(
+        color = Color(material.shadowArgb),
+        topLeft = Offset(cx - s * SHADOW_HALF_WIDTH, top + s * SHADOW_TOP_RATIO),
+        size = Size(s * SHADOW_WIDTH, s * SHADOW_HEIGHT),
+    )
+}
+
+private fun DrawScope.drawMaterialFinish(cx: Float, top: Float, s: Float, spec: EarRenderStyleSpec, swayTime: Float) {
+    val material = spec.material
+    val tip = Offset(cx + styleTipOffset(spec.style) * s, top + styleTipYOffset(spec.style) * s)
+    val leftBase = Offset(cx - styleLeftBase(spec.style) * s, top + s)
+    val rightBase = Offset(cx + styleRightBase(spec.style) * s, top + s)
+    drawOuterRim(tip, leftBase, rightBase, s, material)
+    drawInnerRosyGlaze(tip, leftBase, rightBase, s, material)
+    drawFurTexture(tip, leftBase, rightBase, s, spec, swayTime)
+    if (spec.supportsTufts) {
+        drawMaterialTufts(tip, s, material, swayTime)
+    }
+}
+
+private fun DrawScope.drawOuterRim(
+    tip: Offset,
+    leftBase: Offset,
+    rightBase: Offset,
+    s: Float,
+    material: EarMaterialSpec,
+) {
+    val rimWidth = s * MATERIAL_RIM_WIDTH_RATIO
+    drawLine(Color(material.outerRimArgb).copy(alpha = RIM_ALPHA), leftBase, tip, rimWidth, StrokeCap.Round)
+    drawLine(Color(material.outerRimArgb).copy(alpha = RIM_ALPHA), rightBase, tip, rimWidth, StrokeCap.Round)
+    drawLine(
+        Color(material.outerHighlightArgb).copy(alpha = HIGHLIGHT_ALPHA),
+        Offset(tip.x - s * HIGHLIGHT_TIP_X_OFFSET, tip.y + s * HIGHLIGHT_TIP_Y_OFFSET),
+        Offset(leftBase.x + s * HIGHLIGHT_BASE_X_OFFSET, leftBase.y - s * HIGHLIGHT_BASE_Y_OFFSET),
+        s * MATERIAL_HIGHLIGHT_WIDTH_RATIO,
+        StrokeCap.Round,
+    )
+}
+
+private fun DrawScope.drawInnerRosyGlaze(
+    tip: Offset,
+    leftBase: Offset,
+    rightBase: Offset,
+    s: Float,
+    material: EarMaterialSpec,
+) {
+    val innerTop = Offset(
+        x = tip.x,
+        y = tip.y + s * MATERIAL_INNER_TOP_RATIO,
+    )
+    val innerLeft = Offset(
+        x = leftBase.x * MATERIAL_INNER_BASE_BLEND + tip.x * (1f - MATERIAL_INNER_BASE_BLEND),
+        y = leftBase.y - s * MATERIAL_INNER_BASE_LIFT_RATIO,
+    )
+    val innerRight = Offset(
+        x = rightBase.x * MATERIAL_INNER_BASE_BLEND + tip.x * (1f - MATERIAL_INNER_BASE_BLEND),
+        y = rightBase.y - s * MATERIAL_INNER_BASE_LIFT_RATIO,
+    )
+    val inner = Path().apply {
+        moveTo(innerTop.x, innerTop.y)
+        lineTo(innerLeft.x, innerLeft.y)
+        lineTo(innerRight.x, innerRight.y)
+        close()
+    }
+    drawPath(
+        inner,
+        brush = Brush.linearGradient(
+            colors = listOf(
+                Color(material.innerHighlightArgb).copy(alpha = INNER_GLAZE_TOP_ALPHA),
+                Color(material.innerBaseArgb).copy(alpha = INNER_GLAZE_BOTTOM_ALPHA),
+            ),
+            start = Offset(tip.x, tip.y),
+            end = Offset(tip.x, leftBase.y),
+        ),
+    )
+}
+
+private fun DrawScope.drawFurTexture(
+    tip: Offset,
+    leftBase: Offset,
+    rightBase: Offset,
+    s: Float,
+    spec: EarRenderStyleSpec,
+    swayTime: Float,
+) {
+    val stroke = s * MATERIAL_FUR_WIDTH_RATIO
+    repeat(spec.furStrokeCount) { index ->
+        val fraction = (index + 1f) / (spec.furStrokeCount + 1f)
+        val edgeStart = if (index % 2 == 0) leftBase else rightBase
+        val edgePoint = lerpOffset(edgeStart, tip, fraction)
+        val inward = lerpOffset(edgePoint, Offset(tip.x, edgePoint.y), MATERIAL_FUR_INWARD_BLEND)
+        val sway = sin(swayTime + index * MATERIAL_FUR_PHASE_STEP) * s * MATERIAL_FUR_SWAY_RATIO
+        val end = Offset(
+            x =
+            inward.x +
+                if (index % 2 == 0) s * MATERIAL_FUR_LENGTH_RATIO + sway else -s * MATERIAL_FUR_LENGTH_RATIO + sway,
+            y = inward.y - s * MATERIAL_FUR_LIFT_RATIO,
+        )
+        drawLine(
+            color = Color(spec.material.outerHighlightArgb).copy(alpha = MATERIAL_FUR_ALPHA),
+            start = edgePoint,
+            end = end,
+            strokeWidth = stroke,
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
+private fun DrawScope.drawMaterialTufts(tip: Offset, s: Float, material: EarMaterialSpec, swayTime: Float) {
+    for (i in -1..1) {
+        val angle = Math.toRadians((MATERIAL_TUFT_FAN_DEG * i + sin(swayTime + i) * MATERIAL_TUFT_SWAY_DEG).toDouble())
+            .toFloat()
+        drawLine(
+            color = Color(material.outerRimArgb),
+            start = tip,
+            end = Offset(
+                x = tip.x + sin(angle) * s * MATERIAL_TUFT_LENGTH_RATIO,
+                y = tip.y - cos(angle) * s * MATERIAL_TUFT_LENGTH_RATIO,
+            ),
+            strokeWidth = s * MATERIAL_TUFT_WIDTH_RATIO,
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
+private fun lerpOffset(from: Offset, to: Offset, fraction: Float): Offset = Offset(
+    x = from.x + (to.x - from.x) * fraction,
+    y = from.y + (to.y - from.y) * fraction,
+)
+
+private fun styleTipOffset(style: EarStyle): Float = when (style) {
+    EarStyle.SHARP_FELINE,
+    EarStyle.LYNX_TUFTED,
+    EarStyle.FOX,
+    -> FELINE_TIP_OFFSET_X
+
+    else -> 0f
+}
+
+private fun styleTipYOffset(style: EarStyle): Float = when (style) {
+    EarStyle.CANINE_PERKY -> PERKY_TIP_Y
+    else -> 0f
+}
+
+private fun styleLeftBase(style: EarStyle): Float = when (style) {
+    EarStyle.SHARP_FELINE -> FELINE_BASE_LEFT
+    EarStyle.LYNX_TUFTED -> LYNX_BASE_LEFT
+    EarStyle.DENSE_FLUFFY -> FLUFFY_LEFT_BASE
+    EarStyle.FOX -> FOX_HALF_BASE
+    EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
+    EarStyle.RABBIT -> RABBIT_HALF_WIDTH
+    EarStyle.BEAR -> BEAR_RADIUS_RATIO
+    else -> OUTER_HALF_BASE
+}
+
+private fun styleRightBase(style: EarStyle): Float = when (style) {
+    EarStyle.SHARP_FELINE -> FELINE_BASE_RIGHT
+    EarStyle.LYNX_TUFTED -> LYNX_BASE_RIGHT
+    EarStyle.DENSE_FLUFFY -> FLUFFY_RIGHT_BASE
+    EarStyle.FOX -> FOX_RIGHT_BASE
+    EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
+    EarStyle.RABBIT -> RABBIT_HALF_WIDTH
+    EarStyle.BEAR -> BEAR_RADIUS_RATIO
+    else -> OUTER_HALF_BASE
 }
 
 // --- 1 CLASSIC
