@@ -55,14 +55,11 @@ object OverlayCompositor {
      */
     fun drawEarsOnCanvas(canvas: Canvas, placements: List<OverlayPlacement>) {
         for (p in placements) {
-            val tintLayer = p.tint != EarTint.NATURAL
-            if (tintLayer) {
-                val filter = ColorMatrixColorFilter(ColorMatrix(hueRotationMatrix(p.tint.hueDegrees)))
-                canvas.saveLayer(null, Paint().apply { colorFilter = filter })
-            }
+            val tintPaint = tintPaints[p.tint]
+            if (tintPaint != null) canvas.saveLayer(earsBounds(p), tintPaint)
             drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
             drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
-            if (tintLayer) canvas.restore()
+            if (tintPaint != null) canvas.restore()
         }
     }
 
@@ -75,16 +72,23 @@ object OverlayCompositor {
         if (placements.isEmpty()) return result
         val canvas = Canvas(result)
         for (p in placements) {
-            val tintLayer = p.tint != EarTint.NATURAL
-            if (tintLayer) {
-                val filter = ColorMatrixColorFilter(ColorMatrix(hueRotationMatrix(p.tint.hueDegrees)))
-                canvas.saveLayer(null, Paint().apply { colorFilter = filter })
-            }
+            val tintPaint = tintPaints[p.tint]
+            if (tintPaint != null) canvas.saveLayer(earsBounds(p), tintPaint)
             drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
             drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
-            if (tintLayer) canvas.restore()
+            if (tintPaint != null) canvas.restore()
         }
         return result
+    }
+
+    private fun earsBounds(p: OverlayPlacement): RectF {
+        val margin = p.leftEar.size.coerceAtLeast(p.rightEar.size)
+        return RectF(
+            minOf(p.leftEar.x, p.rightEar.x) - margin,
+            minOf(p.leftEar.y, p.rightEar.y) - margin * 0.1f,
+            maxOf(p.leftEar.x, p.rightEar.x) + margin,
+            maxOf(p.leftEar.y, p.rightEar.y) + margin * 2f,
+        )
     }
 
     private fun drawEarOnCanvas(canvas: Canvas, anchor: EarAnchor, style: EarStyle) {
@@ -358,6 +362,18 @@ object OverlayCompositor {
         lineTo(vertices[2], vertices[3])
         lineTo(vertices[4], vertices[5])
         close()
+    }
+
+    // ─── tint paints — one per non-natural EarTint value, cached for hot-path reuse ─
+    // saveLayer with a tight RectF avoids allocating a full-frame offscreen buffer.
+    private val tintPaints: Map<EarTint, Paint> by lazy {
+        EarTint.entries
+            .filter { it != EarTint.NATURAL }
+            .associateWith { tint ->
+                Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    colorFilter = ColorMatrixColorFilter(ColorMatrix(hueRotationMatrix(tint.hueDegrees)))
+                }
+            }
     }
 
     // ─── paints — lazy to avoid android.graphics.Color at class-load in JVM tests ──
