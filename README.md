@@ -15,21 +15,35 @@
 
 **License: GPLv3 or later. See `LICENSE`.**
 
+This project is developed using AI-assisted coding (Claude Code as the primary
+engineering agent) with Marcel Petrick as the human author — reviewing every
+change, steering architecture decisions, and owning the final product. All
+commits are signed off (`git commit -s`) by the human author. "AI-generated"
+means accelerated by AI, not unsupervised: every diff is read and understood
+before it lands.
+
 ---
 
 ## CI Status
 
-[![CI](https://github.com/marcelpetrick/androidCatEars/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/ci.yml) [![CodeQL](https://github.com/marcelpetrick/androidCatEars/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/codeql.yml) [![Dependabot Updates](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependabot/dependabot-updates) [![Dependency Review](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependency-review.yml) [![Release](https://github.com/marcelpetrick/androidCatEars/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/release.yml) [![Secret Scan](https://github.com/marcelpetrick/androidCatEars/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/secret-scan.yml)
+[![CI](https://github.com/marcelpetrick/androidCatEars/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/ci.yml) [![CodeQL](https://github.com/marcelpetrick/androidCatEars/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/codeql.yml) [![Dependabot Updates](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependabot/dependabot-updates) [![Dependency Review](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependency-review.yml) [![Release](https://github.com/marcelpetrick/androidCatEars/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/release.yml) [![Secret Scan](https://github.com/marcelpetrick/androidCatEars/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/secret-scan.yml) [![Download APK](https://img.shields.io/github/v/release/marcelpetrick/androidCatEars?label=Download%20APK&color=brightgreen)](https://github.com/marcelpetrick/androidCatEars/releases/latest)
 
 ---
 
 ## ✨ What makes it special
 
+### Everything runs on-device — zero network access
+
+All face detection, rendering, and compositing happens locally on the device.
+No image ever leaves the phone. No account. No permissions for storage or
+internet. `INTERNET` is not in the manifest — the OS enforces this at runtime.
+
 ### 10 ear styles, one tap away
 Cycle through **Classic Cat · Sharp Feline · Rounded Feline · Lynx Tufted ·
 Dense Fluffy · Canine Floppy · Canine Perky · Rabbit · Fox · Bear** with a
 single tap on the paw-icon button. Every style renders in real time — no
-loading, no lag.
+loading, no lag. All styles are drawn in code: there are **no image assets** in
+the APK; every triangle, curve, and strand is computed on the fly.
 
 ### Ears that actually feel alive
 Each ear style is procedurally animated on every frame:
@@ -58,120 +72,124 @@ the re-roll button reshuffles the group without changing face positions.
 Tap the shutter to save a photo with the ears composited directly onto the
 frame. The same procedural geometry used in the live preview is applied at
 full resolution — what you see is exactly what you get. Share via any Android
-app with one more tap. Five-second video clips can also be recorded with the
-overlay baked in.
+app with one more tap.
+
+For video, five-second MP4 clips are recorded with the overlay baked into
+every frame at record time via CameraX `OverlayEffect` (`camera-effects:1.6.1`).
+The ears are drawn directly into the video buffer — no post-processing step.
 
 ---
 
 ## What It Does
 
 - Live camera preview with front/rear camera switching
-- On-device face detection via ML Kit (ear landmarks, head pose, expressions)
-- Animated 3D-look procedural ears — 10 styles, tint cycling, expression-reactive, multi-face
+- On-device face detection via ML Kit (landmarks, head pose, per-eye expression)
+- Animated procedural ears — 10 styles, 6 tints, expression-reactive, tracks up to 4 faces
 - Party Mode with stable per-face style/tint assignments and manual re-roll
 - Still photo capture with the overlay baked in at full resolution
-- Five-second MP4 recording with the overlay baked in
+- Five-second MP4 recording with the overlay baked in via `CameraEffect`
 - Save to gallery and share photos/videos via the Android share sheet
+- No internet permission, no cloud, no account — fully private by design
 
 ## Tech Stack
 
-| Concern        | Technology                      |
-|----------------|---------------------------------|
-| Language       | Kotlin 2.3.21                   |
-| UI             | Jetpack Compose (BOM 2026.05.01)|
-| Camera         | CameraX 1.6.1                   |
-| Face detection | ML Kit Face Detection 16.1.7    |
-| DI             | Hilt 2.59.2                     |
-| Build          | Gradle 9.5.1 (Kotlin DSL)       |
-| Min SDK        | Android 14 (API 34)             |
-| Target SDK     | Android 16 (API 36)             |
+| Concern | Technology |
+|---------|------------|
+| Language | Kotlin 2.3.21 |
+| UI | Jetpack Compose (BOM 2026.05.01) |
+| Camera | CameraX 1.6.1 |
+| Video overlay | `camera-effects:1.6.1` — `OverlayEffect` bakes ears into frames at record time |
+| Face detection | ML Kit Face Detection 16.1.7 — fully on-device, no network |
+| DI | Hilt 2.59.2 |
+| Build | Gradle 9.5.1 (Kotlin DSL) |
+| Min SDK | Android 14 (API 34) |
+| Target SDK | Android 16 (API 36) |
+| Drawing | 100% procedural — no PNG/WebP/SVG assets |
+
+## Module structure and testability
+
+The project is split into two Gradle modules:
+
+- **`:domain`** — pure JVM, zero Android dependencies. All geometry
+  (`computeOverlayPlacement`, `imageToViewCoordinates`), state machines
+  (`CaptureState`, `RecordingState`, `MainUiState`), and face-smoothing
+  (`MultiFaceSmoother`) live here. 40+ tests run in milliseconds on any JVM
+  — no Robolectric, no emulator.
+- **`:app`** — Android module. CameraX, Compose UI, ML Kit, Hilt wiring.
+  The boundary is enforced at compile time: `:domain` cannot import anything
+  from `:app`.
+
+Camera, ML Kit, and I/O are hidden behind seam interfaces
+(`CameraControllerSeam`, `FaceDetectorSeam`, `CaptureRuntime`) injected via
+Hilt, so the ViewModel and all domain logic are exercised with plain Kotlin
+test doubles. A **95% Kover line-coverage gate** on `:domain` runs in CI
+and blocks merges when it drops.
+
+See [`documentation/ARCHITECTURE.md`](documentation/ARCHITECTURE.md) for the
+full module map and MVVM wiring.
+
+## Getting started (contributors)
+
+```bash
+git clone https://github.com/marcelpetrick/androidCatEars
+cd androidCatEars
+./gradlew installHooks   # required once per clone — installs the pre-commit version bumper
+./gradlew assembleDebug  # downloads Gradle 9.5.1 and all deps on first run
+./gradlew installDebug   # push to a connected device or running emulator
+```
+
+Read [`documentation/agents.md`](documentation/agents.md) before opening a PR.
+It contains the binding engineering rules: commit format (Conventional Commits),
+quality gates that must pass, what must never be bypassed (hooks, coverage).
+
+---
 
 ## CI / Quality Gate
 
 The required local gate is [`scripts/ci.sh`](scripts/ci.sh). Run it before
 pushing; GitHub Actions invokes the same script so local and remote CI cannot
-drift silently.
+drift.
 
 ```bash
-# Full local CI gate: build, format, detekt, lint, tests, Kover
-./scripts/ci.sh
-
-# Same gate with all Gradle caches cleared first (for a truly clean run)
-./gradlew --stop && rm -rf .gradle/configuration-cache app/build && ./scripts/ci.sh
-
-# Format (auto-fix)
-./gradlew spotlessApply
-
-# Check formatting + static analysis + Android lint in one command
-./gradlew qualityCheck
-
-# Coverage
-./gradlew :app:koverVerify     # Fails if domain/logic coverage < 95%
-./gradlew :app:koverHtmlReport # HTML report → app/build/reports/kover/html/
-
-# Individual tools
-./gradlew spotlessCheck   # ktlint via Spotless
-./gradlew detekt          # detekt static analysis
-./gradlew :app:lint       # Android Lint
+./scripts/ci.sh            # build + format + detekt + lint + tests + Kover (≥95%)
+./gradlew spotlessApply    # auto-fix formatting
+./gradlew qualityCheck     # format + detekt + lint in one command
+./gradlew :app:koverVerify # domain coverage gate (fails if < 95%)
 ```
 
-If a local gate step fails, `scripts/ci.sh` prints the failed step and command.
-GitHub CI uploads test, coverage, lint, and CycloneDX SBOM reports as workflow
-artifacts.
-
-Example summary from a successful local run:
-
-```text
-+----+----------------------------------+----------+----------+
-| #  | Step                             | Status   | Wall     |
-+----+----------------------------------+----------+----------+
-| 1  | Build (debug)                    | PASSED   | 00:51    |
-| 2  | Format check (Spotless)          | PASSED   | 00:01    |
-| 3  | Static analysis (detekt)         | PASSED   | 00:01    |
-| 4  | Android Lint                     | PASSED   | 00:18    |
-| 5  | Unit tests                       | PASSED   | 00:08    |
-| 6  | Coverage gate (Kover >= 95%)     | PASSED   | 00:01    |
-| 7  | SBOM (CycloneDX)                 | PASSED   | 00:06    |
-+----+----------------------------------+----------+----------+
-| Total                                 | PASSED   | 01:26    |
-+---------------------------------------+----------+----------+
-All checks passed.
-```
-
-GitHub Actions also runs security/release workflows:
-
-- `ci.yml` — push/PR quality gate using `scripts/ci.sh`.
-- `dependency-review.yml` — blocks vulnerable dependency changes on PRs.
-- `codeql.yml` — Java/Kotlin code scanning on push/PR and weekly schedule.
-- `secret-scan.yml` — Gitleaks scan for committed credentials.
-- `release.yml` — manual release publishing with AAB, debug APK, CycloneDX SBOMs, and checksums.
-
-CycloneDX SBOMs can also be generated locally:
-
-```bash
-./gradlew cyclonedxBom              # raw aggregate SBOM under build/reports/cyclonedx/
-./scripts/generate-sbom.sh          # versioned release-style SBOM files + SHA-256 checksums
-```
+GitHub Actions runs five additional workflows: CodeQL scanning, Dependabot
+updates, dependency-review on PRs, Gitleaks secret scan, and a manual release
+workflow that publishes signed AAB, debug APK, CycloneDX SBOM, and SHA-256
+checksums to GitHub Releases.
 
 See [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) for
 workflow triggers, secrets, timeouts, and release behavior.
 
 ## License
 
-[GPL v3](LICENSE)
+[GPL v3](LICENSE) — copyleft. Modifications and derived works must be
+distributed under the same licence.
 
 ---
 
 ## Prerequisites
 
-- JDK 17+ (tested with OpenJDK 26.0.1)
-- Android SDK — set `sdk.dir` in `local.properties` (not committed):
+- **JDK 21+** (JDK 17 is the compile-time minimum but Gradle 9.5 recommends
+  JDK 21+; using JDK 17 is unsupported and may produce unexpected errors)
+- **Android SDK** — set `sdk.dir` in `local.properties` (not committed):
   ```properties
   sdk.dir=/path/to/Android/Sdk
   ```
   Required SDK components: `platforms;android-36`, `build-tools;36.0.0`.
-  Install via: `sdkmanager "platforms;android-36" "build-tools;36.0.0"`
-- `./gradlew` is self-contained (downloads Gradle 9.5.1 on first run).
+  ```bash
+  sdkmanager "platforms;android-36" "build-tools;36.0.0"
+  ```
+- `./gradlew` downloads Gradle 9.5.1 automatically on first run.
+
+> **Why Android 14 (API 34) minimum?** The `CameraEffect` / `OverlayEffect`
+> API used to bake the overlay into recorded video frames was introduced in
+> CameraX 1.4 targeting API 34. Supporting lower APIs would require a
+> significantly more complex off-device compositing approach.
 
 ## Build
 
@@ -288,38 +306,17 @@ Never edit `versionCode` or `versionName` anywhere else — they are derived fro
 
 ## Documentation
 
-Project documentation lives in [`documentation/`](documentation/). Start with
-the README for daily commands, then use the table below for deeper topics.
+Project documentation lives in [`documentation/`](documentation/).
 
 | Document | What it covers |
 |----------|----------------|
 | [`documentation/DEV_INTRO.md`](documentation/DEV_INTRO.md) | Fresh-clone setup and Android Studio workflow |
-| [`documentation/VISION.md`](documentation/VISION.md) | Product intent, scope, and technology decisions |
-| [`documentation/DEVELOPMENT_PLAN.md`](documentation/DEVELOPMENT_PLAN.md) | Strategic work plan and binding decisions |
-| [`documentation/BACKLOG.md`](documentation/BACKLOG.md) | Ordered actionable task list for agents/contributors |
-| [`documentation/ARCHITECTURE.md`](documentation/ARCHITECTURE.md) | Structure, MVVM, and the seam/testability pattern |
-| [`documentation/WORKFLOW_C4.md`](documentation/WORKFLOW_C4.md) | C4-style workflow and runtime diagrams |
-| [`documentation/PROJECT_REVIEW.md`](documentation/PROJECT_REVIEW.md) | Lifecycle review: what exists, testing gaps, what to add |
-| [`documentation/HUMAND_DEVELOPER_COMPARISON.md`](documentation/HUMAND_DEVELOPER_COMPARISON.md) | Human developer effort estimate for the current project scope |
-| [`documentation/code_review.md`](documentation/code_review.md) | Security, CI, and correctness review with remediation status |
-| [`documentation/OVERLAY_LAB.md`](documentation/OVERLAY_LAB.md) | Desktop harness for tuning cat-ear placement on sample photos |
-| [`documentation/ANIMATED_EARS.md`](documentation/ANIMATED_EARS.md) | Design for animated, 3D-look procedural ears with proper head anchoring (WP 20) |
-| [`documentation/EAR_STYLES.md`](documentation/EAR_STYLES.md) | Feline-quality ear styles + style switcher design (WP 21) |
+| [`documentation/ARCHITECTURE.md`](documentation/ARCHITECTURE.md) | Module structure, MVVM, seam/testability pattern |
+| [`documentation/BACKLOG.md`](documentation/BACKLOG.md) | Ordered task list for contributors and agents |
+| [`documentation/agents.md`](documentation/agents.md) | Binding engineering rules (commit format, gates, what not to bypass) |
 | [`documentation/RELEASE.md`](documentation/RELEASE.md) | Keystore setup, signed builds, release checklist |
-| [`documentation/PLAY_STORE.md`](documentation/PLAY_STORE.md) | Google Play account, signing model, and publishing guide |
-| [`documentation/PRIVACY_POLICY.md`](documentation/PRIVACY_POLICY.md) | Privacy policy template for Play Store submission |
-| [`documentation/SBOM.md`](documentation/SBOM.md) | CycloneDX SBOM automation plan for Gradle, CI, and releases |
-| [`documentation/DEPLOY_PHONE.md`](documentation/DEPLOY_PHONE.md) | Building and installing on a physical device |
-| [`documentation/EMULATOR.md`](documentation/EMULATOR.md) | Emulator setup and GPU/KVM workarounds |
 | [`documentation/TROUBLESHOOTING.md`](documentation/TROUBLESHOOTING.md) | Build, coverage, emulator, device, signing issues |
-| [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) | CI and the manual release workflow |
-| [`documentation/TOOLING.md`](documentation/TOOLING.md) | Installed SDK/tooling log |
-| [`documentation/SPDX.md`](documentation/SPDX.md) | SPDX/license header convention |
-| [`documentation/agents.md`](documentation/agents.md) | Binding engineering rules for contributors |
-| [`documentation/TODO.md`](documentation/TODO.md) | Lightweight review radar for follow-ups |
+| [`documentation/GITHUB_ACTIONS.md`](documentation/GITHUB_ACTIONS.md) | CI workflows, secrets, timeouts, release publishing |
 
----
-
-## Package
-
-`it.marcelpetrick.catears`
+See [`documentation/`](documentation/) for the full index — CI, SBOM, privacy policy,
+overlay lab, ear style design docs, Play Store guide, and more.
