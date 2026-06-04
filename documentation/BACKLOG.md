@@ -406,6 +406,37 @@ Two regressions were observed in release **0.1.119** during real-device use. The
 
 ---
 
+### WP 31 — Camera shutter & recording sounds
+
+Play the standard camera click when a photo is saved and the start/stop sounds when
+a video clip begins and ends. No bundled audio file is needed — Android provides
+`android.media.MediaActionSound` (available since API 16; our minSdk is 34, so always
+present) which plays the device's system camera sounds and handles any jurisdiction
+where shutter audio is legally mandated (Japan, Korea, etc.) automatically.
+
+**No external sound source required.** `MediaActionSound` is the correct API for camera
+apps; it uses OS-level sounds, respects the user's ringer volume, and satisfies
+regulatory requirements without any special permission or bundled asset.
+
+Sounds to play:
+
+| Event | Constant |
+|-------|----------|
+| Photo captured | `MediaActionSound.SHUTTER_CLICK` |
+| Video recording started | `MediaActionSound.START_VIDEO_RECORDING` |
+| Video recording stopped | `MediaActionSound.STOP_VIDEO_RECORDING` |
+
+Usage pattern: call `load(soundId)` eagerly (asynchronous buffer fill); call `play(soundId)`
+at the exact moment of capture/start/stop; call `release()` when the camera view is torn
+down. The instance should be scoped to the camera composable lifecycle (`DisposableEffect`).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 31.0 | TODO | Photo shutter click | `MediaActionSound.SHUTTER_CLICK` is played at the moment `onCaptureRequested()` is confirmed (i.e., the bitmap is composited and saved, not just when the button is tapped). `MediaActionSound` loaded in `CameraPreview` via `DisposableEffect`; released on `onDispose`. No external audio file committed. All gates green. |
+| 31.1 | TODO | Video start / stop sounds | `MediaActionSound.START_VIDEO_RECORDING` plays when `CameraXControllerImpl.startVideoRecording()` begins; `STOP_VIDEO_RECORDING` plays when the 5 s clip finalises (inside the `VideoRecordEvent.Finalize` callback). Same `MediaActionSound` instance as 31.0, pre-loaded for all three constants. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
