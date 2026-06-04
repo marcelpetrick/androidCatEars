@@ -496,6 +496,7 @@ the fix should be derived from the image data rather than guessed.
 |----|--------|------|---------------------|
 | 34.0 | DONE | Receive annotated screenshot(s) showing expected vs actual ear position | User supplied 10 face examples. `media/faceExamples/positioning/` contains annotated outputs and findings; measured target is ear base at `face.top + face_height * 0.065`, with smaller ears at `face_width * 0.42`. |
 | 34.1 | DONE | Fix ear vertical offset and/or scale | `computeOverlayPlacement` now uses the annotated experiment constants: ear base lowered to `box.top + box.height * 0.065`, ear size reduced to `box.width * 0.42`, fallback spacing aligned to the experiment. Fixture tests updated. |
+| 34.2 | DONE | Port positioning experiment to landmark-backed live app path | Regression screenshot `media/bug_release0.1.1.138_earsTooHigh.jpg` showed that the app still used human-ear landmarks when available, bypassing the experiment's `face.center_x ± face_width * 0.31` spacing. `computeOverlayPlacement` now always uses the tuned center spacing for X. Eye landmarks, when present, estimate a lower forehead/top-head attachment line and clamp it near the top of the face box so ears cannot float above the visible forehead or slide down toward the eyes. Focused placement and fixture tests updated. |
 
 ---
 

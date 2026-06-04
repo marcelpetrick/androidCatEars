@@ -25,8 +25,6 @@ class ComputeOverlayPlacementFixtureTest {
             viewBox = f.box,
             headEulerAngleZ = f.eulerZ,
             headEulerAngleY = f.eulerY,
-            leftEarAnchor = f.leftEarLandmark,
-            rightEarAnchor = f.rightEarLandmark,
             widthRatio = f.widthRatio,
         )
         assertAnchor("left", f.expectedLeft, result.leftEar)
@@ -60,8 +58,6 @@ data class PlacementFixture(
     val box: BoundingBox,
     val eulerZ: Float,
     val eulerY: Float,
-    val leftEarLandmark: Point2D?,
-    val rightEarLandmark: Point2D?,
     val widthRatio: Float,
     val expectedLeft: EarAnchor,
     val expectedRight: EarAnchor,
@@ -88,24 +84,30 @@ data class PlacementFixture(
 
             PlacementFixture(
                 name = "frontal face — no rotation, no landmarks",
-                box = BOX, eulerZ = 0f, eulerY = 0f,
-                leftEarLandmark = null, rightEarLandmark = null, widthRatio = W,
+                box = BOX,
+                eulerZ = 0f,
+                eulerY = 0f,
+                widthRatio = W,
                 expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
                 expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
             ),
 
             PlacementFixture(
                 name = "frontal face — 15° roll, no landmarks",
-                box = BOX, eulerZ = 15f, eulerY = 0f,
-                leftEarLandmark = null, rightEarLandmark = null, widthRatio = W,
+                box = BOX,
+                eulerZ = 15f,
+                eulerY = 0f,
+                widthRatio = W,
                 expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 15f, xScale = 1f),
                 expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 15f, xScale = 1f),
             ),
 
             PlacementFixture(
                 name = "head turned right 30° — right ear wider (perspective)",
-                box = BOX, eulerZ = 0f, eulerY = 30f,
-                leftEarLandmark = null, rightEarLandmark = null, widthRatio = W,
+                box = BOX,
+                eulerZ = 0f,
+                eulerY = 30f,
+                widthRatio = W,
                 // yawFraction = 30/45 = 0.6667; left = 1 - 0.6667*0.5 = 0.6667; right = 1 + 0.6667*0.5 = 1.3333
                 expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 0.6667f),
                 expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1.3333f),
@@ -113,52 +115,45 @@ data class PlacementFixture(
 
             PlacementFixture(
                 name = "head turned left 30° — left ear wider (perspective)",
-                box = BOX, eulerZ = 0f, eulerY = -30f,
-                leftEarLandmark = null, rightEarLandmark = null, widthRatio = W,
+                box = BOX,
+                eulerZ = 0f,
+                eulerY = -30f,
+                widthRatio = W,
                 expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1.3333f),
                 expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 0.6667f),
             ),
 
             PlacementFixture(
                 name = "extreme 90° yaw — xScale clamped to [0.4, 1.6]",
-                box = BOX, eulerZ = 0f, eulerY = 90f,
-                leftEarLandmark = null, rightEarLandmark = null, widthRatio = W,
+                box = BOX,
+                eulerZ = 0f,
+                eulerY = 90f,
+                widthRatio = W,
                 // yawFraction clamped to 1.0; left = 1 - 0.5 = 0.5; right = 1 + 0.5 = 1.5
                 expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 0.5f),
                 expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1.5f),
             ),
 
-            // ---- ear-landmark anchor path ----
+            // ---- experiment spacing path ----
 
             PlacementFixture(
-                name = "ear landmarks present — x follows landmark, y attaches to top of head",
-                box = BOX, eulerZ = 0f, eulerY = 0f,
-                leftEarLandmark = Point2D(150f, 300f),
-                rightEarLandmark = Point2D(250f, 300f),
+                name = "experiment spacing remains centred",
+                box = BOX,
+                eulerZ = 0f,
+                eulerY = 0f,
                 widthRatio = W,
-                expectedLeft = EarAnchor(x = 150f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
-                expectedRight = EarAnchor(x = 250f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
-            ),
-
-            PlacementFixture(
-                name = "ear landmarks present — tilt propagates to both ears",
-                box = BOX, eulerZ = 20f, eulerY = 0f,
-                leftEarLandmark = Point2D(150f, 300f),
-                rightEarLandmark = Point2D(250f, 300f),
-                widthRatio = W,
-                expectedLeft = EarAnchor(x = 150f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
-                expectedRight = EarAnchor(x = 250f, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
-            ),
-
-            PlacementFixture(
-                name = "partial landmarks (left only) — falls back to bounding-box path",
-                box = BOX, eulerZ = 0f, eulerY = 0f,
-                leftEarLandmark = Point2D(150f, 300f),
-                rightEarLandmark = null,
-                widthRatio = W,
-                // Partial → fallback; same result as no-landmark case.
                 expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
                 expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 0f, xScale = 1f),
+            ),
+
+            PlacementFixture(
+                name = "tilt propagates to both ears",
+                box = BOX,
+                eulerZ = 20f,
+                eulerY = 0f,
+                widthRatio = W,
+                expectedLeft = EarAnchor(x = LX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
+                expectedRight = EarAnchor(x = RX, y = TOP_Y, size = EAR_SIZE, tiltDegrees = 20f, xScale = 1f),
             ),
         )
     }

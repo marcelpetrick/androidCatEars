@@ -41,18 +41,19 @@ data class OverlayPlacement(
  * Computes independent [EarAnchor] positions for both cat ears.
  *
  * Anchoring strategy:
- * - When [leftEarAnchor] / [rightEarAnchor] are provided (ML Kit ear landmarks in view space),
- *   their X positions control left/right spacing, but Y placement still attaches to the top of
- *   the head. Cat ears should not sit down at human-ear height.
- * - Fallback (landmarks absent): positions derived from the bounding box centre so the ears
- *   are symmetrically placed above the face.
+ * - X positions are derived from the bounding box centre using the tuned positioning experiment
+ *   spacing. Human-ear landmarks are deliberately not used for X: real-device screenshots showed
+ *   they push cat ears out to the sides instead of above the skull.
+ * - Y placement attaches to a visible forehead/top-head line. When eye landmarks are available,
+ *   the line is estimated from the eye line and clamped near the top of the face box. Otherwise it
+ *   falls back to the experiment's box-top ratio.
  * - Ear size is always derived from the face bounding box width for stable distance scaling.
  *
  * @param viewBox Face bounding box already transformed to view space.
  * @param headEulerAngleZ Head roll (degrees, positive = tilted right); applied to both ears.
  * @param headEulerAngleY Head yaw (degrees, positive = head turned right); stored for 20.4.
- * @param leftEarAnchor View-space position of the left ear landmark; null = use fallback.
- * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
+ * @param leftEyeAnchor View-space position of the left eye landmark; helps estimate forehead line.
+ * @param rightEyeAnchor View-space position of the right eye landmark; helps estimate forehead line.
  * @param widthRatio Width of one ear relative to face width. Default 0.42.
  * @param earHeightRatio Attachment depth for the ear bottom below box top (fraction of height).
  * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
@@ -63,8 +64,8 @@ fun computeOverlayPlacement(
     viewBox: BoundingBox,
     headEulerAngleZ: Float,
     headEulerAngleY: Float = 0f,
-    leftEarAnchor: Point2D? = null,
-    rightEarAnchor: Point2D? = null,
+    leftEyeAnchor: Point2D? = null,
+    rightEyeAnchor: Point2D? = null,
     widthRatio: Float = DEFAULT_EAR_WIDTH_RATIO,
     earHeightRatio: Float = DEFAULT_EAR_HEIGHT_RATIO,
     smilingProbability: Float = 0f,
@@ -76,53 +77,47 @@ fun computeOverlayPlacement(
     val yawFraction = (headEulerAngleY / MAX_YAW_DEGREES).coerceIn(-1f, 1f)
     val leftXScale = (1f - yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
     val rightXScale = (1f + yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
-    val earBottomY = viewBox.top + viewBox.height * earHeightRatio
+    val earBottomY = computeEarBottomY(viewBox, leftEyeAnchor, rightEyeAnchor, earHeightRatio)
     val topY = earBottomY - earSize
+    val halfSpacing = earSize * EAR_HALF_SPACING_RATIO
+    return OverlayPlacement(
+        leftEar = EarAnchor(
+            x = viewBox.centerX - halfSpacing,
+            y = topY,
+            size = earSize,
+            tiltDegrees = headEulerAngleZ,
+            xScale = leftXScale,
+        ),
+        rightEar = EarAnchor(
+            x = viewBox.centerX + halfSpacing,
+            y = topY,
+            size = earSize,
+            tiltDegrees = headEulerAngleZ,
+            xScale = rightXScale,
+        ),
+        headEulerAngleY = headEulerAngleY,
+        smilingProbability = smilingProbability,
+        eyeOpennessMean = eyeOpennessMean,
+        trackingId = trackingId,
+    )
+}
 
-    return if (leftEarAnchor != null && rightEarAnchor != null) {
-        OverlayPlacement(
-            leftEar = EarAnchor(
-                x = leftEarAnchor.x,
-                y = topY,
-                size = earSize,
-                tiltDegrees = headEulerAngleZ,
-                xScale = leftXScale,
-            ),
-            rightEar = EarAnchor(
-                x = rightEarAnchor.x,
-                y = topY,
-                size = earSize,
-                tiltDegrees = headEulerAngleZ,
-                xScale = rightXScale,
-            ),
-            headEulerAngleY = headEulerAngleY,
-            smilingProbability = smilingProbability,
-            eyeOpennessMean = eyeOpennessMean,
-            trackingId = trackingId,
-        )
-    } else {
-        val halfSpacing = earSize * EAR_HALF_SPACING_RATIO
-        OverlayPlacement(
-            leftEar = EarAnchor(
-                x = viewBox.centerX - halfSpacing,
-                y = topY,
-                size = earSize,
-                tiltDegrees = headEulerAngleZ,
-                xScale = leftXScale,
-            ),
-            rightEar = EarAnchor(
-                x = viewBox.centerX + halfSpacing,
-                y = topY,
-                size = earSize,
-                tiltDegrees = headEulerAngleZ,
-                xScale = rightXScale,
-            ),
-            headEulerAngleY = headEulerAngleY,
-            smilingProbability = smilingProbability,
-            eyeOpennessMean = eyeOpennessMean,
-            trackingId = trackingId,
-        )
-    }
+private fun computeEarBottomY(
+    viewBox: BoundingBox,
+    leftEyeAnchor: Point2D?,
+    rightEyeAnchor: Point2D?,
+    fallbackHeightRatio: Float,
+): Float {
+    val fallback = viewBox.top + viewBox.height * fallbackHeightRatio
+    val eyeLineY = listOfNotNull(leftEyeAnchor?.y, rightEyeAnchor?.y)
+        .takeIf { it.isNotEmpty() }
+        ?.average()
+        ?.toFloat()
+        ?: return fallback
+    val estimatedHeadLine = eyeLineY - viewBox.height * EYE_LINE_TO_FOREHEAD_RATIO
+    val minY = fallback
+    val maxY = viewBox.top + viewBox.height * MAX_FOREHEAD_DEPTH_RATIO
+    return estimatedHeadLine.coerceIn(minY, maxY)
 }
 
 /**
@@ -214,6 +209,8 @@ class MultiFaceSmoother(private val alpha: Float = DEFAULT_MULTI_ALPHA) {
 private const val DEFAULT_EAR_WIDTH_RATIO = 0.42f
 private const val DEFAULT_EAR_HEIGHT_RATIO = 0.065f
 private const val EAR_HALF_SPACING_RATIO = 0.7381f
+private const val EYE_LINE_TO_FOREHEAD_RATIO = 0.22f
+private const val MAX_FOREHEAD_DEPTH_RATIO = 0.24f
 private const val MAX_YAW_DEGREES = 45f
 private const val PERSPECTIVE_STRENGTH = 0.5f
 private const val MIN_SCALE = 0.4f

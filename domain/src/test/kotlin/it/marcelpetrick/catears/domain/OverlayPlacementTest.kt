@@ -14,10 +14,6 @@ class OverlayPlacementTest {
     // 100×100 face box centred at (200, 300).
     private val box = BoundingBox(left = 150f, top = 250f, right = 250f, bottom = 350f)
 
-    // Ear landmarks at the sides of the box, at mid-height.
-    private val leftEar = Point2D(box.left, box.centerY)
-    private val rightEar = Point2D(box.right, box.centerY)
-
     // ---- computeOverlayPlacement — fallback (no ear landmarks) ----
 
     @Test
@@ -140,62 +136,55 @@ class OverlayPlacementTest {
         assertTrue(p.rightEar.xScale <= 1.6f) { "xScale must not exceed 1.6" }
     }
 
-    // ---- computeOverlayPlacement — ear-landmark anchor path ----
+    // ---- computeOverlayPlacement — production experiment path ----
 
     @Test
-    fun `ear-anchor —left ear x is left landmark x`() {
-        val p = computeOverlayPlacement(
-            viewBox = box,
-            headEulerAngleZ = 0f,
-            leftEarAnchor = leftEar,
-            rightEarAnchor = rightEar,
-        )
-        assertEquals(leftEar.x, p.leftEar.x, DELTA)
+    fun `left ear uses experiment spacing from face center`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertEquals(168.9998f, p.leftEar.x, DELTA)
     }
 
     @Test
-    fun `ear-anchor —right ear x is right landmark x`() {
-        val p = computeOverlayPlacement(
-            viewBox = box,
-            headEulerAngleZ = 0f,
-            leftEarAnchor = leftEar,
-            rightEarAnchor = rightEar,
-        )
-        assertEquals(rightEar.x, p.rightEar.x, DELTA)
+    fun `right ear uses experiment spacing from face center`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertEquals(231.0002f, p.rightEar.x, DELTA)
     }
 
     @Test
-    fun `ear-anchor —cat ear vertical placement attaches to top of head`() {
+    fun `cat ear vertical placement attaches to top of head fallback`() {
         val earSize = box.width * 0.42f
         val expectedTopY = box.top + box.height * 0.065f - earSize
-        val p = computeOverlayPlacement(
-            viewBox = box,
-            headEulerAngleZ = 0f,
-            leftEarAnchor = leftEar,
-            rightEarAnchor = rightEar,
-        )
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
         assertEquals(expectedTopY, p.leftEar.y, DELTA)
         assertEquals(expectedTopY, p.rightEar.y, DELTA)
         assertTrue(p.leftEar.y + earSize >= box.top) { "Cat ear base should start at the head" }
         assertTrue(p.rightEar.y + earSize >= box.top) { "Cat ear base should start at the head" }
         assertEquals(box.top + box.height * 0.065f, p.leftEar.y + p.leftEar.size, DELTA)
         assertEquals(box.top + box.height * 0.065f, p.rightEar.y + p.rightEar.size, DELTA)
-        assertTrue(p.leftEar.y + earSize < leftEar.y) { "Cat ear base should sit above the human ear landmark" }
-        assertTrue(p.rightEar.y + earSize < rightEar.y) { "Cat ear base should sit above the human ear landmark" }
     }
 
     @Test
-    fun `partial anchors fall back to bounding-box path`() {
-        val withLeftOnly = computeOverlayPlacement(
+    fun `eye anchors lower forehead attachment when face box top is too high`() {
+        val p = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
-            leftEarAnchor = leftEar,
-            rightEarAnchor = null,
+            leftEyeAnchor = Point2D(180f, 300f),
+            rightEyeAnchor = Point2D(220f, 300f),
         )
-        val noAnchors = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
-        val midWithLeft = (withLeftOnly.leftEar.x + withLeftOnly.rightEar.x) / 2f
-        val midNoAnchor = (noAnchors.leftEar.x + noAnchors.rightEar.x) / 2f
-        assertEquals(midNoAnchor, midWithLeft, DELTA)
+        assertEquals(box.top + box.height * 0.24f, p.leftEar.y + p.leftEar.size, DELTA)
+        assertEquals(box.top + box.height * 0.24f, p.rightEar.y + p.rightEar.size, DELTA)
+    }
+
+    @Test
+    fun `eye anchors never raise ears above experiment fallback`() {
+        val p = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            leftEyeAnchor = Point2D(180f, 260f),
+            rightEyeAnchor = Point2D(220f, 260f),
+        )
+        assertEquals(box.top + box.height * 0.065f, p.leftEar.y + p.leftEar.size, DELTA)
+        assertEquals(box.top + box.height * 0.065f, p.rightEar.y + p.rightEar.size, DELTA)
     }
 
     // ---- PlacementSmoother ----
