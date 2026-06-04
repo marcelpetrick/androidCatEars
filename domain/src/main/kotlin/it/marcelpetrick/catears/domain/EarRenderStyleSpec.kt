@@ -59,7 +59,15 @@ enum class EarTintPolicy {
     OuterFurOnly,
 }
 
-fun earRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when (style) {
+private val specCache: Map<EarStyle, EarRenderStyleSpec> by lazy {
+    EarStyle.entries.associateWith { buildEarRenderStyleSpec(it) }
+}
+
+fun earRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = specCache.getValue(style)
+
+fun allEarRenderStyleSpecs(): List<EarRenderStyleSpec> = EarStyle.entries.map(::earRenderStyleSpec)
+
+private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when (style) {
     EarStyle.CLASSIC -> EarRenderStyleSpec(
         style = style,
         material = EarMaterialSpec(
@@ -108,8 +116,6 @@ fun earRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when (style) {
 
     EarStyle.BEAR -> warmCanineSpec(style, furStrokeCount = 5)
 }
-
-fun allEarRenderStyleSpecs(): List<EarRenderStyleSpec> = EarStyle.entries.map(::earRenderStyleSpec)
 
 private fun naturalFelineSpec(style: EarStyle, furStrokeCount: Int, supportsTufts: Boolean): EarRenderStyleSpec =
     EarRenderStyleSpec(
