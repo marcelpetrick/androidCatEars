@@ -24,7 +24,7 @@ import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.RecordingState
-import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
+import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import it.marcelpetrick.catears.share.buildShareConfig
 import it.marcelpetrick.catears.share.toChooserIntent
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
     lateinit var cameraControllerProvider: Provider<CameraXControllerImpl>
 
     @Inject
-    lateinit var faceDetectorProvider: Provider<MlKitFaceDetectorImpl>
+    lateinit var faceDetectorProvider: Provider<FaceDetectorSeam>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
