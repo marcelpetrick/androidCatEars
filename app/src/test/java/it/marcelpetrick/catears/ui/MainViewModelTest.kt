@@ -424,6 +424,19 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `onRecordTap from Failed retries recording`() = runTest {
+        val vm = viewModel()
+        vm.onRecordTap()
+        vm.onRecordingSaved(null) // → Failed
+        vm.recordingState.test {
+            assertEquals(RecordingState.Failed, awaitItem())
+            vm.onRecordTap()
+            assertEquals(RecordingState.Recording, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `onRecordTap while Recording is ignored`() = runTest {
         val vm = viewModel()
         vm.onRecordTap()

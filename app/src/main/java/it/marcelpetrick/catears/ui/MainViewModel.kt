@@ -149,9 +149,10 @@ class MainViewModel @Inject constructor(
     private val _recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
     val recordingState: StateFlow<RecordingState> = _recordingState.asStateFlow()
 
-    /** Starts a recording if currently Idle; ignored if recording or in any other state. */
+    /** Starts a recording if currently Idle or Failed; ignored if already recording or saving. */
     fun onRecordTap() {
-        if (_recordingState.value is RecordingState.Idle) {
+        val state = _recordingState.value
+        if (state is RecordingState.Idle || state is RecordingState.Failed) {
             _recordingState.value = RecordingState.Recording
         }
     }
