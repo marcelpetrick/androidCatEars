@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import it.marcelpetrick.catears.domain.buildImageFileName
 import java.io.IOException
 import javax.inject.Inject
@@ -22,7 +23,7 @@ import javax.inject.Inject
  *
  * Excluded from Kover (Android MediaStore APIs are device-only).
  */
-class ImageSaver @Inject constructor(private val context: Context) {
+class ImageSaver @Inject constructor(@ApplicationContext private val context: Context) {
 
     /**
      * Writes [bitmap] as a JPEG to the Pictures/CatEars gallery album.

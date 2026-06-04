@@ -6,7 +6,6 @@ package it.marcelpetrick.catears.di
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import it.marcelpetrick.catears.ui.CaptureRuntime
 import it.marcelpetrick.catears.ui.DefaultCaptureRuntime
@@ -18,11 +17,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
-    @Provides
-    @Singleton
-    fun provideApplicationContext(@ApplicationContext context: android.content.Context): android.content.Context =
-        context
 
     @Provides
     @Singleton
