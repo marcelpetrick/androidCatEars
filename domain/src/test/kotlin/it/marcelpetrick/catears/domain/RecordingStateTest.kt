@@ -5,30 +5,22 @@ package it.marcelpetrick.catears.domain
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class RecordingStateTest {
 
     @Test
-    fun `Idle is a RecordingState`() {
-        assertTrue(RecordingState.Idle is RecordingState)
-    }
-
-    @Test
-    fun `Recording is a RecordingState`() {
-        assertTrue(RecordingState.Recording is RecordingState)
+    fun `state labels cover all variants`() {
+        assertEquals("idle", RecordingState.Idle.label())
+        assertEquals("recording", RecordingState.Recording.label())
+        assertEquals("saved", RecordingState.Saved("content://media/video/1").label())
+        assertEquals("failed", RecordingState.Failed.label())
     }
 
     @Test
     fun `Saved holds its uriString`() {
         val state = RecordingState.Saved("content://media/video/1")
         assertEquals("content://media/video/1", state.uriString)
-    }
-
-    @Test
-    fun `Failed is a RecordingState`() {
-        assertTrue(RecordingState.Failed is RecordingState)
     }
 
     @Test
@@ -44,5 +36,12 @@ class RecordingStateTest {
     @Test
     fun `Idle and Recording are not equal`() {
         assertNotEquals(RecordingState.Idle as RecordingState, RecordingState.Recording as RecordingState)
+    }
+
+    private fun RecordingState.label(): String = when (this) {
+        RecordingState.Idle -> "idle"
+        RecordingState.Recording -> "recording"
+        is RecordingState.Saved -> "saved"
+        RecordingState.Failed -> "failed"
     }
 }
