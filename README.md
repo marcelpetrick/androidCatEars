@@ -16,7 +16,7 @@
 **License: GPLv3 or later. See `LICENSE`.**
 
 ---
-CI status: 
+CI status:
 [![CI](https://github.com/marcelpetrick/androidCatEars/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/ci.yml) [![CodeQL](https://github.com/marcelpetrick/androidCatEars/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/codeql.yml) [![Dependabot Updates](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependabot/dependabot-updates) [![Dependency Review](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/dependency-review.yml) [![Release](https://github.com/marcelpetrick/androidCatEars/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/release.yml) [![Secret Scan](https://github.com/marcelpetrick/androidCatEars/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/marcelpetrick/androidCatEars/actions/workflows/secret-scan.yml)
 ---
 
