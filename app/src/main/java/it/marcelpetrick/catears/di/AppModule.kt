@@ -7,8 +7,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import it.marcelpetrick.catears.ui.CaptureRuntime
-import it.marcelpetrick.catears.ui.DefaultCaptureRuntime
+import it.marcelpetrick.catears.capture.CaptureRuntime
+import it.marcelpetrick.catears.capture.DefaultCaptureRuntime
 import javax.inject.Singleton
 
 /**

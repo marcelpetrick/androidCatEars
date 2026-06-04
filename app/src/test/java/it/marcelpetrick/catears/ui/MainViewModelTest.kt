@@ -8,6 +8,7 @@ import android.net.Uri
 import app.cash.turbine.test
 import io.mockk.every
 import io.mockk.mockk
+import it.marcelpetrick.catears.capture.CaptureRuntime
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.EarAnchor
