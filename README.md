@@ -180,7 +180,10 @@ Example summary from a successful local run:
 All checks passed.
 ```
 
-GitHub Actions also runs security/release workflows:
+GitHub Actions runs five additional workflows: CodeQL scanning, Dependabot
+updates, dependency-review on PRs, Gitleaks secret scan, and a manual release
+workflow that publishes signed AAB, debug APK, CycloneDX SBOM, and SHA-256
+checksums to GitHub Releases.
 
 - `ci.yml` — push/PR quality gate using `scripts/ci.sh`.
 - `dependency-review.yml` — blocks vulnerable dependency changes on PRs.
