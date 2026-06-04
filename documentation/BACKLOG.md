@@ -360,9 +360,17 @@ and Kotlin→Hilt-metadata rejected with recorded blockers).
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 28.0 | TODO | Enumerate open bump branches/PRs | Fetch all open Dependabot branches / dependency PRs and list each proposed bump (artifact, from→to). |
-| 28.1 | TODO | Cherry-pick & verify one-by-one | For each bump in isolation: cherry-pick onto `master`, run the **full gate** (build, Spotless, detekt, `:app:lint`, `:app:test`, `:domain:test`, `:domain:koverVerify`). If green → keep as a unique atomic commit. If red → `git revert` / drop it and record the exact blocker. Never bundle two bumps into one commit. **No push.** |
-| 28.2 | TODO | Integration summary | Produce a table of **integrated** vs. **rejected** bumps with the reason for each rejection, and persist the rejection blockers (e.g. in `lint.xml` notes or this backlog) so the next sweep does not re-attempt them blindly. |
+| 28.0 | DONE | Enumerate open bump branches/PRs | Three open branches found: `codeql-action-4`, `core-ktx-1.19.0`, `kotlin-2.4.0`. |
+| 28.1 | DONE | Cherry-pick & verify one-by-one | Each bump cherry-picked and gated; see summary below. Cancel-out commit pairs dropped from history via `git rebase --onto`. |
+| 28.2 | DONE | Integration summary | See table below. Blockers persisted here for next sweep. |
+
+**Sweep results (2026-06-04):**
+
+| Bump | From | To | Result | Blocker |
+|------|------|----|--------|---------|
+| `github/codeql-action` | v3 | v4 | ✅ Integrated | — |
+| `androidx.core:core-ktx` | 1.18.0 | 1.19.0 | ❌ Rejected | `checkDebugAarMetadata` fails: 1.19.0 requires `compileSdk ≥ 37`; we target 36. Unblock by upgrading to API 37 SDK. |
+| `org.jetbrains.kotlin` | 2.3.21 | 2.4.0 | ❌ Rejected | `hiltJavaCompileDebug` fails: Hilt's `kotlin-metadata-jvm` library supports metadata up to v2.3.0 only; 2.4.0 is rejected at annotation-processing time. Unblock by upgrading Hilt 2.59.2 → a release that bumps its `kotlin-metadata-jvm` upper bound. |
 
 ---
 
