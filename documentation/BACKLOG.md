@@ -338,6 +338,54 @@ Keep the build log clean and forward-compatible with future Gradle majors.
 
 ---
 
+### WP 27 — In-app Help / About dialog (localised: EN · DE · ZH)
+
+A first-class way for new users to understand the app, reach the author, and
+give feedback. This is an open, for-fun project — the author actively wants input.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 27.0 | TODO | Help button + dialog scaffold | Add a Help/Info control to the camera UI (e.g. an `Icons.AutoMirrored.Outlined.HelpOutline` icon button in the title bar, or a `SmallFloatingActionButton`). Tapping opens a dismissible modal dialog / bottom sheet over the camera. No regression to existing controls; all gates green. |
+| 27.1 | TODO | About + author + repo + feedback content | The dialog states **what the app is** (one-line pitch), **who the author is** (Marcel Petrick), a **clickable GitHub repo link**, and an explicit **invitation to send feedback via GitHub Issues** ("this is a fun exercise — input welcome"). Links open via an `ACTION_VIEW` intent. |
+| 27.2 | TODO | Feature overview + how-to-use | The dialog includes a concise **feature overview** (10 ear styles, smooth animation, expression-reactive ears, multi-face up to 4, colour-tint hues, capture with ears baked in) and a short **how-to-use** walkthrough (allow camera → face the lens → cycle style → cycle colour → flip lens → tap to capture & share). |
+| 27.3 | TODO | Language switch EN / DE / ZH inside the dialog | A control in the dialog (segmented button or dropdown) switches **all dialog copy** between English, German, and Mandarin Chinese at runtime — independent of the system locale, no app restart. Model the copy as a **testable domain structure** (e.g. `enum class HelpLanguage { ENGLISH, GERMAN, MANDARIN }` + a pure `helpContent(language): HelpContent` map in `:domain`) so completeness (every language supplies every field) is unit-tested and the ≥95% Kover gate stays green. Verify the Mandarin glyphs render with the bundled font. |
+
+---
+
+### WP 28 — Dependency bump sweep (Dependabot / open PR triage)
+
+Periodic maintenance: bring in safe dependency updates and document the rest.
+Mirrors the earlier sweep (5 Actions bumps + JUnit 6.1.0 integrated; core-ktx→SDK37
+and Kotlin→Hilt-metadata rejected with recorded blockers).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 28.0 | TODO | Enumerate open bump branches/PRs | Fetch all open Dependabot branches / dependency PRs and list each proposed bump (artifact, from→to). |
+| 28.1 | TODO | Cherry-pick & verify one-by-one | For each bump in isolation: cherry-pick onto `master`, run the **full gate** (build, Spotless, detekt, `:app:lint`, `:app:test`, `:domain:test`, `:domain:koverVerify`). If green → keep as a unique atomic commit. If red → `git revert` / drop it and record the exact blocker. Never bundle two bumps into one commit. **No push.** |
+| 28.2 | TODO | Integration summary | Produce a table of **integrated** vs. **rejected** bumps with the reason for each rejection, and persist the rejection blockers (e.g. in `lint.xml` notes or this backlog) so the next sweep does not re-attempt them blindly. |
+
+---
+
+### WP 29 — Five-second video clip with ears (shareable)
+
+Concretises **WP 24** into a shippable MVP: instead of open-ended recording, capture
+a fixed **~5-second** clip with the animated ears baked in and share it. A short,
+silent, looping clip is far more viral than a still and keeps the scope testable.
+
+> **Device-dependent:** compositing the procedural overlay onto recorded frames needs
+> a `CameraEffect` / `SurfaceProcessor` pipeline that cannot be fully verified on the
+> host build — the non-UI/seam logic must still be unit-tested, and on-device
+> verification is part of the Definition of Done for this WP.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 29.0 | TODO | CameraX `VideoCapture` for a fixed 5 s clip | Add a `VideoCapture` use case to `CameraXControllerImpl`, bound alongside `Preview` + `ImageAnalysis`. Expose a start/stop (or fixed-duration) recording API on the camera seam that auto-stops at ~5 s. Seam/logic unit-tested; all host gates green. |
+| 29.1 | TODO | Bake ears into recorded frames | Apply the active `OverlayPlacement` (ears, current `EarStyle` + `EarTint`, animation/expression state) to each recorded frame via a `CameraEffect`/`SurfaceProcessor`, reusing the existing `OverlayCompositor` drawing logic. Ears render at the last known placement when no face is detected. |
+| 29.2 | TODO | Record button UI + countdown | Add a record toggle (dedicated FAB or long-press on the shutter) showing a ~5 s countdown / progress ring. On completion, save the MP4 to MediaStore. |
+| 29.3 | TODO | Share the clip | Enable sharing the saved MP4 through the existing share-sheet path (`buildShareConfig` / chooser intent), with the correct `video/mp4` MIME type and a `FileProvider` URI grant. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
