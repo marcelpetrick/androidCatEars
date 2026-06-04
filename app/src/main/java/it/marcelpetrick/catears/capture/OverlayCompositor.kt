@@ -48,6 +48,23 @@ object OverlayCompositor {
     }
 
     /**
+     * Draws cat ears for every placement in [placements] directly onto [canvas].
+     * Used by the video overlay effect to bake ears into recorded frames.
+     */
+    fun drawEarsOnCanvas(canvas: Canvas, placements: List<OverlayPlacement>) {
+        for (p in placements) {
+            val tintLayer = p.tint != EarTint.NATURAL
+            if (tintLayer) {
+                val filter = ColorMatrixColorFilter(ColorMatrix(hueRotationMatrix(p.tint.hueDegrees)))
+                canvas.saveLayer(null, Paint().apply { colorFilter = filter })
+            }
+            drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
+            drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
+            if (tintLayer) canvas.restore()
+        }
+    }
+
+    /**
      * Draws cat ears for every placement in [placements] onto [frame] and returns the result.
      * Returns a copy of [frame] unchanged when [placements] is empty.
      */

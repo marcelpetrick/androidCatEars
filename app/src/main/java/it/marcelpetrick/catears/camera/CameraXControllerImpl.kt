@@ -6,15 +6,19 @@ package it.marcelpetrick.catears.camera
 import android.content.ContentValues
 import android.content.Context
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import androidx.camera.core.CameraEffect
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
+import androidx.camera.core.UseCaseGroup
+import androidx.camera.effects.OverlayEffect
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.MediaStoreOutputOptions
 import androidx.camera.video.Quality
@@ -26,10 +30,14 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import it.marcelpetrick.catears.capture.OverlayCompositor
+import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.FaceModel
 import it.marcelpetrick.catears.domain.LensSelector
+import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 /**
@@ -56,6 +64,14 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     private var videoCapture: VideoCapture<Recorder>? = null
     private var activeRecording: Recording? = null
 
+    private val overlayEffectThread = HandlerThread("CatEarsOverlayEffect").also { it.start() }
+    private val overlayEffectHandler = Handler(overlayEffectThread.looper)
+    private val videoOverlayState = AtomicReference<VideoOverlayState?>(null)
+
+    fun updateOverlayPlacements(placements: List<OverlayPlacement>, viewWidth: Int, viewHeight: Int) {
+        videoOverlayState.set(VideoOverlayState(placements, viewWidth, viewHeight))
+    }
+
     fun setCameraProvider(provider: ProcessCameraProvider) {
         cameraProvider = provider
     }
@@ -73,21 +89,46 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         val preview = Preview.Builder().build().also { it.surfaceProvider = surface.surfaceProvider }
         val analysis = buildAnalysisUseCase()
         val vc = buildVideoUseCase()
+        val effect = buildOverlayEffect()
 
         // Binding can fail (camera busy, unsupported use-case combination, hardware quirks).
         // Never let that crash the app: log it and leave the preview unbound.
         @Suppress("TooGenericExceptionCaught")
         try {
             provider.unbindAll()
-            if (analysis != null) {
-                provider.bindToLifecycle(owner, selector, preview, analysis, vc)
-            } else {
-                provider.bindToLifecycle(owner, selector, preview, vc)
-            }
+            val groupBuilder = UseCaseGroup.Builder()
+                .addUseCase(preview)
+                .addUseCase(vc)
+                .addEffect(effect)
+            if (analysis != null) groupBuilder.addUseCase(analysis)
+            provider.bindToLifecycle(owner, selector, groupBuilder.build())
             Log.d(TAG, "Camera bound (lens=$lens)")
         } catch (e: Exception) {
             Log.e(TAG, "Camera bind failed", e)
         }
+    }
+
+    private fun buildOverlayEffect(): OverlayEffect {
+        val effect = OverlayEffect(
+            CameraEffect.VIDEO_CAPTURE,
+            OVERLAY_QUEUE_DEPTH,
+            overlayEffectHandler,
+        ) { error -> Log.e(TAG, "OverlayEffect error", error) }
+        effect.setOnDrawListener { frame ->
+            val state = videoOverlayState.get()
+            if (state != null && state.placements.isNotEmpty()) {
+                val fW = frame.getSize().width.toFloat()
+                val fH = frame.getSize().height.toFloat()
+                val sx = fW / state.viewWidth
+                val sy = fH / state.viewHeight
+                val scaled = state.placements.map { p ->
+                    p.copy(leftEar = p.leftEar.scaleTo(sx, sy), rightEar = p.rightEar.scaleTo(sx, sy))
+                }
+                OverlayCompositor.drawEarsOnCanvas(frame.getOverlayCanvas(), scaled)
+            }
+            true
+        }
+        return effect
     }
 
     private fun buildAnalysisUseCase(): UseCase? {
@@ -156,12 +197,23 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         stopVideoRecording()
         unbind()
         analysisExecutor.shutdown()
+        overlayEffectThread.quitSafely()
     }
+
+    private data class VideoOverlayState(
+        val placements: List<OverlayPlacement>,
+        val viewWidth: Int,
+        val viewHeight: Int,
+    )
 
     private companion object {
         const val ROTATION_90 = 90
         const val ROTATION_270 = 270
         const val TAG = "CatEars"
         const val VIDEO_DURATION_MS = 5_000L
+        const val OVERLAY_QUEUE_DEPTH = 2
     }
 }
+
+private fun EarAnchor.scaleTo(sx: Float, sy: Float): EarAnchor =
+    copy(x = x * sx, y = y * sy, size = size * minOf(sx, sy))

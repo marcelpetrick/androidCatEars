@@ -57,6 +57,7 @@ camerax-camera2                  = { group = "androidx.camera",         name = "
 camerax-lifecycle                = { group = "androidx.camera",         name = "camera-lifecycle",                   version.ref = "camerax" }
 camerax-view                     = { group = "androidx.camera",         name = "camera-view",                        version.ref = "camerax" }
 camerax-video                    = { group = "androidx.camera",         name = "camera-video",                       version.ref = "camerax" }
+camerax-effects                  = { group = "androidx.camera",         name = "camera-effects",                     version.ref = "camerax" }
 
 # ML Kit
 mlkit-face-detection             = { group = "com.google.mlkit",        name = "face-detection",                     version.ref = "mlkit-face-detection" }

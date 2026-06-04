@@ -460,7 +460,7 @@ thread-safe `AtomicReference`.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 32.0 | TODO | Implement `CameraEffect` + `SurfaceProcessor` to bake ears into video | Recorded video shows the same ear overlay visible in the live preview at recording time. The `SurfaceProcessor` receives the latest `List<OverlayPlacement>` via an `AtomicReference` updated from the main thread. Preview stream is unaffected. All quality gates pass. |
+| 32.0 | DONE | Implement `CameraEffect` + `SurfaceProcessor` to bake ears into video | Recorded video shows the same ear overlay visible in the live preview at recording time. Used `OverlayEffect` from `camera-effects:1.6.1` targeting `VIDEO_CAPTURE`. The `setOnDrawListener` callback scales the current `List<OverlayPlacement>` from view-space to video-frame-space via an `AtomicReference<VideoOverlayState>` updated on every placement change from `CameraPreviewComposable`. `OverlayCompositor.drawEarsOnCanvas` (new public function) draws directly onto `Frame.getOverlayCanvas()`. Preview stream is unaffected. All quality gates pass. |
 
 ---
 

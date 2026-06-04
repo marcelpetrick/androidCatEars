@@ -70,6 +70,15 @@ fun CameraPreview(
         }
     }
 
+    LaunchedEffect(overlayPlacements) {
+        val pv = previewViewRef.get() ?: return@LaunchedEffect
+        controller.updateOverlayPlacements(
+            overlayPlacements,
+            pv.width.coerceAtLeast(1),
+            pv.height.coerceAtLeast(1),
+        )
+    }
+
     LaunchedEffect(captureRequested) {
         if (captureRequested) {
             val bitmap = captureComposited(previewViewRef.get(), capturePlacements.value)
