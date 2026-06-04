@@ -494,8 +494,8 @@ the fix should be derived from the image data rather than guessed.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 34.0 | ASK | Receive annotated screenshot(s) showing expected vs actual ear position | User supplies ≥1 annotated image. Task is complete when the image(s) are committed to `media/` and the positioning bug is described in measurable terms (e.g., "ear base should be N% of face-box height below `box.top`"). |
-| 34.1 | TODO | Fix ear vertical offset and/or scale | After 34.0: adjust `computeOverlayPlacement` (or its callers) so the ear base sits at the correct attachment point relative to the skull top. Fixture tests updated. No regression on WP 30.0 fix. All gates green. |
+| 34.0 | DONE | Receive annotated screenshot(s) showing expected vs actual ear position | User supplied 10 face examples. `media/faceExamples/positioning/` contains annotated outputs and findings; measured target is ear base at `face.top + face_height * 0.065`, with smaller ears at `face_width * 0.42`. |
+| 34.1 | DONE | Fix ear vertical offset and/or scale | `computeOverlayPlacement` now uses the annotated experiment constants: ear base lowered to `box.top + box.height * 0.065`, ear size reduced to `box.width * 0.42`, fallback spacing aligned to the experiment. Fixture tests updated. |
 
 ---
 

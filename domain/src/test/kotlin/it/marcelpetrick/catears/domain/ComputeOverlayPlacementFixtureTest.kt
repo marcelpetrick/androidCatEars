@@ -71,15 +71,15 @@ data class PlacementFixture(
     companion object {
         // Standard face box: 100×100, centred at (200, 300).
         private val BOX = BoundingBox(left = 150f, top = 250f, right = 250f, bottom = 350f)
-        private const val W = 0.65f // default widthRatio
+        private const val W = 0.42f // default widthRatio
 
         // Derived geometry for the standard box.
-        private const val EAR_SIZE = 100f * W // 65
-        private const val HALF_SPC = EAR_SIZE * 0.35f // 22.75
-        private const val EAR_BOT = 250f + 100f * 0.04f // 254  (earHeightRatio=0.04)
-        private const val TOP_Y = EAR_BOT - EAR_SIZE // 189
-        private const val LX = 200f - HALF_SPC // 177.25
-        private const val RX = 200f + HALF_SPC // 222.75
+        private const val EAR_SIZE = 100f * W // 42
+        private const val HALF_SPC = EAR_SIZE * 0.7381f // 31.0002
+        private const val EAR_BOT = 250f + 100f * 0.065f // 256.5  (earHeightRatio=0.065)
+        private const val TOP_Y = EAR_BOT - EAR_SIZE // 214.5
+        private const val LX = 200f - HALF_SPC // 168.9998
+        private const val RX = 200f + HALF_SPC // 231.0002
 
         @JvmField
         val all: Array<PlacementFixture> = arrayOf(

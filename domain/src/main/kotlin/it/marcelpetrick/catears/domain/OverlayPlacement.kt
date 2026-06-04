@@ -53,7 +53,7 @@ data class OverlayPlacement(
  * @param headEulerAngleY Head yaw (degrees, positive = head turned right); stored for 20.4.
  * @param leftEarAnchor View-space position of the left ear landmark; null = use fallback.
  * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
- * @param widthRatio Width of one ear relative to face width. Default 0.65.
+ * @param widthRatio Width of one ear relative to face width. Default 0.42.
  * @param earHeightRatio Attachment depth for the ear bottom below box top (fraction of height).
  * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
  * @param eyeOpennessMean Mean of left+right eye-open probabilities [0..1]; 1 when absent.
@@ -208,9 +208,9 @@ class MultiFaceSmoother(private val alpha: Float = DEFAULT_MULTI_ALPHA) {
     }
 }
 
-private const val DEFAULT_EAR_WIDTH_RATIO = 0.65f
-private const val DEFAULT_EAR_HEIGHT_RATIO = 0.04f
-private const val EAR_HALF_SPACING_RATIO = 0.35f
+private const val DEFAULT_EAR_WIDTH_RATIO = 0.42f
+private const val DEFAULT_EAR_HEIGHT_RATIO = 0.065f
+private const val EAR_HALF_SPACING_RATIO = 0.7381f
 private const val MAX_YAW_DEGREES = 45f
 private const val PERSPECTIVE_STRENGTH = 0.5f
 private const val MIN_SCALE = 0.4f

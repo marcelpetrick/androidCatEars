@@ -12,18 +12,18 @@ architecture for **WP 20** (see [`BACKLOG.md`](BACKLOG.md)).
 ## What's wrong today (two separate bugs)
 
 ### Bug 1 — Ears fly above the face
-`computeOverlayPlacement` anchors the ear bottom to
-`viewBox.top − viewBox.height × earHeightRatio`.
-The ML Kit bounding box top is notoriously noisy: it wraps the entire head
-including hair and varies frame-to-frame by ±10–15%. The current constant-ratio
-offset amplifies that noise. When the face is small or the bounding box
-balloons, the ears drift far above the head.
+Earlier versions placed the ear base too high above the visible head line and
+scaled the ears too large. Real-device face examples showed that the visually
+natural attachment point is a small overlap into the visible forehead/top-head
+line, not a floating point above it.
 
-**Fix**: anchor each cat ear directly above the corresponding **human ear
-landmark** (`FaceLandmark.LEFT_EAR`, `FaceLandmark.RIGHT_EAR`). These ML Kit
-landmark positions are stable because they are keypoints on actual face
-geometry, not a rectangle corner. Cat ears positioned above human ears also
-looks semantically natural and matches the mental model users have.
+**Fix**: keep horizontal placement from side landmarks when available, but use
+the top-of-face/head box for vertical attachment. The current tuned production
+constants are:
+
+- ear bottom: `viewBox.top + viewBox.height * 0.065`
+- ear size: `viewBox.width * 0.42`
+- fallback half-spacing: `viewBox.width * 0.31`
 
 ### Bug 2 — One sprite, no life
 The current overlay is a single static PNG/vector scaled and rotated in
