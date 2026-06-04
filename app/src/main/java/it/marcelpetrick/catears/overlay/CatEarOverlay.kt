@@ -116,44 +116,38 @@ fun CatEarOverlay(placements: List<OverlayPlacement>, modifier: Modifier = Modif
 private fun SingleFaceEarOverlay(placement: OverlayPlacement) {
     val anim = rememberEarAnimState(placement)
     val style = placement.earStyle
-    val tintFilter: ColorFilter? = if (placement.tint == EarTint.NATURAL) {
-        null
-    } else {
-        ColorFilter.colorMatrix(ColorMatrix(hueRotationMatrix(placement.tint.hueDegrees)))
-    }
+    val tintPaint: Paint? = tintPaintCache[placement.tint]
     Box(
         modifier = Modifier
             .fillMaxSize()
             .drawWithContent {
                 drawContent()
+                val leftEar = placement.leftEar.copy(
+                    tiltDegrees = anim.leftTilt,
+                    y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
+                    xScale = placement.leftEar.xScale * anim.leftWinkScale,
+                )
+                val rightEar = placement.rightEar.copy(
+                    tiltDegrees = anim.rightTilt,
+                    y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
+                    xScale = placement.rightEar.xScale * anim.rightWinkScale,
+                )
                 val drawEars: DrawScope.() -> Unit = {
-                    drawEar(
-                        placement.leftEar.copy(
-                            tiltDegrees = anim.leftTilt,
-                            y = placement.leftEar.y + placement.leftEar.size * anim.yShiftFraction,
-                            xScale = placement.leftEar.xScale * anim.leftWinkScale,
-                        ),
-                        style,
-                        anim.swayTime,
-                        anim.twitchTime,
-                    )
-                    drawEar(
-                        placement.rightEar.copy(
-                            tiltDegrees = anim.rightTilt,
-                            y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
-                            xScale = placement.rightEar.xScale * anim.rightWinkScale,
-                        ),
-                        style,
-                        anim.swayTime,
-                        anim.twitchTime,
-                    )
+                    drawEar(leftEar, style, anim.swayTime, anim.twitchTime)
+                    drawEar(rightEar, style, anim.swayTime, anim.twitchTime)
                 }
-                if (tintFilter == null) {
+                if (tintPaint == null) {
                     drawEars()
                 } else {
-                    val paint = Paint().apply { colorFilter = tintFilter }
+                    val margin = leftEar.size.coerceAtLeast(rightEar.size)
+                    val bounds = Rect(
+                        left = minOf(leftEar.x, rightEar.x) - margin,
+                        top = minOf(leftEar.y, rightEar.y) - margin * 0.1f,
+                        right = maxOf(leftEar.x, rightEar.x) + margin,
+                        bottom = maxOf(leftEar.y, rightEar.y) + margin * 2f,
+                    )
                     drawIntoCanvas { canvas ->
-                        canvas.saveLayer(Rect(Offset.Zero, size), paint)
+                        canvas.saveLayer(bounds, tintPaint)
                         drawEars()
                         canvas.restore()
                     }
@@ -591,3 +585,16 @@ private val FOX_TUFT_COLOR = Color(0xFF3A1800)
 
 private val BEAR_OUTER_COLOR = Color(0xFF3A2010)
 private val BEAR_INNER_COLOR = Color(0xFF7A4020)
+
+// One Paint per non-natural tint; created once so the hot draw path allocates nothing.
+private val tintPaintCache: Map<EarTint, Paint> by lazy {
+    EarTint.entries
+        .filter { it != EarTint.NATURAL }
+        .associateWith { tint ->
+            Paint().apply {
+                colorFilter = ColorFilter.colorMatrix(
+                    ColorMatrix(hueRotationMatrix(tint.hueDegrees)),
+                )
+            }
+        }
+}
