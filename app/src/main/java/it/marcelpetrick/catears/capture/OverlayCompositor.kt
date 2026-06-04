@@ -133,13 +133,13 @@ object OverlayCompositor {
 
     private fun drawSoftEarShadow(canvas: Canvas, anchor: EarAnchor, material: EarMaterialSpec) {
         val s = anchor.size
-        val paint = fillPaint(colorWithAlpha(material.shadowArgb, SHADOW_ALPHA))
+        matFillPaint.color = colorWithAlpha(material.shadowArgb, SHADOW_ALPHA)
         canvas.drawOval(
             anchor.x - s * SHADOW_HALF_WIDTH,
             anchor.y + s * SHADOW_TOP_RATIO,
             anchor.x + s * SHADOW_HALF_WIDTH,
             anchor.y + s * (SHADOW_TOP_RATIO + SHADOW_HEIGHT),
-            paint,
+            matFillPaint,
         )
     }
 
@@ -162,19 +162,18 @@ object OverlayCompositor {
     }
 
     private fun drawOuterRim(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
-        val rimPaint = strokePaint(colorWithAlpha(material.outerRimArgb, RIM_ALPHA), s * MATERIAL_RIM_WIDTH_RATIO)
-        canvas.drawLine(geometry.leftBaseX, geometry.leftBaseY, geometry.tipX, geometry.tipY, rimPaint)
-        canvas.drawLine(geometry.rightBaseX, geometry.rightBaseY, geometry.tipX, geometry.tipY, rimPaint)
-        val highlightPaint = strokePaint(
-            colorWithAlpha(material.outerHighlightArgb, HIGHLIGHT_ALPHA),
-            s * MATERIAL_HIGHLIGHT_WIDTH_RATIO,
-        )
+        matStrokePaint.color = colorWithAlpha(material.outerRimArgb, RIM_ALPHA)
+        matStrokePaint.strokeWidth = s * MATERIAL_RIM_WIDTH_RATIO
+        canvas.drawLine(geometry.leftBaseX, geometry.leftBaseY, geometry.tipX, geometry.tipY, matStrokePaint)
+        canvas.drawLine(geometry.rightBaseX, geometry.rightBaseY, geometry.tipX, geometry.tipY, matStrokePaint)
+        matStrokePaint.color = colorWithAlpha(material.outerHighlightArgb, HIGHLIGHT_ALPHA)
+        matStrokePaint.strokeWidth = s * MATERIAL_HIGHLIGHT_WIDTH_RATIO
         canvas.drawLine(
             geometry.tipX - s * HIGHLIGHT_TIP_X_OFFSET,
             geometry.tipY + s * HIGHLIGHT_TIP_Y_OFFSET,
             geometry.leftBaseX + s * HIGHLIGHT_BASE_X_OFFSET,
             geometry.leftBaseY - s * HIGHLIGHT_BASE_Y_OFFSET,
-            highlightPaint,
+            matStrokePaint,
         )
     }
 
@@ -193,19 +192,16 @@ object OverlayCompositor {
             lineTo(innerRightX, innerBaseY)
             close()
         }
-        canvas.drawPath(inner, fillPaint(colorWithAlpha(material.innerBaseArgb, INNER_GLAZE_BOTTOM_ALPHA)))
-        val highlight = strokePaint(
-            colorWithAlpha(material.innerHighlightArgb, INNER_GLAZE_TOP_ALPHA),
-            s * MATERIAL_HIGHLIGHT_WIDTH_RATIO,
-        )
-        canvas.drawLine(innerTopX, innerTopY, innerLeftX, innerBaseY, highlight)
+        matFillPaint.color = colorWithAlpha(material.innerBaseArgb, INNER_GLAZE_BOTTOM_ALPHA)
+        canvas.drawPath(inner, matFillPaint)
+        matStrokePaint.color = colorWithAlpha(material.innerHighlightArgb, INNER_GLAZE_TOP_ALPHA)
+        matStrokePaint.strokeWidth = s * MATERIAL_HIGHLIGHT_WIDTH_RATIO
+        canvas.drawLine(innerTopX, innerTopY, innerLeftX, innerBaseY, matStrokePaint)
     }
 
     private fun drawFurTexture(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, spec: EarRenderStyleSpec) {
-        val paint = strokePaint(
-            colorWithAlpha(spec.material.outerHighlightArgb, MATERIAL_FUR_ALPHA),
-            s * MATERIAL_FUR_WIDTH_RATIO,
-        )
+        matStrokePaint.color = colorWithAlpha(spec.material.outerHighlightArgb, MATERIAL_FUR_ALPHA)
+        matStrokePaint.strokeWidth = s * MATERIAL_FUR_WIDTH_RATIO
         repeat(spec.furStrokeCount) { index ->
             val fraction = (index + 1f) / (spec.furStrokeCount + 1f)
             val leftEdge = index % 2 == 0
@@ -220,13 +216,14 @@ object OverlayCompositor {
                 edgeY,
                 inwardX + direction * s * MATERIAL_FUR_LENGTH_RATIO,
                 edgeY - s * MATERIAL_FUR_LIFT_RATIO,
-                paint,
+                matStrokePaint,
             )
         }
     }
 
     private fun drawMaterialTufts(canvas: Canvas, geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
-        val paint = strokePaint(material.outerRimArgb, s * MATERIAL_TUFT_WIDTH_RATIO)
+        matStrokePaint.color = material.outerRimArgb
+        matStrokePaint.strokeWidth = s * MATERIAL_TUFT_WIDTH_RATIO
         for (i in -1..1) {
             val angle = Math.toRadians((MATERIAL_TUFT_FAN_DEG * i).toDouble()).toFloat()
             canvas.drawLine(
@@ -234,7 +231,7 @@ object OverlayCompositor {
                 geometry.tipY,
                 geometry.tipX + sin(angle) * s * MATERIAL_TUFT_LENGTH_RATIO,
                 geometry.tipY - cos(angle) * s * MATERIAL_TUFT_LENGTH_RATIO,
-                paint,
+                matStrokePaint,
             )
         }
     }
@@ -489,16 +486,16 @@ object OverlayCompositor {
         close()
     }
 
-    private fun fillPaint(color: Int): Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = color
-        style = Paint.Style.FILL
-    }
-
-    private fun strokePaint(color: Int, width: Float): Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = color
-        style = Paint.Style.STROKE
-        strokeWidth = width
-        strokeCap = Paint.Cap.ROUND
+    // Two reusable Paints for the material finish pass. Lazy to avoid android.graphics.Paint
+    // at class-load time in JVM tests. Drawing is sequential and mutually exclusive between
+    // the video overlay thread and the photo capture thread (state machine prevents
+    // simultaneous use), so shared mutable state is safe here.
+    private val matFillPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    private val matStrokePaint: Paint by lazy {
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+        }
     }
 
     private fun colorWithAlpha(argb: Int, alpha: Float): Int {
