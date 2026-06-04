@@ -4,6 +4,7 @@
 package it.marcelpetrick.catears.camera
 
 import android.graphics.Bitmap
+import android.media.MediaActionSound
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -61,16 +62,29 @@ fun CameraPreview(
     val controller = remember { cameraControllerFactory() }
     val capturePlacements = rememberUpdatedState(overlayPlacements)
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
+    val soundPlayer = remember {
+        MediaActionSound().also {
+            it.load(MediaActionSound.SHUTTER_CLICK)
+            it.load(MediaActionSound.START_VIDEO_RECORDING)
+            it.load(MediaActionSound.STOP_VIDEO_RECORDING)
+        }
+    }
 
     LaunchedEffect(captureRequested) {
         if (captureRequested) {
-            onComposited(captureComposited(previewViewRef.get(), capturePlacements.value))
+            val bitmap = captureComposited(previewViewRef.get(), capturePlacements.value)
+            if (bitmap != null) soundPlayer.play(MediaActionSound.SHUTTER_CLICK)
+            onComposited(bitmap)
         }
     }
 
     LaunchedEffect(recordingRequested) {
         if (recordingRequested) {
-            controller.startVideoRecording(onRecordingSaved)
+            soundPlayer.play(MediaActionSound.START_VIDEO_RECORDING)
+            controller.startVideoRecording { uriString ->
+                if (uriString != null) soundPlayer.play(MediaActionSound.STOP_VIDEO_RECORDING)
+                onRecordingSaved(uriString)
+            }
         }
     }
 
@@ -101,6 +115,7 @@ fun CameraPreview(
 
     DisposableEffect(Unit) {
         onDispose {
+            soundPlayer.release()
             controller.close()
             detector.close()
         }

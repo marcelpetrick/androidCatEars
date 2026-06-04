@@ -432,8 +432,8 @@ down. The instance should be scoped to the camera composable lifecycle (`Disposa
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 31.0 | TODO | Photo shutter click | `MediaActionSound.SHUTTER_CLICK` is played at the moment `onCaptureRequested()` is confirmed (i.e., the bitmap is composited and saved, not just when the button is tapped). `MediaActionSound` loaded in `CameraPreview` via `DisposableEffect`; released on `onDispose`. No external audio file committed. All gates green. |
-| 31.1 | TODO | Video start / stop sounds | `MediaActionSound.START_VIDEO_RECORDING` plays when `CameraXControllerImpl.startVideoRecording()` begins; `STOP_VIDEO_RECORDING` plays when the 5 s clip finalises (inside the `VideoRecordEvent.Finalize` callback). Same `MediaActionSound` instance as 31.0, pre-loaded for all three constants. |
+| 31.0 | DONE | Photo shutter click | `MediaActionSound.SHUTTER_CLICK` is played at the moment `onCaptureRequested()` is confirmed (i.e., the bitmap is composited and saved, not just when the button is tapped). `MediaActionSound` loaded in `CameraPreview` via `DisposableEffect`; released on `onDispose`. No external audio file committed. All gates green. |
+| 31.1 | DONE | Video start / stop sounds | `MediaActionSound.START_VIDEO_RECORDING` plays when `CameraXControllerImpl.startVideoRecording()` begins; `STOP_VIDEO_RECORDING` plays when the 5 s clip finalises (inside the `VideoRecordEvent.Finalize` callback). Same `MediaActionSound` instance as 31.0, pre-loaded for all three constants. |
 
 ---
 
