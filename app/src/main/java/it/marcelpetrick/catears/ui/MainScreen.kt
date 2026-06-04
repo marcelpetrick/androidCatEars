@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Share
@@ -27,12 +28,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -111,6 +117,11 @@ fun MainScreen(
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
                     .padding(top = 8.dp),
+            )
+            HelpControl(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding(),
             )
             if (captureStatus != null) {
                 CaptureStatusBanner(
@@ -399,6 +410,24 @@ private fun MainScreenPermissionDeniedPreview() {
             cameraControllerFactory = { CameraXControllerImpl() },
             faceDetectorFactory = { PreviewFaceDetector },
             captureStatus = null,
+        )
+    }
+}
+
+@Composable
+private fun HelpControl(modifier: Modifier = Modifier) {
+    var showHelp by rememberSaveable { mutableStateOf(false) }
+    if (showHelp) {
+        HelpDialog(onDismiss = { showHelp = false })
+    }
+    IconButton(
+        onClick = { showHelp = true },
+        modifier = modifier.padding(top = 4.dp, end = 4.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Info,
+            contentDescription = "Help & About",
+            tint = Color.White,
         )
     }
 }
