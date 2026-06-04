@@ -56,6 +56,8 @@ private data class EarAnimState(
     val rightWinkScale: Float,
 )
 
+private data class MaterialEarGeometry(val tip: Offset, val leftBase: Offset, val rightBase: Offset)
+
 @Composable
 private fun rememberEarAnimState(placement: OverlayPlacement?): EarAnimState {
     val transition = rememberInfiniteTransition(label = "earSway")
@@ -241,54 +243,60 @@ private fun DrawScope.drawSoftEarShadow(cx: Float, top: Float, s: Float, materia
 
 private fun DrawScope.drawMaterialFinish(cx: Float, top: Float, s: Float, spec: EarRenderStyleSpec, swayTime: Float) {
     val material = spec.material
-    val tip = Offset(cx + styleTipOffset(spec.style) * s, top + styleTipYOffset(spec.style) * s)
-    val leftBase = Offset(cx - styleLeftBase(spec.style) * s, top + s)
-    val rightBase = Offset(cx + styleRightBase(spec.style) * s, top + s)
-    drawOuterRim(tip, leftBase, rightBase, s, material)
-    drawInnerRosyGlaze(tip, leftBase, rightBase, s, material)
-    drawFurTexture(tip, leftBase, rightBase, s, spec, swayTime)
+    val geometry = MaterialEarGeometry(
+        tip = Offset(cx + styleTipOffset(spec.style) * s, top + styleTipYOffset(spec.style) * s),
+        leftBase = Offset(cx - styleLeftBase(spec.style) * s, top + s),
+        rightBase = Offset(cx + styleRightBase(spec.style) * s, top + s),
+    )
+    drawOuterRim(geometry, s, material)
+    drawInnerRosyGlaze(geometry, s, material)
+    drawFurTexture(geometry, s, spec, swayTime)
     if (spec.supportsTufts) {
-        drawMaterialTufts(tip, s, material, swayTime)
+        drawMaterialTufts(geometry.tip, s, material, swayTime)
     }
 }
 
-private fun DrawScope.drawOuterRim(
-    tip: Offset,
-    leftBase: Offset,
-    rightBase: Offset,
-    s: Float,
-    material: EarMaterialSpec,
-) {
+private fun DrawScope.drawOuterRim(geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
     val rimWidth = s * MATERIAL_RIM_WIDTH_RATIO
-    drawLine(Color(material.outerRimArgb).copy(alpha = RIM_ALPHA), leftBase, tip, rimWidth, StrokeCap.Round)
-    drawLine(Color(material.outerRimArgb).copy(alpha = RIM_ALPHA), rightBase, tip, rimWidth, StrokeCap.Round)
+    val rimColor = Color(material.outerRimArgb).copy(alpha = RIM_ALPHA)
+    drawLine(
+        rimColor,
+        geometry.leftBase,
+        geometry.tip,
+        rimWidth,
+        StrokeCap.Round,
+    )
+    drawLine(
+        rimColor,
+        geometry.rightBase,
+        geometry.tip,
+        rimWidth,
+        StrokeCap.Round,
+    )
     drawLine(
         Color(material.outerHighlightArgb).copy(alpha = HIGHLIGHT_ALPHA),
-        Offset(tip.x - s * HIGHLIGHT_TIP_X_OFFSET, tip.y + s * HIGHLIGHT_TIP_Y_OFFSET),
-        Offset(leftBase.x + s * HIGHLIGHT_BASE_X_OFFSET, leftBase.y - s * HIGHLIGHT_BASE_Y_OFFSET),
+        Offset(geometry.tip.x - s * HIGHLIGHT_TIP_X_OFFSET, geometry.tip.y + s * HIGHLIGHT_TIP_Y_OFFSET),
+        Offset(
+            geometry.leftBase.x + s * HIGHLIGHT_BASE_X_OFFSET,
+            geometry.leftBase.y - s * HIGHLIGHT_BASE_Y_OFFSET,
+        ),
         s * MATERIAL_HIGHLIGHT_WIDTH_RATIO,
         StrokeCap.Round,
     )
 }
 
-private fun DrawScope.drawInnerRosyGlaze(
-    tip: Offset,
-    leftBase: Offset,
-    rightBase: Offset,
-    s: Float,
-    material: EarMaterialSpec,
-) {
+private fun DrawScope.drawInnerRosyGlaze(geometry: MaterialEarGeometry, s: Float, material: EarMaterialSpec) {
     val innerTop = Offset(
-        x = tip.x,
-        y = tip.y + s * MATERIAL_INNER_TOP_RATIO,
+        x = geometry.tip.x,
+        y = geometry.tip.y + s * MATERIAL_INNER_TOP_RATIO,
     )
     val innerLeft = Offset(
-        x = leftBase.x * MATERIAL_INNER_BASE_BLEND + tip.x * (1f - MATERIAL_INNER_BASE_BLEND),
-        y = leftBase.y - s * MATERIAL_INNER_BASE_LIFT_RATIO,
+        x = geometry.leftBase.x * MATERIAL_INNER_BASE_BLEND + geometry.tip.x * (1f - MATERIAL_INNER_BASE_BLEND),
+        y = geometry.leftBase.y - s * MATERIAL_INNER_BASE_LIFT_RATIO,
     )
     val innerRight = Offset(
-        x = rightBase.x * MATERIAL_INNER_BASE_BLEND + tip.x * (1f - MATERIAL_INNER_BASE_BLEND),
-        y = rightBase.y - s * MATERIAL_INNER_BASE_LIFT_RATIO,
+        x = geometry.rightBase.x * MATERIAL_INNER_BASE_BLEND + geometry.tip.x * (1f - MATERIAL_INNER_BASE_BLEND),
+        y = geometry.rightBase.y - s * MATERIAL_INNER_BASE_LIFT_RATIO,
     )
     val inner = Path().apply {
         moveTo(innerTop.x, innerTop.y)
@@ -303,16 +311,14 @@ private fun DrawScope.drawInnerRosyGlaze(
                 Color(material.innerHighlightArgb).copy(alpha = INNER_GLAZE_TOP_ALPHA),
                 Color(material.innerBaseArgb).copy(alpha = INNER_GLAZE_BOTTOM_ALPHA),
             ),
-            start = Offset(tip.x, tip.y),
-            end = Offset(tip.x, leftBase.y),
+            start = Offset(geometry.tip.x, geometry.tip.y),
+            end = Offset(geometry.tip.x, geometry.leftBase.y),
         ),
     )
 }
 
 private fun DrawScope.drawFurTexture(
-    tip: Offset,
-    leftBase: Offset,
-    rightBase: Offset,
+    geometry: MaterialEarGeometry,
     s: Float,
     spec: EarRenderStyleSpec,
     swayTime: Float,
@@ -320,9 +326,9 @@ private fun DrawScope.drawFurTexture(
     val stroke = s * MATERIAL_FUR_WIDTH_RATIO
     repeat(spec.furStrokeCount) { index ->
         val fraction = (index + 1f) / (spec.furStrokeCount + 1f)
-        val edgeStart = if (index % 2 == 0) leftBase else rightBase
-        val edgePoint = lerpOffset(edgeStart, tip, fraction)
-        val inward = lerpOffset(edgePoint, Offset(tip.x, edgePoint.y), MATERIAL_FUR_INWARD_BLEND)
+        val edgeStart = if (index % 2 == 0) geometry.leftBase else geometry.rightBase
+        val edgePoint = lerpOffset(edgeStart, geometry.tip, fraction)
+        val inward = lerpOffset(edgePoint, Offset(geometry.tip.x, edgePoint.y), MATERIAL_FUR_INWARD_BLEND)
         val sway = sin(swayTime + index * MATERIAL_FUR_PHASE_STEP) * s * MATERIAL_FUR_SWAY_RATIO
         val end = Offset(
             x =
@@ -661,7 +667,7 @@ private fun DrawScope.drawCaninePerkyEar(cx: Float, top: Float, s: Float, swayTi
 // --- 8 RABBIT
 
 private fun DrawScope.drawRabbitEar(cx: Float, top: Float, s: Float) {
-    val halfW = s * 0.18f
+    val halfW = s * RABBIT_HALF_WIDTH
     drawOval(RABBIT_OUTER_COLOR, Offset(cx - halfW, top), Size(halfW * 2f, s))
     drawOval(RABBIT_INNER_COLOR, Offset(cx - halfW * 0.55f, top + s * 0.06f), Size(halfW * 1.1f, s * 0.86f))
 }
@@ -669,7 +675,7 @@ private fun DrawScope.drawRabbitEar(cx: Float, top: Float, s: Float) {
 // --- 9 FOX
 
 private fun DrawScope.drawFoxEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    val halfBase = s * 0.32f
+    val halfBase = s * FOX_HALF_BASE
     val tipX = cx + s * 0.05f
     val outer = Path().apply {
         moveTo(tipX, top)
@@ -696,7 +702,7 @@ private fun DrawScope.drawFoxEar(cx: Float, top: Float, s: Float, swayTime: Floa
 // --- 10 BEAR
 
 private fun DrawScope.drawBearEar(cx: Float, top: Float, s: Float) {
-    val radius = s * 0.32f
+    val radius = s * BEAR_RADIUS_RATIO
     val centerY = top + radius
     drawCircle(BEAR_OUTER_COLOR, radius, Offset(cx, centerY))
     drawCircle(BEAR_INNER_COLOR, radius * 0.55f, Offset(cx, centerY))
@@ -747,6 +753,8 @@ private const val LYNX_SWAY_DEG = 10f
 private val LYNX_TUFT_PHASES = floatArrayOf(0.0f, 0.9f, 1.8f, 2.7f, 0.4f, 1.3f, 2.2f)
 
 // --- DENSE FLUFFY constants
+private const val FLUFFY_LEFT_BASE = 0.48f
+private const val FLUFFY_RIGHT_BASE = 0.408f
 private val FLUFFY_PHASES = floatArrayOf(0.0f, 0.8f, 1.6f, 2.4f, 0.4f, 1.2f, 2.0f, 0.6f)
 
 // --- CANINE FLOPPY constants
@@ -758,6 +766,16 @@ private const val FLOPPY_SWAY_DEG = 4f
 // --- CANINE PERKY constants
 private const val PERKY_HALF_BASE = 0.38f
 private const val PERKY_TIP_Y = 0.20f
+
+// --- RABBIT constants
+private const val RABBIT_HALF_WIDTH = 0.18f
+
+// --- FOX constants
+private const val FOX_HALF_BASE = 0.32f
+private const val FOX_RIGHT_BASE = 0.224f
+
+// --- BEAR constants
+private const val BEAR_RADIUS_RATIO = 0.32f
 
 // --- colours
 private val EAR_COLOR = Color(0xFF8B5E3C)
