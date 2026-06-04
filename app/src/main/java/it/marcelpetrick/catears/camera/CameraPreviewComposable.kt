@@ -64,6 +64,8 @@ fun CameraPreview(
     val currentOnCameraError by rememberUpdatedState(onCameraError)
     val capturePlacements = rememberUpdatedState(overlayPlacements)
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
+    val previewWidthRef = remember { java.util.concurrent.atomic.AtomicInteger(1) }
+    val previewHeightRef = remember { java.util.concurrent.atomic.AtomicInteger(1) }
     // Stable reference so the factory-block closure always reads the current lens.
     val currentLens by rememberUpdatedState(lens)
     val soundPlayer = remember {
@@ -75,11 +77,11 @@ fun CameraPreview(
     }
 
     LaunchedEffect(overlayPlacements) {
-        val pv = previewViewRef.get() ?: return@LaunchedEffect
+        if (previewViewRef.get() == null) return@LaunchedEffect
         controller.updateOverlayPlacements(
             overlayPlacements,
-            pv.width.coerceAtLeast(1),
-            pv.height.coerceAtLeast(1),
+            previewWidthRef.get(),
+            previewHeightRef.get(),
         )
     }
 
@@ -107,6 +109,10 @@ fun CameraPreview(
                 implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             }
             previewViewRef.set(previewView)
+            previewView.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
+                previewWidthRef.set((right - left).coerceAtLeast(1))
+                previewHeightRef.set((bottom - top).coerceAtLeast(1))
+            }
             controller.configure(
                 CameraBindConfig(
                     previewView = previewView,
@@ -117,8 +123,8 @@ fun CameraPreview(
                         val transform = TransformContext(
                             imageWidth = w,
                             imageHeight = h,
-                            viewWidth = previewView.width.coerceAtLeast(1),
-                            viewHeight = previewView.height.coerceAtLeast(1),
+                            viewWidth = previewWidthRef.get(),
+                            viewHeight = previewHeightRef.get(),
                             isFrontCamera = currentLens == LensSelector.Front,
                         )
                         onFaceDetected(facePlacements(faces, transform, smoother))
