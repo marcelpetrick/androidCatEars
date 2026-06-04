@@ -221,6 +221,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
 
     override fun unbind() {
         cameraProvider?.unbindAll()
+        videoCapture = null
     }
 
     override fun close() {
