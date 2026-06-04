@@ -64,6 +64,8 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     private val analysisExecutor = Executors.newSingleThreadExecutor()
     private var videoCapture: VideoCapture<Recorder>? = null
     private var activeRecording: Recording? = null
+    private val autoStopHandler = Handler(Looper.getMainLooper())
+    private var autoStopRunnable: Runnable? = null
 
     private val overlayEffectThread = HandlerThread("CatEarsOverlayEffect").also { it.start() }
     private val overlayEffectHandler = Handler(overlayEffectThread.looper)
@@ -195,10 +197,14 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
                     activeRecording = null
                 }
             }
-        Handler(Looper.getMainLooper()).postDelayed({ stopVideoRecording() }, VIDEO_DURATION_MS)
+        val runnable = Runnable { stopVideoRecording() }
+        autoStopRunnable = runnable
+        autoStopHandler.postDelayed(runnable, VIDEO_DURATION_MS)
     }
 
     override fun stopVideoRecording() {
+        autoStopRunnable?.let { autoStopHandler.removeCallbacks(it) }
+        autoStopRunnable = null
         activeRecording?.stop()
         activeRecording = null
     }
