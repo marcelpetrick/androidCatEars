@@ -56,6 +56,9 @@ Thumbs.db
 *.swp
 *~
 
+# Duplicates of committed face example inputs
+media/faceExamples.zip
+
 # -------------------------------------------------------
 # The Gradle *wrapper* jars ARE committed so the build is
 # self-contained (no global Gradle required).
