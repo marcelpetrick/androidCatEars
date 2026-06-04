@@ -143,6 +143,9 @@ class PlacementSmoother(private val alpha: Float = DEFAULT_ALPHA) {
             headEulerAngleY = lerp(prev.headEulerAngleY, next.headEulerAngleY, alpha),
             smilingProbability = lerp(prev.smilingProbability, next.smilingProbability, alpha),
             eyeOpennessMean = lerp(prev.eyeOpennessMean, next.eyeOpennessMean, alpha),
+            trackingId = next.trackingId,
+            earStyle = next.earStyle,
+            tint = next.tint,
         )
         last = smoothed
         return smoothed

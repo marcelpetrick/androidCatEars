@@ -518,6 +518,18 @@ state transition to `Saved`/`Failed` as before — no ViewModel changes needed.
 
 ---
 
+### WP 36 — Party Mode: one face, one style
+
+Product idea from `productIdeas20260604.md`: when multiple faces are detected,
+each face gets its own style/tint pairing that stays stable for the ML Kit
+tracking ID until the user explicitly re-rolls.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 36.0 | DONE | Stable per-face Party Mode assignments | Add a Party Mode toggle and re-roll button. In normal mode, global style/tint controls keep applying to all faces. In Party Mode, `MainViewModel` assigns each tracking ID a persistent style/tint slot, first slot starts as Classic/Natural, and re-roll reshuffles active faces without changing face geometry. `PlacementSmoother` preserves `trackingId`, style, and tint so assignments do not collapse after smoothing. Focused unit tests cover stable assignments, re-roll, disabled re-roll, and tracking-ID propagation. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·

@@ -100,6 +100,18 @@ class OverlayPlacementTest {
     }
 
     @Test
+    fun `smoother preserves next tracking id and appearance`() {
+        val smoother = PlacementSmoother(alpha = 0.5f)
+        val first = makePlacement().copy(trackingId = 1, earStyle = EarStyle.CLASSIC, tint = EarTint.NATURAL)
+        val second = makePlacement().copy(trackingId = 2, earStyle = EarStyle.FOX, tint = EarTint.SKY)
+        smoother.smooth(first)
+        val result = smoother.smooth(second)
+        assertEquals(2, result.trackingId)
+        assertEquals(EarStyle.FOX, result.earStyle)
+        assertEquals(EarTint.SKY, result.tint)
+    }
+
+    @Test
     fun `zero yaw produces symmetric xScale of 1 on both ears`() {
         val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, headEulerAngleY = 0f)
         assertEquals(1f, p.leftEar.xScale, DELTA)
