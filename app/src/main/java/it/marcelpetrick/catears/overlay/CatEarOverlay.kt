@@ -80,6 +80,8 @@ private fun rememberEarAnimState(placement: OverlayPlacement?): EarAnimState {
     )
     val smiling = placement?.smilingProbability ?: 0f
     val eyeOpen = placement?.eyeOpennessMean ?: 1f
+    val leftEyeOpen = placement?.leftEyeOpenness ?: eyeOpen
+    val rightEyeOpen = placement?.rightEyeOpenness ?: eyeOpen
     val smileY by animateFloatAsState(
         if (smiling > SMILE_THRESHOLD) -SMILE_PERK_FRACTION else 0f,
         spring(stiffness = Spring.StiffnessMediumLow),
@@ -90,9 +92,14 @@ private fun rememberEarAnimState(placement: OverlayPlacement?): EarAnimState {
         spring(stiffness = Spring.StiffnessHigh),
         label = "wideEyeY",
     )
-    val winkScale = if (eyeOpen < WINK_THRESHOLD) WINK_SCALE else 1f
-    val leftWink by animateFloatAsState(winkScale, spring(stiffness = Spring.StiffnessMedium), label = "leftWink")
-    val rightWink by animateFloatAsState(winkScale, spring(stiffness = Spring.StiffnessMedium), label = "rightWink")
+    val leftWinkScale = if (leftEyeOpen < WINK_THRESHOLD) WINK_SCALE else 1f
+    val rightWinkScale = if (rightEyeOpen < WINK_THRESHOLD) WINK_SCALE else 1f
+    val leftWink by animateFloatAsState(leftWinkScale, spring(stiffness = Spring.StiffnessMedium), label = "leftWink")
+    val rightWink by animateFloatAsState(
+        rightWinkScale,
+        spring(stiffness = Spring.StiffnessMedium),
+        label = "rightWink",
+    )
     return EarAnimState(swayTime, twitchTime, leftTilt, rightTilt, smileY + wideEyeY, leftWink, rightWink)
 }
 

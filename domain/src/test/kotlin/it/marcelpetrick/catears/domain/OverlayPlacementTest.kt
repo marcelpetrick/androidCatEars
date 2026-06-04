@@ -70,29 +70,54 @@ class OverlayPlacementTest {
         val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
         assertEquals(0f, p.smilingProbability, DELTA)
         assertEquals(1f, p.eyeOpennessMean, DELTA)
+        assertEquals(1f, p.leftEyeOpenness, DELTA)
+        assertEquals(1f, p.rightEyeOpenness, DELTA)
     }
 
     @Test
-    fun `expression probabilities are stored in placement`() {
+    fun `expression probabilities are stored in placement with per-eye openness`() {
         val p = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
             smilingProbability = 0.9f,
             eyeOpennessMean = 0.1f,
+            leftEyeOpenness = 0.2f,
+            rightEyeOpenness = 0.8f,
         )
         assertEquals(0.9f, p.smilingProbability, DELTA)
         assertEquals(0.1f, p.eyeOpennessMean, DELTA)
+        assertEquals(0.2f, p.leftEyeOpenness, DELTA)
+        assertEquals(0.8f, p.rightEyeOpenness, DELTA)
+    }
+
+    @Test
+    fun `per-eye openness falls back to mean for older callers`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, eyeOpennessMean = 0.3f)
+        assertEquals(0.3f, p.leftEyeOpenness, DELTA)
+        assertEquals(0.3f, p.rightEyeOpenness, DELTA)
     }
 
     @Test
     fun `smoother interpolates expression probabilities`() {
         val smoother = PlacementSmoother(alpha = 0.5f)
-        val first = makePlacement().copy(smilingProbability = 0f, eyeOpennessMean = 1f)
-        val second = makePlacement().copy(smilingProbability = 1f, eyeOpennessMean = 0f)
+        val first = makePlacement().copy(
+            smilingProbability = 0f,
+            eyeOpennessMean = 1f,
+            leftEyeOpenness = 1f,
+            rightEyeOpenness = 0f,
+        )
+        val second = makePlacement().copy(
+            smilingProbability = 1f,
+            eyeOpennessMean = 0f,
+            leftEyeOpenness = 0f,
+            rightEyeOpenness = 1f,
+        )
         smoother.smooth(first)
         val result = smoother.smooth(second)
         assertEquals(0.5f, result.smilingProbability, DELTA)
         assertEquals(0.5f, result.eyeOpennessMean, DELTA)
+        assertEquals(0.5f, result.leftEyeOpenness, DELTA)
+        assertEquals(0.5f, result.rightEyeOpenness, DELTA)
     }
 
     @Test
