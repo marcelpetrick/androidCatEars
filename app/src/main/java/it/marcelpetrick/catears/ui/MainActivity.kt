@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
         val captureState by viewModel.captureState.collectAsStateWithLifecycle()
         val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
         val earTint by viewModel.earTint.collectAsStateWithLifecycle()
+        val partyModeEnabled by viewModel.partyModeEnabled.collectAsStateWithLifecycle()
         val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
 
         val permissionLauncher = rememberLauncherForActivityResult(
@@ -80,6 +81,8 @@ class MainActivity : ComponentActivity() {
             overlayPlacements = overlayPlacements,
             onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
             onOpenSettings = { openAppSettings() },
+            onCameraError = viewModel::onCameraBindFailed,
+            onRetryCamera = viewModel::onRetryCamera,
             onToggleLens = viewModel::onToggleLens,
             onCapture = { viewModel.onCaptureRequested() },
             onShare = savedState?.let { saved ->
@@ -93,6 +96,9 @@ class MainActivity : ComponentActivity() {
             onCycleEarStyle = viewModel::onCycleEarStyle,
             earTint = earTint,
             onCycleEarTint = viewModel::onCycleEarTint,
+            partyModeEnabled = partyModeEnabled,
+            onTogglePartyMode = viewModel::onTogglePartyMode,
+            onRerollPartyAssignments = viewModel::onRerollPartyAssignments,
             captureRequested = captureState is CaptureState.Capturing,
             captureEnabled = captureState !is CaptureState.Capturing,
             onComposited = viewModel::onCompositedBitmap,

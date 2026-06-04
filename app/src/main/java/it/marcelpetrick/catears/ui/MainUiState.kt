@@ -9,6 +9,8 @@ package it.marcelpetrick.catears.ui
  * Transitions:
  *   Initialising → PermissionRequired | PermissionPermanentlyDenied | Ready
  *   PermissionRequired → Ready | PermissionPermanentlyDenied
+ *   Ready → CameraError (on camera bind failure)
+ *   CameraError → Ready (on user retry)
  */
 sealed interface MainUiState {
     /** App is starting up — show nothing or a splash. */
@@ -25,4 +27,7 @@ sealed interface MainUiState {
 
     /** Camera permission granted; ready to show the preview. */
     data object Ready : MainUiState
+
+    /** Camera failed to bind (busy, hardware issue, unsupported config). User can retry. */
+    data object CameraError : MainUiState
 }

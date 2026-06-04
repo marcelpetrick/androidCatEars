@@ -12,6 +12,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -54,11 +55,13 @@ fun CameraPreview(
     modifier: Modifier = Modifier,
     recordingRequested: Boolean = false,
     onRecordingSaved: (String?) -> Unit = {},
+    onCameraError: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val detector = remember { faceDetectorFactory() }
     val smoother = remember { MultiFaceSmoother() }
+    val currentOnCameraError by rememberUpdatedState(onCameraError)
     val capturePlacements = rememberUpdatedState(overlayPlacements)
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
     val soundPlayer = remember {
@@ -103,6 +106,7 @@ fun CameraPreview(
             }
             previewViewRef.set(previewView)
             controller.context = ctx
+            controller.onBindFailed = { currentOnCameraError() }
             wireController(controller, previewView, lifecycleOwner, detector) { faces, w, h ->
                 val transform = TransformContext(
                     imageWidth = w,

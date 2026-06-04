@@ -20,7 +20,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
 class MainViewModelTest {
@@ -304,6 +304,77 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `initial party mode is off`() = runTest {
+        viewModel().partyModeEnabled.test {
+            assertEquals(false, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onTogglePartyMode enables party mode`() = runTest {
+        val vm = viewModel()
+        vm.partyModeEnabled.test {
+            assertEquals(false, awaitItem())
+            vm.onTogglePartyMode()
+            assertEquals(true, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `party mode assigns stable per tracking id appearances`() = runTest {
+        val vm = viewModel()
+        val firstFrame = listOf(trackedPlacement(10), trackedPlacement(20))
+        val secondFrame = listOf(trackedPlacement(10, x = 120f), trackedPlacement(20, x = 220f))
+
+        vm.onTogglePartyMode()
+        vm.overlayPlacements.test {
+            assertEquals(emptyList<OverlayPlacement>(), awaitItem())
+            vm.onFaceDetected(firstFrame)
+            val firstAssignments = awaitItem()
+            assertEquals(EarStyle.CLASSIC, firstAssignments[0].earStyle)
+            assertEquals(EarTint.NATURAL, firstAssignments[0].tint)
+            assertNotEquals(firstAssignments[0].earStyle, firstAssignments[1].earStyle)
+
+            vm.onFaceDetected(secondFrame)
+            val secondAssignments = awaitItem()
+            assertEquals(firstAssignments[0].earStyle, secondAssignments[0].earStyle)
+            assertEquals(firstAssignments[0].tint, secondAssignments[0].tint)
+            assertEquals(firstAssignments[1].earStyle, secondAssignments[1].earStyle)
+            assertEquals(firstAssignments[1].tint, secondAssignments[1].tint)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `party reroll changes active assignments`() = runTest {
+        val vm = viewModel()
+        vm.onTogglePartyMode()
+        vm.onFaceDetected(listOf(trackedPlacement(10), trackedPlacement(20)))
+
+        vm.overlayPlacements.test {
+            val before = awaitItem()
+            vm.onRerollPartyAssignments()
+            val after = awaitItem()
+            assertNotEquals(before.map { it.earStyle to it.tint }, after.map { it.earStyle to it.tint })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `reroll is ignored when party mode is off`() = runTest {
+        val vm = viewModel()
+        vm.onFaceDetected(listOf(trackedPlacement(10)))
+
+        vm.overlayPlacements.test {
+            awaitItem()
+            vm.onRerollPartyAssignments()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `onToggleLens twice returns to Front`() = runTest {
         val vm = viewModel()
         vm.lens.test {
@@ -382,6 +453,36 @@ class MainViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `onCameraBindFailed transitions to CameraError`() = runTest {
+        val vm = viewModel()
+        vm.onPermissionResult(granted = true, showRationale = false)
+        vm.uiState.test {
+            assertEquals(MainUiState.Ready, awaitItem())
+            vm.onCameraBindFailed()
+            assertEquals(MainUiState.CameraError, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onRetryCamera transitions from CameraError back to Ready`() = runTest {
+        val vm = viewModel()
+        vm.onCameraBindFailed()
+        vm.uiState.test {
+            assertEquals(MainUiState.CameraError, awaitItem())
+            vm.onRetryCamera()
+            assertEquals(MainUiState.Ready, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    private fun trackedPlacement(id: Int, x: Float = 100f) = OverlayPlacement(
+        leftEar = EarAnchor(x = x, y = 50f, size = 80f, tiltDegrees = 0f),
+        rightEar = EarAnchor(x = x + 100f, y = 50f, size = 80f, tiltDegrees = 0f),
+        trackingId = id,
+    )
 
     private class FakeCaptureRuntime : CaptureRuntime {
         override val ioDispatcher: CoroutineDispatcher = Dispatchers.Unconfined

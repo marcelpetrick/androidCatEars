@@ -20,10 +20,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Videocam
@@ -75,6 +77,8 @@ fun MainScreen(
     overlayPlacements: List<OverlayPlacement>,
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit,
+    onCameraError: () -> Unit,
+    onRetryCamera: () -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
@@ -83,6 +87,9 @@ fun MainScreen(
     onCycleEarStyle: () -> Unit,
     earTint: EarTint,
     onCycleEarTint: () -> Unit,
+    partyModeEnabled: Boolean,
+    onTogglePartyMode: () -> Unit,
+    onRerollPartyAssignments: () -> Unit,
     captureRequested: Boolean,
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
@@ -104,6 +111,8 @@ fun MainScreen(
 
                 MainUiState.PermissionPermanentlyDenied -> PermissionDeniedContent(onOpenSettings)
 
+                MainUiState.CameraError -> CameraErrorContent(onRetryCamera)
+
                 MainUiState.Ready -> CameraContent(
                     lens = lens,
                     overlayPlacements = overlayPlacements,
@@ -112,11 +121,15 @@ fun MainScreen(
                     onCycleEarStyle = onCycleEarStyle,
                     earTint = earTint,
                     onCycleEarTint = onCycleEarTint,
+                    partyModeEnabled = partyModeEnabled,
+                    onTogglePartyMode = onTogglePartyMode,
+                    onRerollPartyAssignments = onRerollPartyAssignments,
                     captureRequested = captureRequested,
                     captureEnabled = captureEnabled,
                     onComposited = onComposited,
                     cameraControllerFactory = cameraControllerFactory,
                     faceDetectorFactory = faceDetectorFactory,
+                    onCameraError = onCameraError,
                     onToggleLens = onToggleLens,
                     onCapture = onCapture,
                     onShare = onShare,
@@ -242,6 +255,32 @@ private fun PermissionDeniedContent(onOpenSettings: () -> Unit) {
 }
 
 @Composable
+private fun CameraErrorContent(onRetryCamera: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(
+                text = "Camera unavailable",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "The camera could not be started. Close other camera apps and try again.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onRetryCamera) { Text("Retry") }
+        }
+    }
+}
+
+@Composable
 private fun CameraContent(
     lens: LensSelector,
     overlayPlacements: List<OverlayPlacement>,
@@ -250,11 +289,15 @@ private fun CameraContent(
     onCycleEarStyle: () -> Unit,
     earTint: EarTint,
     onCycleEarTint: () -> Unit,
+    partyModeEnabled: Boolean,
+    onTogglePartyMode: () -> Unit,
+    onRerollPartyAssignments: () -> Unit,
     captureRequested: Boolean,
     captureEnabled: Boolean,
     onComposited: (android.graphics.Bitmap?) -> Unit,
     cameraControllerFactory: () -> CameraXControllerImpl,
     faceDetectorFactory: () -> FaceDetectorSeam,
+    onCameraError: () -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
@@ -280,6 +323,7 @@ private fun CameraContent(
             onComposited = onComposited,
             controller = controller,
             faceDetectorFactory = faceDetectorFactory,
+            onCameraError = onCameraError,
             recordingRequested = recordingState is RecordingState.Recording,
             onRecordingSaved = onRecordingSaved,
             modifier = Modifier.fillMaxSize(),
@@ -290,6 +334,9 @@ private fun CameraContent(
             onCycleEarStyle = onCycleEarStyle,
             earTint = earTint,
             onCycleEarTint = onCycleEarTint,
+            partyModeEnabled = partyModeEnabled,
+            onTogglePartyMode = onTogglePartyMode,
+            onRerollPartyAssignments = onRerollPartyAssignments,
             onToggleLens = onToggleLens,
             onCapture = onCaptureTap,
             captureEnabled = captureEnabled,
@@ -308,6 +355,9 @@ private fun CameraFabRow(
     onCycleEarStyle: () -> Unit,
     earTint: EarTint,
     onCycleEarTint: () -> Unit,
+    partyModeEnabled: Boolean,
+    onTogglePartyMode: () -> Unit,
+    onRerollPartyAssignments: () -> Unit,
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     captureEnabled: Boolean,
@@ -324,14 +374,33 @@ private fun CameraFabRow(
             horizontalAlignment = Alignment.End,
         ) {
             RecordButton(recordingState, onRecordTap, onStopRecording)
-            SmallFloatingActionButton(onClick = onCycleEarTint) {
-                Icon(Icons.Filled.Palette, contentDescription = "Cycle ear colour: ${earTint.name}")
+            SmallFloatingActionButton(
+                onClick = onTogglePartyMode,
+                containerColor = if (partyModeEnabled) {
+                    MaterialTheme.colorScheme.tertiaryContainer
+                } else {
+                    MaterialTheme.colorScheme.secondaryContainer
+                },
+            ) {
+                Icon(
+                    Icons.Filled.Celebration,
+                    contentDescription = if (partyModeEnabled) "Turn off Party Mode" else "Turn on Party Mode",
+                )
             }
-            ExtendedFloatingActionButton(
-                onClick = onCycleEarStyle,
-                icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
-                text = { Text(earStyle.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }) },
-            )
+            if (partyModeEnabled) {
+                SmallFloatingActionButton(onClick = onRerollPartyAssignments) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Re-roll Party Mode ears")
+                }
+            } else {
+                SmallFloatingActionButton(onClick = onCycleEarTint) {
+                    Icon(Icons.Filled.Palette, contentDescription = "Cycle ear colour: ${earTint.name}")
+                }
+                ExtendedFloatingActionButton(
+                    onClick = onCycleEarStyle,
+                    icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
+                    text = { Text(earStyle.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }) },
+                )
+            }
             FloatingActionButton(onClick = onToggleLens) {
                 Icon(Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
             }
@@ -399,6 +468,8 @@ private fun MainScreenReadyPreview() {
             overlayPlacements = emptyList(),
             onRequestPermission = {},
             onOpenSettings = {},
+            onCameraError = {},
+            onRetryCamera = {},
             onToggleLens = {},
             onCapture = {},
             onShare = {},
@@ -407,6 +478,9 @@ private fun MainScreenReadyPreview() {
             onCycleEarStyle = {},
             earTint = EarTint.NATURAL,
             onCycleEarTint = {},
+            partyModeEnabled = false,
+            onTogglePartyMode = {},
+            onRerollPartyAssignments = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},
@@ -427,6 +501,8 @@ private fun MainScreenPermissionRequiredPreview() {
             overlayPlacements = emptyList(),
             onRequestPermission = {},
             onOpenSettings = {},
+            onCameraError = {},
+            onRetryCamera = {},
             onToggleLens = {},
             onCapture = {},
             onShare = {},
@@ -435,6 +511,9 @@ private fun MainScreenPermissionRequiredPreview() {
             onCycleEarStyle = {},
             earTint = EarTint.NATURAL,
             onCycleEarTint = {},
+            partyModeEnabled = false,
+            onTogglePartyMode = {},
+            onRerollPartyAssignments = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},
@@ -455,6 +534,8 @@ private fun MainScreenPermissionDeniedPreview() {
             overlayPlacements = emptyList(),
             onRequestPermission = {},
             onOpenSettings = {},
+            onCameraError = {},
+            onRetryCamera = {},
             onToggleLens = {},
             onCapture = {},
             onShare = {},
@@ -463,6 +544,9 @@ private fun MainScreenPermissionDeniedPreview() {
             onCycleEarStyle = {},
             earTint = EarTint.NATURAL,
             onCycleEarTint = {},
+            partyModeEnabled = false,
+            onTogglePartyMode = {},
+            onRerollPartyAssignments = {},
             captureRequested = false,
             captureEnabled = true,
             onComposited = {},

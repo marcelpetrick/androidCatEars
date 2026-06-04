@@ -48,6 +48,12 @@ class MainViewModel @Inject constructor(
     private val _earTint = MutableStateFlow(EarTint.NATURAL)
     val earTint: StateFlow<EarTint> = _earTint.asStateFlow()
 
+    private val _partyModeEnabled = MutableStateFlow(false)
+    val partyModeEnabled: StateFlow<Boolean> = _partyModeEnabled.asStateFlow()
+
+    private val partyFaceSlots = LinkedHashMap<Int, Int>()
+    private var partyRerollGeneration = 0
+
     /** Advances to the next [EarStyle] in cycle order, wrapping from last back to first. */
     fun onCycleEarStyle() {
         val styles = EarStyle.entries
@@ -62,17 +68,45 @@ class MainViewModel @Inject constructor(
         applyAppearance()
     }
 
+    fun onTogglePartyMode() {
+        _partyModeEnabled.value = !_partyModeEnabled.value
+        applyAppearance()
+    }
+
+    fun onRerollPartyAssignments() {
+        if (!_partyModeEnabled.value) return
+        partyRerollGeneration += 1
+        applyAppearance()
+    }
+
     private fun applyAppearance() {
-        _overlayPlacements.value = _overlayPlacements.value.map {
-            it.copy(earStyle = _earStyle.value, tint = _earTint.value)
-        }
+        _overlayPlacements.value = withAppearance(_overlayPlacements.value)
     }
 
     /** Called from the face-detection callback with all smoothed placements for the frame. */
     fun onFaceDetected(placements: List<OverlayPlacement>) {
-        _overlayPlacements.value = placements.map {
-            it.copy(earStyle = _earStyle.value, tint = _earTint.value)
+        _overlayPlacements.value = withAppearance(placements)
+    }
+
+    private fun withAppearance(placements: List<OverlayPlacement>): List<OverlayPlacement> =
+        if (_partyModeEnabled.value) {
+            placements.mapIndexed { index, placement ->
+                val slot = placement.trackingId?.let { id ->
+                    partyFaceSlots.getOrPut(id) { partyFaceSlots.size }
+                } ?: index
+                val appearance = partyAppearance(slot)
+                placement.copy(earStyle = appearance.style, tint = appearance.tint)
+            }
+        } else {
+            placements.map { it.copy(earStyle = _earStyle.value, tint = _earTint.value) }
         }
+
+    private fun partyAppearance(slot: Int): FaceAppearance {
+        val styles = PARTY_STYLE_ORDER
+        val tints = PARTY_TINT_ORDER
+        val styleIndex = shuffledIndex(slot, partyRerollGeneration, styles.size, STYLE_SEED)
+        val tintIndex = shuffledIndex(slot, partyRerollGeneration, tints.size, TINT_SEED)
+        return FaceAppearance(style = styles[styleIndex], tint = tints[tintIndex])
     }
 
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)
@@ -129,6 +163,16 @@ class MainViewModel @Inject constructor(
         _recordingState.value = RecordingState.Idle
     }
 
+    /** Camera hardware failed to bind; transitions to [MainUiState.CameraError]. */
+    fun onCameraBindFailed() {
+        _uiState.value = MainUiState.CameraError
+    }
+
+    /** User tapped retry after a camera error; re-enters [MainUiState.Ready]. */
+    fun onRetryCamera() {
+        _uiState.value = MainUiState.Ready
+    }
+
     /**
      * Called by the UI once the Android permission result is known.
      *
@@ -142,6 +186,39 @@ class MainViewModel @Inject constructor(
             PermissionState.Denied -> MainUiState.PermissionRequired
             PermissionState.PermanentlyDenied -> MainUiState.PermissionPermanentlyDenied
             PermissionState.Unknown -> MainUiState.Initialising
+        }
+    }
+
+    private data class FaceAppearance(val style: EarStyle, val tint: EarTint)
+
+    companion object {
+        private val PARTY_STYLE_ORDER = listOf(
+            EarStyle.CLASSIC,
+            EarStyle.FOX,
+            EarStyle.LYNX_TUFTED,
+            EarStyle.RABBIT,
+            EarStyle.DENSE_FLUFFY,
+            EarStyle.SHARP_FELINE,
+            EarStyle.CANINE_PERKY,
+            EarStyle.ROUNDED_FELINE,
+            EarStyle.BEAR,
+            EarStyle.CANINE_FLOPPY,
+        )
+        private val PARTY_TINT_ORDER = listOf(
+            EarTint.NATURAL,
+            EarTint.SKY,
+            EarTint.LAVENDER,
+            EarTint.ROSE,
+            EarTint.GOLD,
+            EarTint.MINT,
+        )
+        private const val STYLE_SEED = 3
+        private const val TINT_SEED = 5
+
+        private fun shuffledIndex(slot: Int, generation: Int, size: Int, seed: Int): Int = if (generation == 0) {
+            slot % size
+        } else {
+            Math.floorMod(slot * seed + generation * (seed + 2), size)
         }
     }
 }

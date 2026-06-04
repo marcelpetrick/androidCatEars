@@ -30,6 +30,7 @@ import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.withMatrix
 import androidx.lifecycle.LifecycleOwner
 import it.marcelpetrick.catears.capture.OverlayCompositor
 import it.marcelpetrick.catears.domain.FaceModel
@@ -72,6 +73,9 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         videoOverlayState.set(VideoOverlayState(placements, viewWidth, viewHeight))
     }
 
+    /** Set by the composable layer; called on the main thread when [bindPreview] fails. */
+    var onBindFailed: (() -> Unit)? = null
+
     fun setCameraProvider(provider: ProcessCameraProvider) {
         cameraProvider = provider
     }
@@ -105,6 +109,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             Log.d(TAG, "Camera bound (lens=$lens)")
         } catch (e: Exception) {
             Log.e(TAG, "Camera bind failed", e)
+            onBindFailed?.invoke()
         }
     }
 
@@ -120,8 +125,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
                 val fW = frame.getSize().width.toFloat()
                 val fH = frame.getSize().height.toFloat()
                 val canvas = frame.getOverlayCanvas()
-                canvas.save()
-                canvas.concat(
+                canvas.withMatrix(
                     viewToBufferMatrix(
                         fW,
                         fH,
@@ -129,9 +133,9 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
                         state.viewHeight.toFloat(),
                         frame.getRotationDegrees(),
                     ),
-                )
-                OverlayCompositor.drawEarsOnCanvas(canvas, state.placements)
-                canvas.restore()
+                ) {
+                    OverlayCompositor.drawEarsOnCanvas(canvas, state.placements)
+                }
             }
             true
         }
