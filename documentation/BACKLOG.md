@@ -437,6 +437,68 @@ down. The instance should be scoped to the camera composable lifecycle (`Disposa
 
 ---
 
+### WP 32 — Bug: recorded video clip missing ear overlay
+
+The 5-second clip saved to the gallery contains **plain camera frames with no cat-ear overlay**.
+The overlay is a Compose layer drawn on top of the preview surface; `CameraX VideoCapture` only
+records the raw camera stream and never sees the Compose layer.
+
+This supersedes **WP 29.1** (previously BLOCKED pending device verification). The fix requires
+compositing the ears into the frame before it reaches the `VideoCapture` use case.
+
+**Resolution path — `CameraEffect` / `SurfaceProcessor`:**
+CameraX (1.3+) exposes `CameraEffect` which intercepts the camera output as an OpenGL texture,
+allowing arbitrary per-frame processing before the frame reaches `Preview` and/or `VideoCapture`.
+A custom `SurfaceProcessor` would:
+1. Receive the raw OpenGL texture from the camera pipeline.
+2. Render the ear overlay (the same `OverlayPlacement` data the live preview uses) onto it.
+3. Output the composited frame to the bound `VideoCapture` use case.
+
+Because the overlay placement data lives in the ViewModel state (collected by `AppContent`) and the
+`SurfaceProcessor` runs on a GL thread, the placement list must be fed to the processor via a
+thread-safe `AtomicReference`.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 32.0 | TODO | Implement `CameraEffect` + `SurfaceProcessor` to bake ears into video | Recorded video shows the same ear overlay visible in the live preview at recording time. The `SurfaceProcessor` receives the latest `List<OverlayPlacement>` via an `AtomicReference` updated from the main thread. Preview stream is unaffected. All quality gates pass. |
+
+---
+
+### WP 33 — Bug: info/help icon too small and misaligned
+
+The info `IconButton` (top-right corner) does not visually match the rest of the UI:
+
+- **Size**: it is noticeably smaller than the FABs and other controls — the touch target and icon
+  diameter are both undersized relative to the bar / FAB hierarchy.
+- **Style**: it lacks the pill/rectangle background treatment that the title bar uses; the icon
+  appears to float without context.
+- **Vertical alignment**: the icon sits at a different Y-position than the "AndroidCatEars v…"
+  title bar on the opposite side of the screen. Both should share the same baseline / centre-line
+  so the top strip feels like a coherent bar.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 33.0 | TODO | Resize, re-style, and re-align info button | Icon is visually similar in weight to the title bar element on the opposite side. Both the title and the info button share the same vertical centre-line (same `statusBarsPadding()` + top offset). The info button has a matching semi-transparent rounded-rectangle background pill (matching `TITLE_BG_ALPHA` and `TITLE_CORNER_DP`). Touch target ≥ 48 dp. All gates green. |
+
+---
+
+### WP 34 — Bug: ears floating above head / oversized
+
+On real-device testing the cat ears appear positioned **too high above the head** and may be
+rendered **too large** relative to the face bounding box. The exact magnitude of the offset and
+scale error requires annotated screenshots from the user to diagnose precisely.
+
+**Status: waiting for user screenshots.** The user will provide one or more photos showing the
+current (buggy) ear placement with annotations marking where the ears should sit. Once received,
+the fix should be derived from the image data rather than guessed.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 34.0 | ASK | Receive annotated screenshot(s) showing expected vs actual ear position | User supplies ≥1 annotated image. Task is complete when the image(s) are committed to `media/` and the positioning bug is described in measurable terms (e.g., "ear base should be N% of face-box height below `box.top`"). |
+| 34.1 | TODO | Fix ear vertical offset and/or scale | After 34.0: adjust `computeOverlayPlacement` (or its callers) so the ear base sits at the correct attachment point relative to the skull top. Fixture tests updated. No regression on WP 30.0 fix. All gates green. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
