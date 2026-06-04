@@ -363,6 +363,22 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `party slot map is bounded when faces cycle through one at a time`() = runTest {
+        val vm = viewModel()
+        vm.onTogglePartyMode()
+        // 20 unique faces each visible for exactly one frame — without pruning the map
+        // would grow to size 20 and the 11th face would get slot 10 (out of 0..9 range).
+        // With pruning, every new solo face gets slot 0 → PARTY_STYLE_ORDER[0] = CLASSIC.
+        repeat(20) { i -> vm.onFaceDetected(listOf(trackedPlacement(id = i))) }
+
+        vm.overlayPlacements.test {
+            val result = awaitItem()
+            assertEquals(EarStyle.CLASSIC, result[0].earStyle)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `reroll is ignored when party mode is off`() = runTest {
         val vm = viewModel()
         vm.onFaceDetected(listOf(trackedPlacement(10)))

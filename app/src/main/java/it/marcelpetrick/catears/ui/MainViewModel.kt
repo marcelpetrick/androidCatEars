@@ -85,6 +85,8 @@ class MainViewModel @Inject constructor(
 
     /** Called from the face-detection callback with all smoothed placements for the frame. */
     fun onFaceDetected(placements: List<OverlayPlacement>) {
+        val activeIds = placements.mapNotNull { it.trackingId }.toSet()
+        partyFaceSlots.keys.retainAll(activeIds)
         _overlayPlacements.value = withAppearance(placements)
     }
 
