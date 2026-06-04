@@ -25,6 +25,12 @@ interface CameraControllerSeam : AutoCloseable {
         bindPreview(lens)
     }
 
+    /** Start a fixed-duration video recording; [onFinished] receives the MediaStore URI or null on failure. */
+    fun startVideoRecording(onFinished: (uriString: String?) -> Unit): Unit = Unit
+
+    /** Stop an in-progress recording early (the camera impl handles auto-stop after the clip duration). */
+    fun stopVideoRecording(): Unit = Unit
+
     override fun close() {
         unbind()
     }

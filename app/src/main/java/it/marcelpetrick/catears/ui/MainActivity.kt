@@ -13,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.camera.core.ExperimentalGetImage
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
@@ -22,6 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.domain.RecordingState
 import it.marcelpetrick.catears.facedetect.MlKitFaceDetectorImpl
 import it.marcelpetrick.catears.share.buildShareConfig
 import it.marcelpetrick.catears.share.toChooserIntent
@@ -47,63 +49,71 @@ class MainActivity : ComponentActivity() {
             window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         }
         enableEdgeToEdge()
-        setContent {
-            CatEarsTheme {
-                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-                val lens by viewModel.lens.collectAsStateWithLifecycle()
-                val overlayPlacements by viewModel.overlayPlacements.collectAsStateWithLifecycle()
-                val captureState by viewModel.captureState.collectAsStateWithLifecycle()
-                val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
-                val earTint by viewModel.earTint.collectAsStateWithLifecycle()
+        setContent { CatEarsTheme { AppContent() } }
+    }
 
-                val permissionLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission(),
-                ) { granted ->
-                    val showRationale = ActivityCompat
-                        .shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)
-                    viewModel.onPermissionResult(granted, showRationale)
-                }
+    @Composable
+    private fun AppContent() {
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val lens by viewModel.lens.collectAsStateWithLifecycle()
+        val overlayPlacements by viewModel.overlayPlacements.collectAsStateWithLifecycle()
+        val captureState by viewModel.captureState.collectAsStateWithLifecycle()
+        val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
+        val earTint by viewModel.earTint.collectAsStateWithLifecycle()
+        val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
 
-                // Kick off the permission check on first composition
-                LaunchedEffect(Unit) {
-                    permissionLauncher.launch(Manifest.permission.CAMERA)
-                }
-
-                val savedState = captureState as? CaptureState.Saved
-
-                MainScreen(
-                    uiState = uiState,
-                    lens = lens,
-                    overlayPlacements = overlayPlacements,
-                    onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                    onOpenSettings = { openAppSettings() },
-                    onToggleLens = viewModel::onToggleLens,
-                    onCapture = { viewModel.onCaptureRequested() },
-                    onShare = savedState?.let { saved ->
-                        {
-                            startActivity(buildShareConfig(saved.uriString.toUri()).toChooserIntent())
-                            viewModel.onCaptureConsumed()
-                        }
-                    },
-                    onFaceDetected = viewModel::onFaceDetected,
-                    earStyle = earStyle,
-                    onCycleEarStyle = viewModel::onCycleEarStyle,
-                    earTint = earTint,
-                    onCycleEarTint = viewModel::onCycleEarTint,
-                    captureRequested = captureState is CaptureState.Capturing,
-                    captureEnabled = captureState !is CaptureState.Capturing,
-                    onComposited = viewModel::onCompositedBitmap,
-                    cameraControllerFactory = { cameraControllerProvider.get() },
-                    faceDetectorFactory = { faceDetectorProvider.get() },
-                    captureStatus = when (captureState) {
-                        CaptureState.Capturing -> "Saving photo..."
-                        is CaptureState.Saved -> "Photo saved to gallery · tap share"
-                        CaptureState.Failed -> "Capture failed — please try again"
-                        else -> null
-                    },
-                )
-            }
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            val showRationale = ActivityCompat
+                .shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)
+            viewModel.onPermissionResult(granted, showRationale)
         }
+        LaunchedEffect(Unit) { permissionLauncher.launch(Manifest.permission.CAMERA) }
+
+        val savedState = captureState as? CaptureState.Saved
+        val savedRecording = recordingState as? RecordingState.Saved
+
+        MainScreen(
+            uiState = uiState,
+            lens = lens,
+            overlayPlacements = overlayPlacements,
+            onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+            onOpenSettings = { openAppSettings() },
+            onToggleLens = viewModel::onToggleLens,
+            onCapture = { viewModel.onCaptureRequested() },
+            onShare = savedState?.let { saved ->
+                {
+                    startActivity(buildShareConfig(saved.uriString.toUri()).toChooserIntent())
+                    viewModel.onCaptureConsumed()
+                }
+            },
+            onFaceDetected = viewModel::onFaceDetected,
+            earStyle = earStyle,
+            onCycleEarStyle = viewModel::onCycleEarStyle,
+            earTint = earTint,
+            onCycleEarTint = viewModel::onCycleEarTint,
+            captureRequested = captureState is CaptureState.Capturing,
+            captureEnabled = captureState !is CaptureState.Capturing,
+            onComposited = viewModel::onCompositedBitmap,
+            cameraControllerFactory = { cameraControllerProvider.get() },
+            faceDetectorFactory = { faceDetectorProvider.get() },
+            captureStatus = when (captureState) {
+                CaptureState.Capturing -> "Saving photo..."
+                is CaptureState.Saved -> "Photo saved to gallery · tap share"
+                CaptureState.Failed -> "Capture failed — please try again"
+                else -> null
+            },
+            recordingState = recordingState,
+            onRecordTap = viewModel::onRecordTap,
+            onRecordingSaved = viewModel::onRecordingSaved,
+            onShareVideo = savedRecording?.let { saved ->
+                {
+                    startActivity(buildShareConfig(saved.uriString.toUri(), "video/mp4").toChooserIntent())
+                    viewModel.onRecordingConsumed()
+                }
+            },
+        )
     }
 
     private fun openAppSettings() {

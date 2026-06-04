@@ -19,10 +19,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -58,6 +61,7 @@ import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.domain.RecordingState
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import it.marcelpetrick.catears.overlay.CatEarOverlay
 import it.marcelpetrick.catears.ui.theme.CatEarsTheme
@@ -84,6 +88,10 @@ fun MainScreen(
     faceDetectorFactory: () -> FaceDetectorSeam,
     captureStatus: String?,
     modifier: Modifier = Modifier,
+    recordingState: RecordingState = RecordingState.Idle,
+    onRecordTap: () -> Unit = {},
+    onRecordingSaved: (String?) -> Unit = {},
+    onShareVideo: (() -> Unit)? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -110,6 +118,10 @@ fun MainScreen(
                     onToggleLens = onToggleLens,
                     onCapture = onCapture,
                     onShare = onShare,
+                    recordingState = recordingState,
+                    onRecordTap = onRecordTap,
+                    onRecordingSaved = onRecordingSaved,
+                    onShareVideo = onShareVideo,
                 )
             }
             AppTitleBar(
@@ -244,6 +256,10 @@ private fun CameraContent(
     onToggleLens: () -> Unit,
     onCapture: () -> Unit,
     onShare: (() -> Unit)?,
+    recordingState: RecordingState,
+    onRecordTap: () -> Unit,
+    onRecordingSaved: (String?) -> Unit,
+    onShareVideo: (() -> Unit)?,
 ) {
     val haptic = LocalHapticFeedback.current
     val onCaptureTap: () -> Unit = {
@@ -260,18 +276,23 @@ private fun CameraContent(
             onComposited = onComposited,
             cameraControllerFactory = cameraControllerFactory,
             faceDetectorFactory = faceDetectorFactory,
+            recordingRequested = recordingState is RecordingState.Recording,
+            onRecordingSaved = onRecordingSaved,
             modifier = Modifier.fillMaxSize(),
         )
         CatEarOverlay(placements = overlayPlacements)
         CameraFabRow(
-            earStyle,
-            onCycleEarStyle,
-            earTint,
-            onCycleEarTint,
-            onToggleLens,
-            onCaptureTap,
-            captureEnabled,
-            onShare,
+            earStyle = earStyle,
+            onCycleEarStyle = onCycleEarStyle,
+            earTint = earTint,
+            onCycleEarTint = onCycleEarTint,
+            onToggleLens = onToggleLens,
+            onCapture = onCaptureTap,
+            captureEnabled = captureEnabled,
+            onShare = onShare,
+            recordingState = recordingState,
+            onRecordTap = onRecordTap,
+            onShareVideo = onShareVideo,
         )
     }
 }
@@ -286,6 +307,9 @@ private fun CameraFabRow(
     onCapture: () -> Unit,
     captureEnabled: Boolean,
     onShare: (() -> Unit)?,
+    recordingState: RecordingState,
+    onRecordTap: () -> Unit,
+    onShareVideo: (() -> Unit)?,
 ) {
     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         Column(
@@ -293,11 +317,9 @@ private fun CameraFabRow(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
+            RecordButton(recordingState, onRecordTap)
             SmallFloatingActionButton(onClick = onCycleEarTint) {
-                Icon(
-                    imageVector = Icons.Filled.Palette,
-                    contentDescription = "Cycle ear colour: ${earTint.name}",
-                )
+                Icon(Icons.Filled.Palette, contentDescription = "Cycle ear colour: ${earTint.name}")
             }
             ExtendedFloatingActionButton(
                 onClick = onCycleEarStyle,
@@ -305,7 +327,7 @@ private fun CameraFabRow(
                 text = { Text(earStyle.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }) },
             )
             FloatingActionButton(onClick = onToggleLens) {
-                Icon(imageVector = Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
+                Icon(Icons.Filled.Cameraswitch, contentDescription = "Switch camera")
             }
         }
         FloatingActionButton(
@@ -313,18 +335,49 @@ private fun CameraFabRow(
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
         ) {
             if (captureEnabled) {
-                Icon(imageVector = Icons.Filled.Camera, contentDescription = "Take photo")
+                Icon(Icons.Filled.Camera, contentDescription = "Take photo")
             } else {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+            }
+        }
+        ShareButtonColumn(
+            onShare = onShare,
+            onShareVideo = onShareVideo,
+            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+        )
+    }
+}
+
+@Composable
+private fun RecordButton(recordingState: RecordingState, onRecordTap: () -> Unit) {
+    val isRecording = recordingState is RecordingState.Recording
+    SmallFloatingActionButton(
+        onClick = onRecordTap,
+        containerColor = if (isRecording) {
+            MaterialTheme.colorScheme.error
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        },
+    ) {
+        if (isRecording) {
+            Icon(Icons.Filled.Stop, contentDescription = "Recording — tap to stop")
+        } else {
+            Icon(Icons.Filled.FiberManualRecord, contentDescription = "Record 5s clip")
+        }
+    }
+}
+
+@Composable
+private fun ShareButtonColumn(onShare: (() -> Unit)?, onShareVideo: (() -> Unit)?, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (onShareVideo != null) {
+            SmallFloatingActionButton(onClick = onShareVideo) {
+                Icon(Icons.Filled.Videocam, contentDescription = "Share video")
             }
         }
         if (onShare != null) {
-            FloatingActionButton(onClick = onShare, modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-                Icon(imageVector = Icons.Filled.Share, contentDescription = "Share photo")
+            FloatingActionButton(onClick = onShare) {
+                Icon(Icons.Filled.Share, contentDescription = "Share photo")
             }
         }
     }

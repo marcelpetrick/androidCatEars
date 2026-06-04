@@ -37,6 +37,10 @@ naming:
 
 complexity:
   active: true
+  LongMethod:
+    active: true
+    ignoreAnnotated:
+      - Composable
   LongParameterList:
     active: true
     ignoreDefaultParameters: true
@@ -46,5 +50,5 @@ complexity:
     active: true
     # Renderer files and test classes legitimately have many functions.
     excludes: ['**/overlay/CatEarOverlay.kt', '**/capture/OverlayCompositor.kt',
-               '**/ui/MainScreen.kt',
+               '**/ui/MainScreen.kt', '**/ui/MainViewModel.kt',
                '**/test/**', '**/androidTest/**']

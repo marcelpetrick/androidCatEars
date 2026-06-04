@@ -15,6 +15,7 @@ import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
+import it.marcelpetrick.catears.domain.RecordingState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
@@ -311,6 +312,73 @@ class MainViewModelTest {
             assertEquals(LensSelector.Rear, awaitItem())
             vm.onToggleLens()
             assertEquals(LensSelector.Front, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `initial recordingState is Idle`() = runTest {
+        viewModel().recordingState.test {
+            assertEquals(RecordingState.Idle, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onRecordTap transitions Idle to Recording`() = runTest {
+        val vm = viewModel()
+        vm.recordingState.test {
+            assertEquals(RecordingState.Idle, awaitItem())
+            vm.onRecordTap()
+            assertEquals(RecordingState.Recording, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onRecordTap while Recording is ignored`() = runTest {
+        val vm = viewModel()
+        vm.onRecordTap()
+        vm.recordingState.test {
+            assertEquals(RecordingState.Recording, awaitItem())
+            vm.onRecordTap()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onRecordingSaved with uri transitions to Saved`() = runTest {
+        val vm = viewModel()
+        vm.onRecordTap()
+        vm.recordingState.test {
+            awaitItem() // Recording
+            vm.onRecordingSaved("content://media/video/1")
+            assertEquals(RecordingState.Saved("content://media/video/1"), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onRecordingSaved null transitions to Failed`() = runTest {
+        val vm = viewModel()
+        vm.onRecordTap()
+        vm.recordingState.test {
+            awaitItem() // Recording
+            vm.onRecordingSaved(null)
+            assertEquals(RecordingState.Failed, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onRecordingConsumed resets to Idle from Saved`() = runTest {
+        val vm = viewModel()
+        vm.onRecordTap()
+        vm.onRecordingSaved("content://media/video/1")
+        vm.recordingState.test {
+            awaitItem() // Saved
+            vm.onRecordingConsumed()
+            assertEquals(RecordingState.Idle, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

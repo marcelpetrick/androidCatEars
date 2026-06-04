@@ -49,6 +49,8 @@ fun CameraPreview(
     cameraControllerFactory: () -> CameraXControllerImpl,
     faceDetectorFactory: () -> FaceDetectorSeam,
     modifier: Modifier = Modifier,
+    recordingRequested: Boolean = false,
+    onRecordingSaved: (String?) -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -64,12 +66,19 @@ fun CameraPreview(
         }
     }
 
+    LaunchedEffect(recordingRequested) {
+        if (recordingRequested) {
+            controller.startVideoRecording(onRecordingSaved)
+        }
+    }
+
     AndroidView(
         factory = { ctx ->
             val previewView = PreviewView(ctx).apply {
                 implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             }
             previewViewRef.set(previewView)
+            controller.context = ctx
             wireController(controller, previewView, lifecycleOwner, detector) { faces, w, h ->
                 val transform = TransformContext(
                     imageWidth = w,

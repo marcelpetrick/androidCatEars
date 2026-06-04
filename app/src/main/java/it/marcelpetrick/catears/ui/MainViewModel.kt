@@ -14,6 +14,7 @@ import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
+import it.marcelpetrick.catears.domain.RecordingState
 import it.marcelpetrick.catears.domain.permissionResultToState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -106,6 +107,26 @@ class MainViewModel @Inject constructor(
     /** Resets the capture state back to Idle (e.g. after the saved photo has been shared). */
     fun onCaptureConsumed() {
         _captureState.value = CaptureState.Idle
+    }
+
+    private val _recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
+    val recordingState: StateFlow<RecordingState> = _recordingState.asStateFlow()
+
+    /** Starts a recording if currently Idle; ignored if recording or in any other state. */
+    fun onRecordTap() {
+        if (_recordingState.value is RecordingState.Idle) {
+            _recordingState.value = RecordingState.Recording
+        }
+    }
+
+    /** Called by the camera layer when the recording finishes; null uri means failure. */
+    fun onRecordingSaved(uriString: String?) {
+        _recordingState.value = if (uriString != null) RecordingState.Saved(uriString) else RecordingState.Failed
+    }
+
+    /** Resets recording state to Idle after the clip has been shared. */
+    fun onRecordingConsumed() {
+        _recordingState.value = RecordingState.Idle
     }
 
     /**
