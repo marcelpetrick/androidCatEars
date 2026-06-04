@@ -5,6 +5,7 @@ package it.marcelpetrick.catears.camera
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Matrix
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -31,7 +32,6 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import it.marcelpetrick.catears.capture.OverlayCompositor
-import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.FaceModel
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
@@ -119,12 +119,19 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             if (state != null && state.placements.isNotEmpty()) {
                 val fW = frame.getSize().width.toFloat()
                 val fH = frame.getSize().height.toFloat()
-                val sx = fW / state.viewWidth
-                val sy = fH / state.viewHeight
-                val scaled = state.placements.map { p ->
-                    p.copy(leftEar = p.leftEar.scaleTo(sx, sy), rightEar = p.rightEar.scaleTo(sx, sy))
-                }
-                OverlayCompositor.drawEarsOnCanvas(frame.getOverlayCanvas(), scaled)
+                val canvas = frame.getOverlayCanvas()
+                canvas.save()
+                canvas.concat(
+                    viewToBufferMatrix(
+                        fW,
+                        fH,
+                        state.viewWidth.toFloat(),
+                        state.viewHeight.toFloat(),
+                        frame.getRotationDegrees(),
+                    ),
+                )
+                OverlayCompositor.drawEarsOnCanvas(canvas, state.placements)
+                canvas.restore()
             }
             true
         }
@@ -208,12 +215,31 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
 
     private companion object {
         const val ROTATION_90 = 90
+        const val ROTATION_180 = 180
         const val ROTATION_270 = 270
         const val TAG = "CatEars"
         const val VIDEO_DURATION_MS = 5_000L
         const val OVERLAY_QUEUE_DEPTH = 2
+
+        /**
+         * Produces a 3×3 affine [Matrix] (row-major) that maps a point (vx, vy) in view-space
+         * to the correct pixel position in the video buffer, accounting for the buffer's
+         * rotation relative to the display.
+         *
+         * Derivation for rotDeg=90 (buffer is landscape, display is portrait):
+         *   bx = vy * fW/vH  (view-y maps to buffer-x)
+         *   by = fH - vx * fH/vW  (view-x maps to inverted buffer-y)
+         * The other three rotations are derived analogously.
+         */
+        fun viewToBufferMatrix(fW: Float, fH: Float, vW: Float, vH: Float, rotDeg: Int): Matrix = Matrix().also { m ->
+            m.setValues(
+                when (rotDeg) {
+                    ROTATION_90 -> floatArrayOf(0f, fW / vH, 0f, -fH / vW, 0f, fH, 0f, 0f, 1f)
+                    ROTATION_180 -> floatArrayOf(-fW / vW, 0f, fW, 0f, -fH / vH, fH, 0f, 0f, 1f)
+                    ROTATION_270 -> floatArrayOf(0f, -fW / vH, fW, fH / vW, 0f, 0f, 0f, 0f, 1f)
+                    else -> floatArrayOf(fW / vW, 0f, 0f, 0f, fH / vH, 0f, 0f, 0f, 1f)
+                },
+            )
+        }
     }
 }
-
-private fun EarAnchor.scaleTo(sx: Float, sy: Float): EarAnchor =
-    copy(x = x * sx, y = y * sy, size = size * minOf(sx, sy))
