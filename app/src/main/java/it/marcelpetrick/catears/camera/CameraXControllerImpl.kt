@@ -28,10 +28,8 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
-import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.withMatrix
-import androidx.lifecycle.LifecycleOwner
 import it.marcelpetrick.catears.capture.OverlayCompositor
 import it.marcelpetrick.catears.domain.FaceModel
 import it.marcelpetrick.catears.domain.LensSelector
@@ -51,15 +49,8 @@ import javax.inject.Inject
 class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
 
     private var cameraProvider: ProcessCameraProvider? = null
-    var previewView: PreviewView? = null
-    var lifecycleOwner: LifecycleOwner? = null
-    var context: Context? = null
-
-    /** Optional face detector; when set, an ImageAnalysis use case is bound. */
-    var faceDetector: FaceDetectorSeam? = null
-
-    /** Receives (faces, uprightImageWidth, uprightImageHeight) on each analysed frame. */
-    var onFaceResult: ((List<FaceModel>, Int, Int) -> Unit)? = null
+    private var bindConfig: CameraBindConfig? = null
+    private var context: Context? = null
 
     private val analysisExecutor = Executors.newSingleThreadExecutor()
     private var videoCapture: VideoCapture<Recorder>? = null
@@ -74,22 +65,26 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
 
     @Volatile private var isFrontCamera: Boolean = false
 
+    /** Supplies all camera-session dependencies in one call before [bindPreview]. */
+    fun configure(config: CameraBindConfig) {
+        bindConfig = config
+        context = config.context
+    }
+
     fun updateOverlayPlacements(placements: List<OverlayPlacement>, viewWidth: Int, viewHeight: Int) {
         videoOverlayState.set(VideoOverlayState(placements, viewWidth, viewHeight))
     }
-
-    /** Set by the composable layer; called on the main thread when [bindPreview] fails. */
-    var onBindFailed: (() -> Unit)? = null
 
     fun setCameraProvider(provider: ProcessCameraProvider) {
         cameraProvider = provider
     }
 
     override fun bindPreview(lens: LensSelector) {
+        val config = bindConfig
         val provider = cameraProvider
-        val owner = lifecycleOwner
-        val surface = previewView
-        if (provider == null || owner == null || surface == null) return
+        if (config == null || provider == null) return
+        val owner = config.lifecycleOwner
+        val surface = config.previewView
 
         isFrontCamera = lens == LensSelector.Front
         val selector = when (lens) {
@@ -97,7 +92,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             LensSelector.Rear -> CameraSelector.DEFAULT_BACK_CAMERA
         }
         val preview = Preview.Builder().build().also { it.surfaceProvider = surface.surfaceProvider }
-        val analysis = buildAnalysisUseCase()
+        val analysis = buildAnalysisUseCase(config)
         val vc = buildVideoUseCase()
         currentOverlayEffect?.close()
         val effect = buildOverlayEffect()
@@ -117,7 +112,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             Log.d(TAG, "Camera bound (lens=$lens)")
         } catch (e: Exception) {
             Log.e(TAG, "Camera bind failed", e)
-            onBindFailed?.invoke()
+            config.onBindFailed?.invoke()
         }
     }
 
@@ -153,12 +148,14 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         return effect
     }
 
-    private fun buildAnalysisUseCase(): UseCase? {
-        val detector = faceDetector ?: return null
+    private fun buildAnalysisUseCase(config: CameraBindConfig): UseCase? {
+        val detector = config.faceDetector
+        val onFace = config.onFaceResult
+        if (detector == null || onFace == null) return null
         val analysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-        analysis.setAnalyzer(analysisExecutor) { proxy -> analyseFrame(detector, proxy) }
+        analysis.setAnalyzer(analysisExecutor) { proxy -> analyseFrame(detector, proxy, onFace) }
         return analysis
     }
 
@@ -170,14 +167,18 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     }
 
     @androidx.annotation.OptIn(ExperimentalGetImage::class)
-    private fun analyseFrame(detector: FaceDetectorSeam, proxy: ImageProxy) {
+    private fun analyseFrame(
+        detector: FaceDetectorSeam,
+        proxy: ImageProxy,
+        onFace: (List<FaceModel>, Int, Int) -> Unit,
+    ) {
         val rotation = proxy.imageInfo.rotationDegrees
         val portrait = rotation == ROTATION_90 || rotation == ROTATION_270
         val width = if (portrait) proxy.height else proxy.width
         val height = if (portrait) proxy.width else proxy.height
         @Suppress("TooGenericExceptionCaught")
         try {
-            detector.process(proxy) { face -> onFaceResult?.invoke(face, width, height) }
+            detector.process(proxy) { face -> onFace(face, width, height) }
         } catch (e: Exception) {
             Log.e(TAG, "Face analysis failed for frame", e)
             proxy.close()

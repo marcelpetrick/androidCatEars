@@ -105,19 +105,25 @@ fun CameraPreview(
                 implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             }
             previewViewRef.set(previewView)
-            controller.context = ctx
-            controller.onBindFailed = { currentOnCameraError() }
-            wireController(controller, previewView, lifecycleOwner, detector) { faces, w, h ->
-                val transform = TransformContext(
-                    imageWidth = w,
-                    imageHeight = h,
-                    viewWidth = previewView.width.coerceAtLeast(1),
-                    viewHeight = previewView.height.coerceAtLeast(1),
-                    isFrontCamera = lens == LensSelector.Front,
-                )
-                val placements = facePlacements(faces, transform, smoother)
-                onFaceDetected(placements)
-            }
+            controller.configure(
+                CameraBindConfig(
+                    previewView = previewView,
+                    lifecycleOwner = lifecycleOwner,
+                    context = ctx,
+                    faceDetector = detector,
+                    onFaceResult = { faces, w, h ->
+                        val transform = TransformContext(
+                            imageWidth = w,
+                            imageHeight = h,
+                            viewWidth = previewView.width.coerceAtLeast(1),
+                            viewHeight = previewView.height.coerceAtLeast(1),
+                            isFrontCamera = lens == LensSelector.Front,
+                        )
+                        onFaceDetected(facePlacements(faces, transform, smoother))
+                    },
+                    onBindFailed = { currentOnCameraError() },
+                ),
+            )
             startCamera(ctx, controller, lens)
             previewView
         },
@@ -200,20 +206,6 @@ private fun singleFacePlacement(
         eyeOpennessMean = eyeOpennessMean,
         trackingId = face.trackingId,
     )
-}
-
-@androidx.annotation.OptIn(ExperimentalGetImage::class)
-private fun wireController(
-    controller: CameraXControllerImpl,
-    previewView: PreviewView,
-    lifecycleOwner: androidx.lifecycle.LifecycleOwner,
-    detector: FaceDetectorSeam,
-    onFace: (List<it.marcelpetrick.catears.domain.FaceModel>, Int, Int) -> Unit,
-) {
-    controller.previewView = previewView
-    controller.lifecycleOwner = lifecycleOwner
-    controller.faceDetector = detector
-    controller.onFaceResult = onFace
 }
 
 private fun startCamera(context: android.content.Context, controller: CameraXControllerImpl, lens: LensSelector) {
