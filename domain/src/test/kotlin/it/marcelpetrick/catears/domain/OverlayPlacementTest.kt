@@ -35,6 +35,13 @@ class OverlayPlacementTest {
     }
 
     @Test
+    fun `fallback —ear bases attach to head top`() {
+        val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        assertTrue(p.leftEar.y + p.leftEar.size >= box.top) { "Left ear base should touch the head top" }
+        assertTrue(p.rightEar.y + p.rightEar.size >= box.top) { "Right ear base should touch the head top" }
+    }
+
+    @Test
     fun `fallback —ear size scales with face box width`() {
         val p = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f, widthRatio = 0.65f)
         val expected = box.width * 0.65f
@@ -148,7 +155,7 @@ class OverlayPlacementTest {
     @Test
     fun `ear-anchor —cat ear vertical placement attaches to top of head`() {
         val earSize = box.width * 0.65f
-        val expectedTopY = box.top - box.height * 0.1f - earSize
+        val expectedTopY = box.top + box.height * 0.04f - earSize
         val p = computeOverlayPlacement(
             viewBox = box,
             headEulerAngleZ = 0f,
@@ -157,6 +164,8 @@ class OverlayPlacementTest {
         )
         assertEquals(expectedTopY, p.leftEar.y, DELTA)
         assertEquals(expectedTopY, p.rightEar.y, DELTA)
+        assertTrue(p.leftEar.y + earSize >= box.top) { "Cat ear base should start at the head" }
+        assertTrue(p.rightEar.y + earSize >= box.top) { "Cat ear base should start at the head" }
         assertTrue(p.leftEar.y + earSize < leftEar.y) { "Cat ear base should sit above the human ear landmark" }
         assertTrue(p.rightEar.y + earSize < rightEar.y) { "Cat ear base should sit above the human ear landmark" }
     }

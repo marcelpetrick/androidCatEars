@@ -76,8 +76,8 @@ data class PlacementFixture(
         // Derived geometry for the standard box.
         private const val EAR_SIZE = 100f * W // 65
         private const val HALF_SPC = EAR_SIZE * 0.35f // 22.75
-        private const val EAR_BOT = 250f - 100f * 0.1f // 240  (earHeightRatio=0.1)
-        private const val TOP_Y = EAR_BOT - EAR_SIZE // 175
+        private const val EAR_BOT = 250f + 100f * 0.04f // 254  (earHeightRatio=0.04)
+        private const val TOP_Y = EAR_BOT - EAR_SIZE // 189
         private const val LX = 200f - HALF_SPC // 177.25
         private const val RX = 200f + HALF_SPC // 222.75
 

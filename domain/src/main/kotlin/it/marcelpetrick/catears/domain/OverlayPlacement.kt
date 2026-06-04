@@ -54,7 +54,7 @@ data class OverlayPlacement(
  * @param leftEarAnchor View-space position of the left ear landmark; null = use fallback.
  * @param rightEarAnchor View-space position of the right ear landmark; null = use fallback.
  * @param widthRatio Width of one ear relative to face width. Default 0.65.
- * @param earHeightRatio Gap between box top and ear bottom (fraction of height).
+ * @param earHeightRatio Attachment depth for the ear bottom below box top (fraction of height).
  * @param smilingProbability Raw smile probability from ML Kit [0..1]; 0 when absent.
  * @param eyeOpennessMean Mean of left+right eye-open probabilities [0..1]; 1 when absent.
  * @param trackingId Stable face-tracking ID for Compose keying; null when unavailable.
@@ -76,7 +76,7 @@ fun computeOverlayPlacement(
     val yawFraction = (headEulerAngleY / MAX_YAW_DEGREES).coerceIn(-1f, 1f)
     val leftXScale = (1f - yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
     val rightXScale = (1f + yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
-    val earBottomY = viewBox.top - viewBox.height * earHeightRatio
+    val earBottomY = viewBox.top + viewBox.height * earHeightRatio
     val topY = earBottomY - earSize
 
     return if (leftEarAnchor != null && rightEarAnchor != null) {
@@ -209,7 +209,7 @@ class MultiFaceSmoother(private val alpha: Float = DEFAULT_MULTI_ALPHA) {
 }
 
 private const val DEFAULT_EAR_WIDTH_RATIO = 0.65f
-private const val DEFAULT_EAR_HEIGHT_RATIO = 0.1f
+private const val DEFAULT_EAR_HEIGHT_RATIO = 0.04f
 private const val EAR_HALF_SPACING_RATIO = 0.35f
 private const val MAX_YAW_DEGREES = 45f
 private const val PERSPECTIVE_STRENGTH = 0.5f

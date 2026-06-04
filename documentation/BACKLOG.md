@@ -401,7 +401,7 @@ Two regressions were observed in release **0.1.119** during real-device use. The
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 30.0 | TODO | Fix cat-ear head attachment after landmark anchoring change | In release 0.1.119 the ears are positioned too high above the skull; the bases no longer touch the visible top of the head. Short analysis: the vertical anchor was moved away from the human-ear landmarks, but the top-of-head offset now overcompensates and places `anchor.y + anchor.size` above the hairline. Tune the placement so cat ears attach to the head top while staying above human-ear height. Add or update placement fixture tests that prove the base point lands on/near the top-of-head attachment zone. |
+| 30.0 | DONE | Fix cat-ear head attachment after landmark anchoring change | In release 0.1.119 the ears were positioned too high above the skull; the bases no longer touched the visible top of the head. Fixed by changing the vertical anchor so each ear base slightly overlaps the top of the detected head/face box (`box.top + 4% height`) instead of floating above it. Fixture and focused placement tests now prove the base point lands on/near the top-of-head attachment zone while staying above human-ear landmarks. |
 | 30.1 | DONE | Apply selected ear tint to saved captures | Saved images still render the default brown ears even when the live preview uses a selected hue such as lila. Fixed by making the capture path use the same appearance-enriched `overlayPlacements` list as the live overlay, instead of the raw face-detector placements. The compositor already applied non-default `EarTint`; the missing piece was propagation into the captured bitmap path. |
 
 ---
