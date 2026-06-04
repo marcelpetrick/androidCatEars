@@ -15,12 +15,12 @@
 
 **License: GPLv3 or later. See `LICENSE`.**
 
-This project is developed using AI-assisted coding (Claude Code as the primary
-engineering agent) with Marcel Petrick as the human author — reviewing every
-change, steering architecture decisions, and owning the final product. All
-commits are signed off (`git commit -s`) by the human author. "AI-generated"
-means accelerated by AI, not unsupervised: every diff is read and understood
-before it lands.
+This project is developed using agentic AI workflows — autonomous coding agents
+that plan, implement, test, and iterate across the full development cycle.
+Marcel Petrick is the human author: setting direction, reviewing every change,
+making architectural decisions, and owning the final product. All commits are
+signed off by the human author. "AI-generated" means the agents do the typing;
+the human does the thinking.
 
 ---
 
