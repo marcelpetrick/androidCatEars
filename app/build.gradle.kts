@@ -67,6 +67,7 @@ android {
         versionCode = rootProject.extra["appVersionCode"] as Int
         versionName = rootProject.extra["appVersionName"] as String
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommitHash\"")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     if (hasReleaseSigning) {
@@ -151,6 +152,10 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
+
+    // Compose UI tests — run on emulator/device (androidTest source set)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
 
     // ML Kit — on-device face detection
     implementation(libs.mlkit.face.detection)

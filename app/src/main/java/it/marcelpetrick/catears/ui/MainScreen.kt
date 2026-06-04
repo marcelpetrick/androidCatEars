@@ -255,7 +255,7 @@ private fun PermissionDeniedContent(onOpenSettings: () -> Unit) {
 }
 
 @Composable
-private fun CameraErrorContent(onRetryCamera: () -> Unit) {
+internal fun CameraErrorContent(onRetryCamera: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -424,7 +424,7 @@ private fun CameraFabRow(
 }
 
 @Composable
-private fun RecordButton(recordingState: RecordingState, onRecordTap: () -> Unit, onStopRecording: () -> Unit) {
+internal fun RecordButton(recordingState: RecordingState, onRecordTap: () -> Unit, onStopRecording: () -> Unit) {
     val isRecording = recordingState is RecordingState.Recording
     SmallFloatingActionButton(
         onClick = if (isRecording) onStopRecording else onRecordTap,
