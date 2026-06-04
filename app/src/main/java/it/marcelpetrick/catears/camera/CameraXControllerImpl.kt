@@ -186,8 +186,9 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     }
 
     override fun startVideoRecording(onFinished: (uriString: String?) -> Unit) {
-        val ctx = context ?: return
-        val vc = videoCapture ?: return
+        val ctx = context
+        val vc = videoCapture
+        if (activeRecording != null || ctx == null || vc == null) return
         val contentValues = ContentValues().apply {
             put(MediaStore.Video.Media.DISPLAY_NAME, "cat_ears_${System.currentTimeMillis()}.mp4")
             put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
