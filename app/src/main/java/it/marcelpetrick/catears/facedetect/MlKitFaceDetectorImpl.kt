@@ -17,7 +17,8 @@ import javax.inject.Inject
  * ML Kit-backed implementation of [FaceDetectorSeam].
  *
  * Excluded from Kover coverage (ML Kit / camera are device-only).
- * Selects the face with the largest bounding box when multiple are detected.
+ * Returns up to [FaceDetectorSeam.MAX_FACES] faces sorted largest-bounding-box first
+ * so the most prominent face in the frame consistently receives cat ears.
  */
 @ExperimentalGetImage
 class MlKitFaceDetectorImpl @Inject constructor() : FaceDetectorSeam {
@@ -43,7 +44,12 @@ class MlKitFaceDetectorImpl @Inject constructor() : FaceDetectorSeam {
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
         detector.process(image)
             .addOnSuccessListener { faces ->
-                onResult(faces.take(FaceDetectorSeam.MAX_FACES).map { it.toFaceModel() })
+                onResult(
+                    faces
+                        .sortedByDescending { it.boundingBox.width().toLong() * it.boundingBox.height() }
+                        .take(FaceDetectorSeam.MAX_FACES)
+                        .map { it.toFaceModel() },
+                )
             }
             .addOnFailureListener { onResult(emptyList()) }
             .addOnCompleteListener { imageProxy.close() }
