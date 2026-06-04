@@ -328,6 +328,16 @@ Individually small improvements that collectively lift the "first launch" and
 
 ---
 
+### WP 26 — Build & tooling maintenance
+
+Keep the build log clean and forward-compatible with future Gradle majors.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 26.0 | BLOCKED | Resolve the `ReportingExtension.file(String)` Gradle deprecation | The only deprecation left in the build originates inside the detekt **plugin** (`io.gitlab.arturbosch.detekt.DetektPlugin.apply` → `ReportingExtension.file`), not in our scripts. It is scheduled for removal in Gradle 10. Our own Kotlin compile (all source sets), Spotless, detekt rules, and Android Lint are warning-free. **Blocker:** the fix landed in detekt 2.x, which is only available as `2.0.0-alpha.x`; 1.23.8 is the latest stable and is what we pin. Upgrade once detekt 2.0 ships **stable**, then re-verify `maxIssues: 0` against any renamed/relocated rules. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·
