@@ -152,11 +152,7 @@ object OverlayCompositor {
                 EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(this, anchor)
                 EarStyle.LYNX_TUFTED -> drawLynxTuftedEar(this, anchor)
                 EarStyle.DENSE_FLUFFY -> drawDenseFluffyEar(this, anchor)
-                EarStyle.CANINE_FLOPPY -> drawCanineFloppyEar(this, anchor)
-                EarStyle.CANINE_PERKY -> drawCaninePerkyEar(this, anchor)
-                EarStyle.RABBIT -> drawRabbitEar(this, anchor)
                 EarStyle.FOX -> drawFoxEar(this, anchor)
-                EarStyle.BEAR -> drawBearEar(this, anchor)
             }
             drawMaterialFinish(this, anchor, spec)
         }
@@ -195,7 +191,7 @@ object OverlayCompositor {
         val s = anchor.size
         val geometry = MaterialEarGeometry(
             tipX = anchor.x + styleTipOffset(spec.style) * s,
-            tipY = anchor.y + styleTipYOffset(spec.style) * s,
+            tipY = anchor.y,
             leftBaseX = anchor.x - styleLeftBase(spec.style) * s,
             leftBaseY = anchor.y + s,
             rightBaseX = anchor.x + styleRightBase(spec.style) * s,
@@ -340,77 +336,6 @@ object OverlayCompositor {
         }
     }
 
-    // ─── CANINE FLOPPY ────────────────────────────────────────────────────────
-
-    private fun drawCanineFloppyEar(canvas: Canvas, anchor: EarAnchor) {
-        val cx = anchor.x
-        val top = anchor.y
-        val s = anchor.size
-        val flapDx = s * 0.55f
-        val flapDy = s * 1.15f
-        val outer = Path().apply {
-            moveTo(cx - s * 0.15f, top)
-            cubicTo(cx - flapDx, top, cx - flapDx, top + flapDy * 0.6f, cx - flapDx * 0.5f, top + flapDy)
-            cubicTo(cx, top + flapDy * 1.05f, cx + s * 0.1f, top + flapDy * 0.4f, cx + s * 0.08f, top)
-            close()
-        }
-        canvas.drawPath(outer, floppyOuterPaint)
-        val inner = Path().apply {
-            moveTo(cx - s * 0.12f, top + s * 0.15f)
-            cubicTo(
-                cx - flapDx * 0.8f,
-                top + s * 0.2f,
-                cx - flapDx * 0.8f,
-                top + flapDy * 0.55f,
-                cx - flapDx * 0.4f,
-                top + flapDy * 0.88f,
-            )
-            cubicTo(
-                cx,
-                top + flapDy * 0.95f,
-                cx + s * 0.05f,
-                top + flapDy * 0.35f,
-                cx + s * 0.04f,
-                top + s * 0.15f,
-            )
-            close()
-        }
-        canvas.drawPath(inner, floppyInnerPaint)
-    }
-
-    // ─── CANINE PERKY ─────────────────────────────────────────────────────────
-
-    private fun drawCaninePerkyEar(canvas: Canvas, anchor: EarAnchor) {
-        val cx = anchor.x
-        val top = anchor.y
-        val s = anchor.size
-        val halfBase = s * 0.38f
-        val tipY = top + s * 0.20f
-        // Arc tip matches CatEarOverlay.drawCaninePerkyEar (arcTo, not drawCircle).
-        val outer = Path().apply {
-            moveTo(cx - halfBase, top + s)
-            lineTo(cx + halfBase, top + s)
-            lineTo(cx + halfBase * 0.4f, tipY + s * 0.08f)
-            arcTo(
-                RectF(cx - halfBase * 0.4f, tipY - s * 0.10f, cx + halfBase * 0.4f, tipY + s * 0.18f),
-                0f,
-                -180f,
-            )
-            lineTo(cx - halfBase * 0.4f, tipY + s * 0.08f)
-            close()
-        }
-        canvas.drawPath(outer, perkyOuterPaint)
-        val inner = floatArrayOf(
-            cx - halfBase * 0.55f,
-            top + s * 0.95f,
-            cx + halfBase * 0.55f,
-            top + s * 0.95f,
-            cx,
-            tipY + s * 0.12f,
-        )
-        canvas.drawPath(trianglePath(inner), perkyInnerPaint)
-    }
-
     // ─── ROUNDED FELINE ──────────────────────────────────────────────────────
 
     private fun drawRoundedFelineEar(canvas: Canvas, anchor: EarAnchor) {
@@ -474,17 +399,6 @@ object OverlayCompositor {
         }
     }
 
-    // ─── RABBIT ───────────────────────────────────────────────────────────────
-
-    private fun drawRabbitEar(canvas: Canvas, anchor: EarAnchor) {
-        val cx = anchor.x
-        val top = anchor.y
-        val s = anchor.size
-        val halfW = s * 0.18f
-        canvas.drawOval(cx - halfW, top, cx + halfW, top + s, rabbitOuterPaint)
-        canvas.drawOval(cx - halfW * 0.55f, top + s * 0.06f, cx + halfW * 0.55f, top + s * 0.92f, rabbitInnerPaint)
-    }
-
     // ─── FOX ──────────────────────────────────────────────────────────────────
 
     private fun drawFoxEar(canvas: Canvas, anchor: EarAnchor) {
@@ -511,18 +425,6 @@ object OverlayCompositor {
             foxInnerPaint,
         )
         canvas.drawCircle(tipX, top, s * 0.07f, whitePaint)
-    }
-
-    // ─── BEAR ─────────────────────────────────────────────────────────────────
-
-    private fun drawBearEar(canvas: Canvas, anchor: EarAnchor) {
-        val cx = anchor.x
-        val top = anchor.y
-        val s = anchor.size
-        val r = s * 0.32f
-        val cy = top + r
-        canvas.drawCircle(cx, cy, r, bearOuterPaint)
-        canvas.drawCircle(cx, cy, r * 0.55f, bearInnerPaint)
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
@@ -564,19 +466,11 @@ object OverlayCompositor {
         else -> 0f
     }
 
-    private fun styleTipYOffset(style: EarStyle): Float = when (style) {
-        EarStyle.CANINE_PERKY -> PERKY_TIP_Y
-        else -> 0f
-    }
-
     private fun styleLeftBase(style: EarStyle): Float = when (style) {
         EarStyle.SHARP_FELINE -> FELINE_BASE_LEFT
         EarStyle.LYNX_TUFTED -> LYNX_BASE_LEFT
         EarStyle.DENSE_FLUFFY -> FLUFFY_LEFT_BASE
         EarStyle.FOX -> FOX_HALF_BASE
-        EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
-        EarStyle.RABBIT -> RABBIT_HALF_WIDTH
-        EarStyle.BEAR -> BEAR_RADIUS_RATIO
         else -> OUTER_HALF_BASE
     }
 
@@ -585,9 +479,6 @@ object OverlayCompositor {
         EarStyle.LYNX_TUFTED -> LYNX_BASE_RIGHT
         EarStyle.DENSE_FLUFFY -> FLUFFY_RIGHT_BASE
         EarStyle.FOX -> FOX_RIGHT_BASE
-        EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
-        EarStyle.RABBIT -> RABBIT_HALF_WIDTH
-        EarStyle.BEAR -> BEAR_RADIUS_RATIO
         else -> OUTER_HALF_BASE
     }
 
@@ -620,20 +511,12 @@ object OverlayCompositor {
             strokeCap = Paint.Cap.ROUND
         }
     }
-    private val floppyOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLOPPY_OUTER } }
-    private val floppyInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLOPPY_INNER } }
-    private val perkyOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PERKY_OUTER } }
-    private val perkyInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PERKY_INNER } }
     private val roundedOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ROUNDED_OUTER } }
     private val fluffyOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLUFFY_OUTER } }
     private val fluffyInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FLUFFY_INNER } }
-    private val rabbitOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = RABBIT_OUTER } }
-    private val rabbitInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = RABBIT_INNER } }
     private val foxOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FOX_OUTER } }
     private val foxInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FOX_INNER } }
     private val whitePaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = WHITE } }
-    private val bearOuterPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BEAR_OUTER } }
-    private val bearInnerPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BEAR_INNER } }
 
     // ─── geometry constants ───────────────────────────────────────────────────
     private const val OUTER_HALF_BASE = 0.42f
@@ -647,12 +530,8 @@ object OverlayCompositor {
     private const val LYNX_BASE_RIGHT = 0.34f
     private const val FLUFFY_LEFT_BASE = 0.48f
     private const val FLUFFY_RIGHT_BASE = 0.408f
-    private const val PERKY_HALF_BASE = 0.38f
-    private const val PERKY_TIP_Y = 0.20f
-    private const val RABBIT_HALF_WIDTH = 0.18f
     private const val FOX_HALF_BASE = 0.32f
     private const val FOX_RIGHT_BASE = 0.224f
-    private const val BEAR_RADIUS_RATIO = 0.32f
     private val FLUFFY_PHASES = floatArrayOf(0.0f, 0.8f, 1.6f, 2.4f, 0.4f, 1.2f, 2.0f, 0.6f)
 
     // ─── material finish constants ───────────────────────────────────────────
@@ -693,19 +572,11 @@ object OverlayCompositor {
     private val FELINE_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xA8 shl 8) or 0xA0
     private val LYNX_OUTER: Int = (0xFF shl 24) or (0x9B shl 16) or (0x70 shl 8) or 0x40
     private val LYNX_TUFT: Int = (0xFF shl 24) or (0x2E shl 16) or (0x1A shl 8) or 0x08
-    private val FLOPPY_OUTER: Int = (0xFF shl 24) or (0xB8 shl 16) or (0x86 shl 8) or 0x4A
-    private val FLOPPY_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xC8 shl 8) or 0xA8
-    private val PERKY_OUTER: Int = (0xFF shl 24) or (0xD4 shl 16) or (0xB8 shl 8) or 0x96
-    private val PERKY_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xA0 shl 8) or 0x90
     private val ROUNDED_OUTER: Int = (0xFF shl 24) or (0xBF shl 16) or (0x8A shl 8) or 0x5A
     private val FLUFFY_OUTER: Int = (0xFF shl 24) or (0x9E shl 16) or (0x6A shl 8) or 0x38
     private val FLUFFY_INNER: Int = (0xFF shl 24) or (0xE0 shl 16) or (0xB0 shl 8) or 0xA0
     private val FLUFFY_FUR: Int = (0xFF shl 24) or (0x6A shl 16) or (0x3E shl 8) or 0x18
-    private val RABBIT_OUTER: Int = (0xFF shl 24) or (0xF0 shl 16) or (0xEC shl 8) or 0xEC
-    private val RABBIT_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0x90 shl 8) or 0xB0
     private val FOX_OUTER: Int = (0xFF shl 24) or (0xD4 shl 16) or (0x58 shl 8) or 0x00
     private val FOX_INNER: Int = (0xFF shl 24) or (0xE8 shl 16) or (0xC0 shl 8) or 0x90
     private val WHITE: Int = (0xFF shl 24) or (0xFF shl 16) or (0xFF shl 8) or 0xFF
-    private val BEAR_OUTER: Int = (0xFF shl 24) or (0x3A shl 16) or (0x20 shl 8) or 0x10
-    private val BEAR_INNER: Int = (0xFF shl 24) or (0x7A shl 16) or (0x40 shl 8) or 0x20
 }

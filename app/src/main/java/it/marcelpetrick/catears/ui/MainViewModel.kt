@@ -11,7 +11,6 @@ import it.marcelpetrick.catears.capture.CaptureRuntime
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.EarStyle
-import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
@@ -46,9 +45,6 @@ class MainViewModel @Inject constructor(
     private val _earStyle = MutableStateFlow(EarStyle.CLASSIC)
     val earStyle: StateFlow<EarStyle> = _earStyle.asStateFlow()
 
-    private val _earTint = MutableStateFlow(EarTint.NATURAL)
-    val earTint: StateFlow<EarTint> = _earTint.asStateFlow()
-
     private val _partyModeEnabled = MutableStateFlow(false)
     val partyModeEnabled: StateFlow<Boolean> = _partyModeEnabled.asStateFlow()
 
@@ -59,13 +55,6 @@ class MainViewModel @Inject constructor(
     fun onCycleEarStyle() {
         val styles = EarStyle.entries
         _earStyle.value = styles[(_earStyle.value.ordinal + 1) % styles.size]
-        applyAppearance()
-    }
-
-    /** Advances to the next [EarTint] in cycle order, wrapping from last back to first. */
-    fun onCycleEarTint() {
-        val tints = EarTint.entries
-        _earTint.value = tints[(_earTint.value.ordinal + 1) % tints.size]
         applyAppearance()
     }
 
@@ -97,19 +86,16 @@ class MainViewModel @Inject constructor(
                 val slot = placement.trackingId?.let { id ->
                     partyFaceSlots.getOrPut(id) { partyFaceSlots.size }
                 } ?: index
-                val appearance = partyAppearance(slot)
-                placement.copy(earStyle = appearance.style, tint = appearance.tint)
+                placement.copy(earStyle = partyAppearance(slot))
             }
         } else {
-            placements.map { it.copy(earStyle = _earStyle.value, tint = _earTint.value) }
+            placements.map { it.copy(earStyle = _earStyle.value) }
         }
 
-    private fun partyAppearance(slot: Int): FaceAppearance {
+    private fun partyAppearance(slot: Int): EarStyle {
         val styles = PARTY_STYLE_ORDER
-        val tints = PARTY_TINT_ORDER
         val styleIndex = shuffledIndex(slot, partyRerollGeneration, styles.size, STYLE_SEED)
-        val tintIndex = shuffledIndex(slot, partyRerollGeneration, tints.size, TINT_SEED)
-        return FaceAppearance(style = styles[styleIndex], tint = tints[tintIndex])
+        return styles[styleIndex]
     }
 
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)
@@ -193,31 +179,16 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private data class FaceAppearance(val style: EarStyle, val tint: EarTint)
-
     companion object {
         private val PARTY_STYLE_ORDER = listOf(
             EarStyle.CLASSIC,
             EarStyle.FOX,
             EarStyle.LYNX_TUFTED,
-            EarStyle.RABBIT,
             EarStyle.DENSE_FLUFFY,
             EarStyle.SHARP_FELINE,
-            EarStyle.CANINE_PERKY,
             EarStyle.ROUNDED_FELINE,
-            EarStyle.BEAR,
-            EarStyle.CANINE_FLOPPY,
-        )
-        private val PARTY_TINT_ORDER = listOf(
-            EarTint.NATURAL,
-            EarTint.SKY,
-            EarTint.LAVENDER,
-            EarTint.ROSE,
-            EarTint.GOLD,
-            EarTint.MINT,
         )
         private const val STYLE_SEED = 3
-        private const val TINT_SEED = 5
 
         private fun shuffledIndex(slot: Int, generation: Int, size: Int, seed: Int): Int = if (generation == 0) {
             slot % size

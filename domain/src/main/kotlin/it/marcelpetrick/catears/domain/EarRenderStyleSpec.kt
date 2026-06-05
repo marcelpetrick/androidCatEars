@@ -112,15 +112,7 @@ private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when 
         rendererKind = EarRendererKind.Sprite,
     )
 
-    EarStyle.CANINE_FLOPPY -> warmCanineSpec(style, furStrokeCount = 6)
-
-    EarStyle.CANINE_PERKY -> warmCanineSpec(style, furStrokeCount = 6)
-
-    EarStyle.RABBIT -> paleSoftSpec(style, furStrokeCount = 8)
-
     EarStyle.FOX -> foxSpec(style)
-
-    EarStyle.BEAR -> warmCanineSpec(style, furStrokeCount = 5)
 }
 
 private fun classicSpec(style: EarStyle): EarRenderStyleSpec = EarRenderStyleSpec(
@@ -177,38 +169,6 @@ private fun foxSpec(style: EarStyle): EarRenderStyleSpec = EarRenderStyleSpec(
     supportsTufts = true,
     tintPolicy = EarTintPolicy.OuterFurOnly,
     rendererKind = EarRendererKind.Sprite,
-)
-
-private fun warmCanineSpec(style: EarStyle, furStrokeCount: Int): EarRenderStyleSpec = EarRenderStyleSpec(
-    style = style,
-    material = EarMaterialSpec(
-        outerBaseArgb = 0xFFD0AA76.toInt(),
-        outerRimArgb = 0xFF6E4B32.toInt(),
-        outerHighlightArgb = 0xFFF0D0A2.toInt(),
-        innerBaseArgb = 0xFFEFA09A.toInt(),
-        innerHighlightArgb = 0xFFFFCEC4.toInt(),
-        shadowArgb = 0x33000000,
-    ),
-    anchor = defaultCatAnchor(),
-    furStrokeCount = furStrokeCount,
-    supportsTufts = false,
-    tintPolicy = EarTintPolicy.OuterFurOnly,
-)
-
-private fun paleSoftSpec(style: EarStyle, furStrokeCount: Int): EarRenderStyleSpec = EarRenderStyleSpec(
-    style = style,
-    material = EarMaterialSpec(
-        outerBaseArgb = 0xFFE8D8C4.toInt(),
-        outerRimArgb = 0xFF8C7664.toInt(),
-        outerHighlightArgb = 0xFFFFF2E2.toInt(),
-        innerBaseArgb = 0xFFF0A8AE.toInt(),
-        innerHighlightArgb = 0xFFFFD5D2.toInt(),
-        shadowArgb = 0x33000000,
-    ),
-    anchor = defaultCatAnchor(),
-    furStrokeCount = furStrokeCount,
-    supportsTufts = false,
-    tintPolicy = EarTintPolicy.OuterFurOnly,
 )
 
 private fun defaultCatAnchor() = EarAssetAnchor(

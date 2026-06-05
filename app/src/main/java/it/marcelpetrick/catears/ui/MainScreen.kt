@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
@@ -62,7 +61,6 @@ import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
 import it.marcelpetrick.catears.domain.EarStyle
-import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.RecordingState
@@ -85,8 +83,6 @@ fun MainScreen(
     onFaceDetected: (List<OverlayPlacement>) -> Unit,
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
-    earTint: EarTint,
-    onCycleEarTint: () -> Unit,
     partyModeEnabled: Boolean,
     onTogglePartyMode: () -> Unit,
     onRerollPartyAssignments: () -> Unit,
@@ -119,8 +115,6 @@ fun MainScreen(
                     onFaceDetected = onFaceDetected,
                     earStyle = earStyle,
                     onCycleEarStyle = onCycleEarStyle,
-                    earTint = earTint,
-                    onCycleEarTint = onCycleEarTint,
                     partyModeEnabled = partyModeEnabled,
                     onTogglePartyMode = onTogglePartyMode,
                     onRerollPartyAssignments = onRerollPartyAssignments,
@@ -287,8 +281,6 @@ private fun CameraContent(
     onFaceDetected: (List<OverlayPlacement>) -> Unit,
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
-    earTint: EarTint,
-    onCycleEarTint: () -> Unit,
     partyModeEnabled: Boolean,
     onTogglePartyMode: () -> Unit,
     onRerollPartyAssignments: () -> Unit,
@@ -332,8 +324,6 @@ private fun CameraContent(
         CameraFabRow(
             earStyle = earStyle,
             onCycleEarStyle = onCycleEarStyle,
-            earTint = earTint,
-            onCycleEarTint = onCycleEarTint,
             partyModeEnabled = partyModeEnabled,
             onTogglePartyMode = onTogglePartyMode,
             onRerollPartyAssignments = onRerollPartyAssignments,
@@ -353,8 +343,6 @@ private fun CameraContent(
 private fun CameraFabRow(
     earStyle: EarStyle,
     onCycleEarStyle: () -> Unit,
-    earTint: EarTint,
-    onCycleEarTint: () -> Unit,
     partyModeEnabled: Boolean,
     onTogglePartyMode: () -> Unit,
     onRerollPartyAssignments: () -> Unit,
@@ -392,9 +380,6 @@ private fun CameraFabRow(
                     Icon(Icons.Filled.Refresh, contentDescription = "Re-roll Party Mode ears")
                 }
             } else {
-                SmallFloatingActionButton(onClick = onCycleEarTint) {
-                    Icon(Icons.Filled.Palette, contentDescription = "Cycle ear colour: ${earTint.name}")
-                }
                 ExtendedFloatingActionButton(
                     onClick = onCycleEarStyle,
                     icon = { Icon(Icons.Filled.Pets, contentDescription = null) },
@@ -476,8 +461,6 @@ private fun MainScreenReadyPreview() {
             onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
-            earTint = EarTint.NATURAL,
-            onCycleEarTint = {},
             partyModeEnabled = false,
             onTogglePartyMode = {},
             onRerollPartyAssignments = {},
@@ -509,8 +492,6 @@ private fun MainScreenPermissionRequiredPreview() {
             onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
-            earTint = EarTint.NATURAL,
-            onCycleEarTint = {},
             partyModeEnabled = false,
             onTogglePartyMode = {},
             onRerollPartyAssignments = {},
@@ -542,8 +523,6 @@ private fun MainScreenPermissionDeniedPreview() {
             onFaceDetected = { _ -> },
             earStyle = EarStyle.CLASSIC,
             onCycleEarStyle = {},
-            earTint = EarTint.NATURAL,
-            onCycleEarTint = {},
             partyModeEnabled = false,
             onTogglePartyMode = {},
             onRerollPartyAssignments = {},

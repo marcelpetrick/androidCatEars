@@ -264,11 +264,7 @@ private fun DrawScope.drawProceduralEar(anchor: EarAnchor, spec: EarRenderStyleS
                 EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(cx, top, s, frame.swayTime)
                 EarStyle.LYNX_TUFTED -> drawLynxTuftedEar(cx, top, s, frame.swayTime)
                 EarStyle.DENSE_FLUFFY -> drawDenseFluffyEar(cx, top, s, frame.swayTime)
-                EarStyle.CANINE_FLOPPY -> drawCanineFloppyEar(cx, top, s, frame.swayTime)
-                EarStyle.CANINE_PERKY -> drawCaninePerkyEar(cx, top, s, frame.swayTime)
-                EarStyle.RABBIT -> drawRabbitEar(cx, top, s)
                 EarStyle.FOX -> drawFoxEar(cx, top, s, frame.swayTime)
-                EarStyle.BEAR -> drawBearEar(cx, top, s)
             }
             drawMaterialFinish(cx, top, s, spec, frame.swayTime)
         }
@@ -296,7 +292,7 @@ private fun DrawScope.drawSoftEarShadow(cx: Float, top: Float, s: Float, materia
 private fun DrawScope.drawMaterialFinish(cx: Float, top: Float, s: Float, spec: EarRenderStyleSpec, swayTime: Float) {
     val material = spec.material
     val geometry = MaterialEarGeometry(
-        tip = Offset(cx + styleTipOffset(spec.style) * s, top + styleTipYOffset(spec.style) * s),
+        tip = Offset(cx + styleTipOffset(spec.style) * s, top),
         leftBase = Offset(cx - styleLeftBase(spec.style) * s, top + s),
         rightBase = Offset(cx + styleRightBase(spec.style) * s, top + s),
     )
@@ -429,19 +425,11 @@ private fun styleTipOffset(style: EarStyle): Float = when (style) {
     else -> 0f
 }
 
-private fun styleTipYOffset(style: EarStyle): Float = when (style) {
-    EarStyle.CANINE_PERKY -> PERKY_TIP_Y
-    else -> 0f
-}
-
 private fun styleLeftBase(style: EarStyle): Float = when (style) {
     EarStyle.SHARP_FELINE -> FELINE_BASE_LEFT
     EarStyle.LYNX_TUFTED -> LYNX_BASE_LEFT
     EarStyle.DENSE_FLUFFY -> FLUFFY_LEFT_BASE
     EarStyle.FOX -> FOX_HALF_BASE
-    EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
-    EarStyle.RABBIT -> RABBIT_HALF_WIDTH
-    EarStyle.BEAR -> BEAR_RADIUS_RATIO
     else -> OUTER_HALF_BASE
 }
 
@@ -450,9 +438,6 @@ private fun styleRightBase(style: EarStyle): Float = when (style) {
     EarStyle.LYNX_TUFTED -> LYNX_BASE_RIGHT
     EarStyle.DENSE_FLUFFY -> FLUFFY_RIGHT_BASE
     EarStyle.FOX -> FOX_RIGHT_BASE
-    EarStyle.CANINE_PERKY -> PERKY_HALF_BASE
-    EarStyle.RABBIT -> RABBIT_HALF_WIDTH
-    EarStyle.BEAR -> BEAR_RADIUS_RATIO
     else -> OUTER_HALF_BASE
 }
 
@@ -635,95 +620,6 @@ private fun DrawScope.drawDenseFluffyEar(cx: Float, top: Float, s: Float, swayTi
     }
 }
 
-// --- 6 CANINE FLOPPY
-
-private fun DrawScope.drawCanineFloppyEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    val flapDx = s * FLOPPY_FLAP_DX
-    val flapDy = s * FLOPPY_FLAP_DY
-    val swayAngle = sin(swayTime * FLOPPY_FREQ) * FLOPPY_SWAY_DEG
-    val outer = Path().apply {
-        moveTo(cx - s * 0.15f, top)
-        cubicTo(cx - flapDx, top, cx - flapDx, top + flapDy * 0.6f, cx - flapDx * 0.5f, top + flapDy)
-        cubicTo(cx, top + flapDy * 1.05f, cx + s * 0.1f, top + flapDy * 0.4f, cx + s * 0.08f, top)
-        close()
-    }
-    val inner = Path().apply {
-        moveTo(cx - s * 0.12f, top + s * 0.15f)
-        cubicTo(
-            cx - flapDx * 0.8f,
-            top + s * 0.20f,
-            cx - flapDx * 0.8f,
-            top + flapDy * 0.55f,
-            cx - flapDx * 0.4f,
-            top + flapDy * 0.88f,
-        )
-        cubicTo(
-            cx,
-            top + flapDy * 0.95f,
-            cx + s * 0.05f,
-            top + flapDy * 0.35f,
-            cx + s * 0.04f,
-            top + s * 0.15f,
-        )
-        close()
-    }
-    rotate(degrees = swayAngle, pivot = Offset(cx, top)) {
-        drawPath(outer, color = FLOPPY_OUTER_COLOR)
-        drawPath(inner, color = FLOPPY_INNER_COLOR)
-    }
-}
-
-// --- 7 CANINE PERKY
-
-private fun DrawScope.drawCaninePerkyEar(cx: Float, top: Float, s: Float, swayTime: Float) {
-    val halfBase = s * PERKY_HALF_BASE
-    val tipY = top + s * PERKY_TIP_Y
-    val outer = Path().apply {
-        moveTo(cx - halfBase, top + s)
-        lineTo(cx + halfBase, top + s)
-        lineTo(cx + halfBase * 0.4f, tipY + s * 0.08f)
-        arcTo(
-            Rect(cx - halfBase * 0.4f, tipY - s * 0.10f, cx + halfBase * 0.4f, tipY + s * 0.18f),
-            0f,
-            -180f,
-            false,
-        )
-        lineTo(cx - halfBase * 0.4f, tipY + s * 0.08f)
-        close()
-    }
-    drawPath(outer, color = PERKY_OUTER_COLOR)
-    val inner = Path().apply {
-        moveTo(cx - halfBase * 0.55f, top + s * 0.95f)
-        lineTo(cx + halfBase * 0.55f, top + s * 0.95f)
-        lineTo(cx + halfBase * 0.2f, tipY + s * 0.12f)
-        lineTo(cx - halfBase * 0.2f, tipY + s * 0.12f)
-        close()
-    }
-    drawPath(inner, color = PERKY_INNER_COLOR)
-    val hs = s * 0.018f
-    for (i in 0..2) {
-        val yOff = top + s * (0.35f + i * 0.18f)
-        val xSpan = halfBase * (0.7f - i * 0.15f)
-        drawLine(PERKY_HATCH_COLOR, Offset(cx - xSpan, yOff), Offset(cx + xSpan, yOff + s * 0.12f), hs)
-    }
-    val baseSway = sin(swayTime * 0.8f) * s * 0.015f
-    drawLine(
-        PERKY_HATCH_COLOR,
-        Offset(cx - halfBase + baseSway, top + s),
-        Offset(cx + halfBase + baseSway, top + s),
-        s * 0.03f,
-        StrokeCap.Round,
-    )
-}
-
-// --- 8 RABBIT
-
-private fun DrawScope.drawRabbitEar(cx: Float, top: Float, s: Float) {
-    val halfW = s * RABBIT_HALF_WIDTH
-    drawOval(RABBIT_OUTER_COLOR, Offset(cx - halfW, top), Size(halfW * 2f, s))
-    drawOval(RABBIT_INNER_COLOR, Offset(cx - halfW * 0.55f, top + s * 0.06f), Size(halfW * 1.1f, s * 0.86f))
-}
-
 // --- 9 FOX
 
 private fun DrawScope.drawFoxEar(cx: Float, top: Float, s: Float, swayTime: Float) {
@@ -749,15 +645,6 @@ private fun DrawScope.drawFoxEar(cx: Float, top: Float, s: Float, swayTime: Floa
         val sway = sin(swayTime + i * 1.1f) * s * 0.03f
         drawLine(FOX_TUFT_COLOR, Offset(tipX, top), Offset(tipX + sway, top - s * 0.10f), ts, StrokeCap.Round)
     }
-}
-
-// --- 10 BEAR
-
-private fun DrawScope.drawBearEar(cx: Float, top: Float, s: Float) {
-    val radius = s * BEAR_RADIUS_RATIO
-    val centerY = top + radius
-    drawCircle(BEAR_OUTER_COLOR, radius, Offset(cx, centerY))
-    drawCircle(BEAR_INNER_COLOR, radius * 0.55f, Offset(cx, centerY))
 }
 
 // --- animation timing
@@ -809,25 +696,9 @@ private const val FLUFFY_LEFT_BASE = 0.48f
 private const val FLUFFY_RIGHT_BASE = 0.408f
 private val FLUFFY_PHASES = floatArrayOf(0.0f, 0.8f, 1.6f, 2.4f, 0.4f, 1.2f, 2.0f, 0.6f)
 
-// --- CANINE FLOPPY constants
-private const val FLOPPY_FLAP_DX = 0.55f
-private const val FLOPPY_FLAP_DY = 1.15f
-private const val FLOPPY_FREQ = 0.5f
-private const val FLOPPY_SWAY_DEG = 4f
-
-// --- CANINE PERKY constants
-private const val PERKY_HALF_BASE = 0.38f
-private const val PERKY_TIP_Y = 0.20f
-
-// --- RABBIT constants
-private const val RABBIT_HALF_WIDTH = 0.18f
-
 // --- FOX constants
 private const val FOX_HALF_BASE = 0.32f
 private const val FOX_RIGHT_BASE = 0.224f
-
-// --- BEAR constants
-private const val BEAR_RADIUS_RATIO = 0.32f
 
 // --- colours
 private val EAR_COLOR = Color(0xFF8B5E3C)
@@ -849,22 +720,9 @@ private val FLUFFY_OUTER_COLOR = Color(0xFF9E6A38)
 private val FLUFFY_INNER_COLOR = Color(0xFFE0B0A0)
 private val FLUFFY_FUR_COLOR = Color(0xFF6A3E18)
 
-private val FLOPPY_OUTER_COLOR = Color(0xFFB8864A)
-private val FLOPPY_INNER_COLOR = Color(0xFFE8C8A8)
-
-private val PERKY_OUTER_COLOR = Color(0xFFD4B896)
-private val PERKY_INNER_COLOR = Color(0xFFE8A090)
-private val PERKY_HATCH_COLOR = Color(0xFF9A7848)
-
-private val RABBIT_OUTER_COLOR = Color(0xFFF0ECEC)
-private val RABBIT_INNER_COLOR = Color(0xFFE890B0)
-
 private val FOX_OUTER_COLOR = Color(0xFFD45800)
 private val FOX_INNER_COLOR = Color(0xFFE8C090)
 private val FOX_TUFT_COLOR = Color(0xFF3A1800)
-
-private val BEAR_OUTER_COLOR = Color(0xFF3A2010)
-private val BEAR_INNER_COLOR = Color(0xFF7A4020)
 
 // One Paint per non-natural tint; created once so the hot draw path allocates nothing.
 private val tintPaintCache: Map<EarTint, Paint> by lazy {

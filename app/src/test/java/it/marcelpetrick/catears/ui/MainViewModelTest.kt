@@ -13,7 +13,6 @@ import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarStyle
-import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.RecordingState
@@ -270,41 +269,6 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `initial earTint is NATURAL`() = runTest {
-        viewModel().earTint.test {
-            assertEquals(EarTint.NATURAL, awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `onCycleEarTint advances to next tint`() = runTest {
-        val vm = viewModel()
-        vm.earTint.test {
-            assertEquals(EarTint.NATURAL, awaitItem())
-            vm.onCycleEarTint()
-            assertEquals(EarTint.entries[1], awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `onCycleEarTint injects tint into active placements`() = runTest {
-        val vm = viewModel()
-        val raw = OverlayPlacement(
-            leftEar = EarAnchor(x = 100f, y = 50f, size = 80f, tiltDegrees = 0f),
-            rightEar = EarAnchor(x = 200f, y = 50f, size = 80f, tiltDegrees = 0f),
-        )
-        vm.onFaceDetected(listOf(raw))
-        vm.overlayPlacements.test {
-            awaitItem() // NATURAL
-            vm.onCycleEarTint()
-            assertEquals(EarTint.entries[1], awaitItem().first().tint)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
     fun `initial party mode is off`() = runTest {
         viewModel().partyModeEnabled.test {
             assertEquals(false, awaitItem())
@@ -324,7 +288,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `party mode assigns stable per tracking id appearances`() = runTest {
+    fun `party mode assigns stable per tracking id styles`() = runTest {
         val vm = viewModel()
         val firstFrame = listOf(trackedPlacement(10), trackedPlacement(20))
         val secondFrame = listOf(trackedPlacement(10, x = 120f), trackedPlacement(20, x = 220f))
@@ -335,15 +299,12 @@ class MainViewModelTest {
             vm.onFaceDetected(firstFrame)
             val firstAssignments = awaitItem()
             assertEquals(EarStyle.CLASSIC, firstAssignments[0].earStyle)
-            assertEquals(EarTint.NATURAL, firstAssignments[0].tint)
             assertNotEquals(firstAssignments[0].earStyle, firstAssignments[1].earStyle)
 
             vm.onFaceDetected(secondFrame)
             val secondAssignments = awaitItem()
             assertEquals(firstAssignments[0].earStyle, secondAssignments[0].earStyle)
-            assertEquals(firstAssignments[0].tint, secondAssignments[0].tint)
             assertEquals(firstAssignments[1].earStyle, secondAssignments[1].earStyle)
-            assertEquals(firstAssignments[1].tint, secondAssignments[1].tint)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -358,7 +319,7 @@ class MainViewModelTest {
             val before = awaitItem()
             vm.onRerollPartyAssignments()
             val after = awaitItem()
-            assertNotEquals(before.map { it.earStyle to it.tint }, after.map { it.earStyle to it.tint })
+            assertNotEquals(before.map { it.earStyle }, after.map { it.earStyle })
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -368,7 +329,7 @@ class MainViewModelTest {
         val vm = viewModel()
         vm.onTogglePartyMode()
         // 20 unique faces each visible for exactly one frame — without pruning the map
-        // would grow to size 20 and the 11th face would get slot 10 (out of 0..9 range).
+        // would grow to size 20 and the 7th face would get slot 6 (out of 0..5 range).
         // With pruning, every new solo face gets slot 0 → PARTY_STYLE_ORDER[0] = CLASSIC.
         repeat(20) { i -> vm.onFaceDetected(listOf(trackedPlacement(id = i))) }
 

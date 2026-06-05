@@ -59,7 +59,6 @@ class MainActivity : ComponentActivity() {
         val overlayPlacements by viewModel.overlayPlacements.collectAsStateWithLifecycle()
         val captureState by viewModel.captureState.collectAsStateWithLifecycle()
         val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
-        val earTint by viewModel.earTint.collectAsStateWithLifecycle()
         val partyModeEnabled by viewModel.partyModeEnabled.collectAsStateWithLifecycle()
         val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
 
@@ -94,8 +93,6 @@ class MainActivity : ComponentActivity() {
             onFaceDetected = viewModel::onFaceDetected,
             earStyle = earStyle,
             onCycleEarStyle = viewModel::onCycleEarStyle,
-            earTint = earTint,
-            onCycleEarTint = viewModel::onCycleEarTint,
             partyModeEnabled = partyModeEnabled,
             onTogglePartyMode = viewModel::onTogglePartyMode,
             onRerollPartyAssignments = viewModel::onRerollPartyAssignments,
