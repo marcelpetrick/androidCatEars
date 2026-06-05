@@ -8,6 +8,7 @@ import android.net.Uri
 import app.cash.turbine.test
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import it.marcelpetrick.catears.capture.CaptureRuntime
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
@@ -162,6 +163,8 @@ class MainViewModelTest {
         val bitmap = mockk<Bitmap>()
         val uri = mockk<Uri>()
         every { uri.toString() } returns "content://saved/photo"
+        every { bitmap.isRecycled } returns false
+        every { bitmap.recycle() } returns Unit
         every {
             imageSaver.save(bitmap = bitmap, epochMillis = 1234L, randomSuffix = "beef")
         } returns uri
@@ -173,6 +176,27 @@ class MainViewModelTest {
             assertEquals(CaptureState.Saved("content://saved/photo"), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
+        verify { bitmap.recycle() }
+    }
+
+    @Test
+    fun `onCompositedBitmap recycles bitmap when save fails`() = runTest {
+        val imageSaver = mockk<ImageSaver>()
+        val bitmap = mockk<Bitmap>()
+        every { bitmap.isRecycled } returns false
+        every { bitmap.recycle() } returns Unit
+        every {
+            imageSaver.save(bitmap = bitmap, epochMillis = 1234L, randomSuffix = "beef")
+        } returns null
+
+        val vm = viewModel(imageSaver = imageSaver)
+        vm.captureState.test {
+            assertEquals(CaptureState.Idle, awaitItem())
+            vm.onCompositedBitmap(bitmap)
+            assertEquals(CaptureState.Failed, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        verify { bitmap.recycle() }
     }
 
     @Test
@@ -329,13 +353,47 @@ class MainViewModelTest {
         val vm = viewModel()
         vm.onTogglePartyMode()
         // 20 unique faces each visible for exactly one frame — without pruning the map
-        // would grow to size 20 and the 7th face would get slot 6 (out of 0..5 range).
-        // With pruning, every new solo face gets slot 0 → PARTY_STYLE_ORDER[0] = CLASSIC.
+        // would grow to size 20. With pruning, the active placement list stays bounded
+        // even though the monotonic slot counter keeps replacement faces distinct.
         repeat(20) { i -> vm.onFaceDetected(listOf(trackedPlacement(id = i))) }
 
         vm.overlayPlacements.test {
             val result = awaitItem()
-            assertEquals(EarStyle.CLASSIC, result[0].earStyle)
+            assertEquals(1, result.size)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `party mode gives replacement faces distinct slots after pruning`() = runTest {
+        val vm = viewModel()
+        vm.onTogglePartyMode()
+        vm.onFaceDetected(listOf(trackedPlacement(1), trackedPlacement(2), trackedPlacement(3)))
+
+        vm.overlayPlacements.test {
+            awaitItem()
+            vm.onFaceDetected(listOf(trackedPlacement(2), trackedPlacement(4)))
+            val result = awaitItem()
+
+            assertEquals(listOf(2, 4), result.map { it.trackingId })
+            assertNotEquals(result[0].earStyle, result[1].earStyle)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `party mode resets first slot after all faces disappear`() = runTest {
+        val vm = viewModel()
+        vm.onTogglePartyMode()
+        vm.onFaceDetected(listOf(trackedPlacement(1), trackedPlacement(2)))
+        vm.onFaceDetected(emptyList())
+
+        vm.overlayPlacements.test {
+            awaitItem()
+            vm.onFaceDetected(listOf(trackedPlacement(5)))
+            val result = awaitItem()
+
+            assertEquals(EarStyle.CLASSIC, result.single().earStyle)
             cancelAndIgnoreRemainingEvents()
         }
     }

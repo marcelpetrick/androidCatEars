@@ -219,7 +219,9 @@ private fun compositeEarsOrFrame(
     placements: List<OverlayPlacement>,
     resources: android.content.res.Resources,
 ): Bitmap = try {
-    OverlayCompositor.composite(frame, placements, resources)
+    val composited = OverlayCompositor.composite(frame, placements, resources)
+    if (composited !== frame && !frame.isRecycled) frame.recycle()
+    composited
 } catch (e: Exception) {
     Log.e(TAG, "Compositing ears failed; saving plain frame", e)
     frame

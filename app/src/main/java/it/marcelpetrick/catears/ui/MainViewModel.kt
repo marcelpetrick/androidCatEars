@@ -50,6 +50,7 @@ class MainViewModel @Inject constructor(
     val partyModeEnabled: StateFlow<Boolean> = _partyModeEnabled.asStateFlow()
 
     private val partyFaceSlots = LinkedHashMap<Int, Int>()
+    private var nextPartySlot = 0
     private var partyRerollGeneration = 0
 
     /** Advances to the next [EarStyle] in cycle order, wrapping from last back to first. */
@@ -78,6 +79,7 @@ class MainViewModel @Inject constructor(
     fun onFaceDetected(placements: List<OverlayPlacement>) {
         val activeIds = placements.mapNotNull { it.trackingId }.toSet()
         partyFaceSlots.keys.retainAll(activeIds)
+        if (activeIds.isEmpty()) nextPartySlot = 0
         _overlayPlacements.value = withAppearance(placements)
     }
 
@@ -85,7 +87,7 @@ class MainViewModel @Inject constructor(
         if (_partyModeEnabled.value) {
             placements.mapIndexed { index, placement ->
                 val slot = placement.trackingId?.let { id ->
-                    partyFaceSlots.getOrPut(id) { partyFaceSlots.size }
+                    partyFaceSlots.getOrPut(id) { nextPartySlot++ }
                 } ?: index
                 placement.copy(earStyle = partyAppearance(slot))
             }
@@ -118,11 +120,15 @@ class MainViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val uri = withContext(captureRuntime.ioDispatcher) {
-                imageSaver.save(
-                    bitmap = bitmap,
-                    epochMillis = captureRuntime.nowMillis(),
-                    randomSuffix = captureRuntime.randomSuffix(),
-                )
+                try {
+                    imageSaver.save(
+                        bitmap = bitmap,
+                        epochMillis = captureRuntime.nowMillis(),
+                        randomSuffix = captureRuntime.randomSuffix(),
+                    )
+                } finally {
+                    if (!bitmap.isRecycled) bitmap.recycle()
+                }
             }
             _captureState.value = if (uri != null) CaptureState.Saved(uri.toString()) else CaptureState.Failed
         }

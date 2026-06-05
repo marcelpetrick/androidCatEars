@@ -59,6 +59,9 @@ Adding a new style requires only a spec entry.
 
 ### 1. `earRenderStyleSpec()` allocates 3 new objects per ear per frame — **CRITICAL (performance)**
 
+**Status: fixed.** `EarRenderStyleSpec` instances are cached by `EarStyle` in
+`domain/EarRenderStyleSpec.kt`.
+
 Both `OverlayCompositor.drawEarOnCanvas()` and `CatEarOverlay.drawEar()` call
 `earRenderStyleSpec(style)` on the hot draw path. The function constructs a fresh
 `EarRenderStyleSpec` + `EarMaterialSpec` + `EarAssetAnchor` on every invocation.
@@ -78,6 +81,8 @@ private val specCache: Map<EarStyle, EarRenderStyleSpec> by lazy {
 ```
 
 ### 2. `fillPaint()` / `strokePaint()` allocate a new `Paint` per sub-draw call — **CRITICAL (performance)**
+
+**Status: fixed.** `OverlayCompositor` now reuses material paints on its hot Canvas path.
 
 `drawSoftEarShadow`, `drawOuterRim`, `drawInnerRosyGlaze`, `drawFurTexture`, and
 `drawMaterialTufts` in `OverlayCompositor` all create new `Paint` objects via `fillPaint(argb)`
@@ -188,8 +193,8 @@ performance and visual edge-cases need a follow-up pass.
 
 | # | Issue | Severity |
 |---|-------|----------|
-| 1 | `earRenderStyleSpec()` allocates per frame | CRITICAL |
-| 2 | `fillPaint()`/`strokePaint()` allocates per sub-draw | CRITICAL |
+| 1 | `earRenderStyleSpec()` allocates per frame | CRITICAL — fixed |
+| 2 | `fillPaint()`/`strokePaint()` allocates per sub-draw | CRITICAL — fixed |
 | 5 | `EarTintPolicy.OuterFurOnly` ignored — inner ear wrong colour | MEDIUM |
 | 3 | Canvas fur static, Compose fur animated | MEDIUM |
 | 4 | Geometry helpers duplicated in both files | MEDIUM |

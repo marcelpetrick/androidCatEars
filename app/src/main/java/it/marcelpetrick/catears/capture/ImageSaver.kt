@@ -23,7 +23,7 @@ import javax.inject.Inject
  *
  * Excluded from Kover (Android MediaStore APIs are device-only).
  */
-class ImageSaver @Inject constructor(@ApplicationContext private val context: Context) {
+class ImageSaver @Inject constructor(@param:ApplicationContext private val context: Context) {
 
     /**
      * Writes [bitmap] as a JPEG to the Pictures/CatEars gallery album.
@@ -33,7 +33,8 @@ class ImageSaver @Inject constructor(@ApplicationContext private val context: Co
      * @param randomSuffix 4-char hex string for filename uniqueness.
      * @return The [Uri] of the saved image, or null on failure.
      */
-    fun save(bitmap: Bitmap, epochMillis: Long, randomSuffix: String): Uri? {
+    @Suppress("TooGenericExceptionCaught")
+    fun save(bitmap: Bitmap, epochMillis: Long, randomSuffix: String): Uri? = try {
         val fileName = buildImageFileName(epochMillis, randomSuffix)
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
@@ -46,9 +47,13 @@ class ImageSaver @Inject constructor(@ApplicationContext private val context: Co
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
             ?: return null
 
-        return writeBitmap(resolver, uri, bitmap, values)
+        writeBitmap(resolver, uri, bitmap, values)
+    } catch (e: RuntimeException) {
+        Log.e(TAG, "Failed to create image in MediaStore", e)
+        null
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun writeBitmap(resolver: ContentResolver, uri: Uri, bitmap: Bitmap, values: ContentValues): Uri? = try {
         val saved = resolver.openOutputStream(uri)?.use { stream ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)
@@ -59,13 +64,26 @@ class ImageSaver @Inject constructor(@ApplicationContext private val context: Co
             resolver.update(uri, values, null, null)
             uri
         } else {
-            resolver.delete(uri, null, null)
+            deleteQuietly(resolver, uri)
             null
         }
     } catch (e: IOException) {
         Log.e(TAG, "Failed to write image to MediaStore", e)
-        resolver.delete(uri, null, null)
+        deleteQuietly(resolver, uri)
         null
+    } catch (e: RuntimeException) {
+        Log.e(TAG, "Failed to finish image in MediaStore", e)
+        deleteQuietly(resolver, uri)
+        null
+    }
+
+    private fun deleteQuietly(resolver: ContentResolver, uri: Uri) {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            resolver.delete(uri, null, null)
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Failed to clean up incomplete MediaStore image", e)
+        }
     }
 
     companion object {

@@ -50,8 +50,9 @@ edge-case reliability) · **LOW** (polish or hardening).
    - Files: `CameraPreviewComposable.kt`, `MainViewModel.kt`, `ImageSaver.kt`
    - `PreviewView.bitmap` allocates native memory. The save path does not recycle the original
      preview bitmap or the composited copy after MediaStore write completes.
-   - Follow-up: define bitmap ownership and recycle after save/failure, or move capture compositing to
-     a scoped worker that owns both bitmaps.
+   - Status: fixed in this pass. The ViewModel now recycles the saved bitmap after the MediaStore
+     write finishes, and the capture compositor recycles the original preview frame after producing
+     a separate composited bitmap.
 
 7. **MEDIUM — Still/video save paths do not catch non-IO MediaStore failures**
    - Files: `ImageSaver.kt`, `CameraXControllerImpl.kt`
@@ -59,8 +60,8 @@ edge-case reliability) · **LOW** (polish or hardening).
      and MediaStore updates can also throw `SecurityException`, `IllegalStateException`, or other
      runtime storage exceptions. Video `prepareRecording()` is now guarded in this pass and reports
      failure to the UI.
-   - Follow-up: catch broad still-image storage/runtime exceptions at the Android boundary and report
-     failure without crashing.
+   - Status: fixed in this pass for still images. `ImageSaver` now catches MediaStore runtime
+     failures around row creation and writing, and cleanup of pending rows is best-effort.
 
 8. **MEDIUM — Live overlay and canvas compositor duplicate renderer geometry**
    - Files: `CatEarOverlay.kt`, `OverlayCompositor.kt`
@@ -85,4 +86,6 @@ edge-case reliability) · **LOW** (polish or hardening).
 1. DONE — Prevent redundant CameraX rebinds and active-recording rebinds.
 2. DONE — Block lens toggles while recording.
 3. DONE — Guard posted face callbacks after dispose and clear overlay/smoothing on lens changes.
-4. DONE — Full quality gate passed before commit.
+4. DONE — Fix the party-mode replacement slot collision from the older review list.
+5. DONE — Recycle captured bitmaps and harden still-image MediaStore failure handling.
+6. DONE — Full quality gate passed before commit.
