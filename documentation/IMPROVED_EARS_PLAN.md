@@ -83,13 +83,21 @@ This is simpler code than what was built and visually 4× better.
 
 Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
 
+- **2026-06-05 — WP S-3 done.** Live preview now resolves sprite resources in the
+  app layer via `earSpriteDrawableId(EarStyle)`, loads the `CLASSIC` sprite once per style in
+  Compose, and draws sprite-backed ears with transform-only placement: height-scaled to the
+  anchor, base-aligned to `anchor.y + anchor.size`, mirrored for the screen-left ear, rotated,
+  perspective-scaled, and wink/smile adjusted through the existing `EarAnchor` animation values.
+  Procedural styles keep the fallback renderer. Sprite drawing deliberately bypasses the hue
+  tint layer for now so the single-layer PNG keeps its rosy inner ear; outer-only sprite tinting
+  requires a future split asset or mask. Added app-layer tests for the drawable resolver.
 - **2026-06-05 — WP S-2 done.** `EarRendererKind { Procedural, Sprite }` added to
   `EarRenderStyleSpec` (domain) with a `Procedural` default so existing constructors are
   unaffected. `CLASSIC` is marked `Sprite`; all other styles remain `Procedural`. Domain stays
   Android-free — the actual `R.drawable` id is resolved in the app layer (see WP S-3). Tests
   added in `EarRenderStyleSpecTest`: CLASSIC is Sprite / others Procedural, and the field
   defaults to Procedural. `:domain:test` green.
-- **2026-06-05 — WP S-1 done.** Extracted `app/src/main/res/drawable/ear_classic.png`
+- **2026-06-05 — WP S-1 done.** Extracted `app/src/main/res/drawable-nodpi/ear_classic.png`
   (435×512 RGBA, ~220KB) from `03_glossy_stylized_3d.png` using `rembg` (u2net) for background
   removal, then `scipy.ndimage` connected-component labelling to isolate the single right-side
   ear (the proposal image contains both ears; the left-ear remnant was dropped). Auto-cropped to
@@ -116,7 +124,7 @@ AI background removal (`rembg`). One sprite per style, covering the right ear.
 The left ear is produced at render time by horizontal mirroring.
 
 **Deliverables:**
-- `app/src/main/res/drawable/ear_classic.png` (from `03_glossy_stylized_3d.png`)
+- `app/src/main/res/drawable-nodpi/ear_classic.png` (from `03_glossy_stylized_3d.png`)
 - Additional style sprites added as implementation proceeds
 
 **Acceptance:**
