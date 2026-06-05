@@ -1,14 +1,21 @@
 // SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+@file:androidx.annotation.OptIn(androidx.camera.view.TransformExperimental::class)
+
 package it.marcelpetrick.catears.camera
 
 import android.graphics.Bitmap
+import android.graphics.Matrix
+import android.graphics.RectF
 import android.media.MediaActionSound
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.camera.view.TransformExperimental
+import androidx.camera.view.transform.CoordinateTransform
+import androidx.camera.view.transform.OutputTransform
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -121,15 +128,24 @@ fun CameraPreview(
                     lifecycleOwner = lifecycleOwner,
                     context = ctx,
                     faceDetector = detector,
-                    onFaceResult = { faces, w, h ->
-                        val transform = TransformContext(
-                            imageWidth = w,
-                            imageHeight = h,
-                            viewWidth = previewWidthRef.get(),
-                            viewHeight = previewHeightRef.get(),
-                            isFrontCamera = currentLens == LensSelector.Front,
-                        )
-                        onFaceDetected(facePlacements(faces, transform, smoother))
+                    onFaceResult = { faces, imageOutputTransform, w, h ->
+                        previewView.post {
+                            val fallbackTransform = TransformContext(
+                                imageWidth = w,
+                                imageHeight = h,
+                                viewWidth = previewWidthRef.get(),
+                                viewHeight = previewHeightRef.get(),
+                                isFrontCamera = currentLens == LensSelector.Front,
+                            )
+                            onFaceDetected(
+                                facePlacements(
+                                    faces = faces,
+                                    imageToViewMatrix = imageToViewMatrix(imageOutputTransform, previewView),
+                                    fallbackTransform = fallbackTransform,
+                                    smoother = smoother,
+                                ),
+                            )
+                        }
                     },
                     onBindFailed = { currentOnCameraError() },
                 ),
@@ -191,7 +207,8 @@ private fun compositeEarsOrFrame(
 /** Transforms all detected faces to smoothed view-space [OverlayPlacement]s. */
 private fun facePlacements(
     faces: List<it.marcelpetrick.catears.domain.FaceModel>,
-    transform: TransformContext,
+    imageToViewMatrix: Matrix?,
+    fallbackTransform: TransformContext,
     smoother: MultiFaceSmoother,
 ): List<OverlayPlacement> {
     if (faces.isEmpty()) {
@@ -199,7 +216,7 @@ private fun facePlacements(
         return emptyList()
     }
     val entries = faces.mapNotNull { face ->
-        val placement = singleFacePlacement(face, transform) ?: return@mapNotNull null
+        val placement = singleFacePlacement(face, imageToViewMatrix, fallbackTransform) ?: return@mapNotNull null
         Pair(face.trackingId, placement)
     }
     return if (entries.isEmpty()) emptyList() else smoother.smooth(entries)
@@ -207,11 +224,20 @@ private fun facePlacements(
 
 private fun singleFacePlacement(
     face: it.marcelpetrick.catears.domain.FaceModel,
-    transform: TransformContext,
+    imageToViewMatrix: Matrix?,
+    fallbackTransform: TransformContext,
 ): OverlayPlacement? {
-    val viewBox = imageToViewBoundingBox(face.boundingBox, transform)
-    val leftEye = face.leftEyePosition?.let { imageToViewCoordinates(it, transform) }
-    val rightEye = face.rightEyePosition?.let { imageToViewCoordinates(it, transform) }
+    val viewBox = if (imageToViewMatrix != null) {
+        mapBoundingBox(face.boundingBox, imageToViewMatrix)
+    } else {
+        imageToViewBoundingBox(face.boundingBox, fallbackTransform)
+    }
+    val leftEye = face.leftEyePosition?.let { point ->
+        imageToViewMatrix?.let { mapPoint(point, it) } ?: imageToViewCoordinates(point, fallbackTransform)
+    }
+    val rightEye = face.rightEyePosition?.let { point ->
+        imageToViewMatrix?.let { mapPoint(point, it) } ?: imageToViewCoordinates(point, fallbackTransform)
+    }
     val eyeOpennessMean = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
         .takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 1f
     val leftEyeOpenness = face.leftEyeOpenProbability ?: 1f
@@ -228,6 +254,39 @@ private fun singleFacePlacement(
         rightEyeOpenness = rightEyeOpenness,
         trackingId = face.trackingId,
     )
+}
+
+@androidx.annotation.OptIn(TransformExperimental::class)
+private fun imageToViewMatrix(imageOutputTransform: OutputTransform?, previewView: PreviewView): Matrix? {
+    val previewOutputTransform = previewView.outputTransform ?: return null
+    return imageOutputTransform?.let { imageTransform ->
+        Matrix().also { matrix ->
+            CoordinateTransform(imageTransform, previewOutputTransform).transform(matrix)
+        }
+    }
+}
+
+private fun mapBoundingBox(
+    box: it.marcelpetrick.catears.domain.BoundingBox,
+    matrix: Matrix,
+): it.marcelpetrick.catears.domain.BoundingBox {
+    val rect = RectF(box.left, box.top, box.right, box.bottom)
+    matrix.mapRect(rect)
+    return it.marcelpetrick.catears.domain.BoundingBox(
+        left = rect.left,
+        top = rect.top,
+        right = rect.right,
+        bottom = rect.bottom,
+    )
+}
+
+private fun mapPoint(
+    point: it.marcelpetrick.catears.domain.Point2D,
+    matrix: Matrix,
+): it.marcelpetrick.catears.domain.Point2D {
+    val mapped = floatArrayOf(point.x, point.y)
+    matrix.mapPoints(mapped)
+    return it.marcelpetrick.catears.domain.Point2D(mapped[0], mapped[1])
 }
 
 private fun startCamera(context: android.content.Context, controller: CameraXControllerImpl, lens: LensSelector) {

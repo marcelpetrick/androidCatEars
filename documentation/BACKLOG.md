@@ -461,6 +461,7 @@ thread-safe `AtomicReference`.
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 32.0 | DONE | Implement `CameraEffect` + `SurfaceProcessor` to bake ears into video | Recorded video shows the same ear overlay visible in the live preview at recording time. Used `OverlayEffect` from `camera-effects:1.6.1` targeting `VIDEO_CAPTURE`. The `setOnDrawListener` callback scales the current `List<OverlayPlacement>` from view-space to video-frame-space via an `AtomicReference<VideoOverlayState>` updated on every placement change from `CameraPreviewComposable`. `OverlayCompositor.drawEarsOnCanvas` (new public function) draws directly onto `Frame.getOverlayCanvas()`. Preview stream is unaffected. All quality gates pass. |
+| 32.1 | DONE | Fix recorded-video ear ghosting/drift | The video overlay state stores only the latest placement list, but CameraX reuses the `OverlayEffect` canvas across frames. The draw listener now clears the overlay canvas with transparent `PorterDuff.Mode.CLEAR` before drawing current placements, so moved faces and no-face frames cannot leave previous ear positions painted into the clip. Incremental compile and focused unit tests pass. |
 
 ---
 
@@ -528,6 +529,25 @@ tracking ID until the user explicitly re-rolls.
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 38.0 | DONE | Stable per-face Party Mode assignments | Add a Party Mode toggle and re-roll button. In normal mode, global style/tint controls keep applying to all faces. In Party Mode, `MainViewModel` assigns each tracking ID a persistent style/tint slot, first slot starts as Classic/Natural, and re-roll reshuffles active faces without changing face geometry. `PlacementSmoother` preserves `trackingId`, style, and tint so assignments do not collapse after smoothing. Focused unit tests cover stable assignments, re-roll, disabled re-roll, and tracking-ID propagation. README usage updated. |
+
+---
+
+### WP 39 — Bug: landscape rotation breaks ear placement
+
+When the phone is rotated into landscape, the camera preview still runs but the ear overlay lands
+far away from the detected head. Portrait placement is acceptable, so the likely failure is not the
+ear geometry itself; it is the coordinate transform between ML Kit face coordinates and the
+`PreviewView`/Compose overlay space.
+
+Current risk area: `CameraPreviewComposable` builds a custom `TransformContext` from the analysis
+image dimensions and the preview view dimensions, and `CoordinateTransform.kt` approximates
+`PreviewView` with a uniform `FILL_CENTER` scale plus optional front-camera mirroring. That does
+not carry CameraX's full output transform through device rotation, crop rect, sensor orientation,
+and preview mirroring, so landscape can map a correct face box to the wrong screen position.
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 39.0 | DONE | Replace landscape-sensitive custom camera transform with CameraX output transform | The analysis path now passes CameraX's `ImageProxyTransformFactory` output transform with each face result, then combines it with `PreviewView.outputTransform` on the view thread via `CoordinateTransform`. Face boxes and eye landmarks are mapped through that matrix before placement math, with the previous `TransformContext` path retained as a fallback while the preview transform is unavailable. Incremental compile and focused unit tests pass; full quality gate required before commit. |
 
 ---
 

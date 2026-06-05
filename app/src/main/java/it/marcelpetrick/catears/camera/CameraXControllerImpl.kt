@@ -1,11 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Marcel Petrick <mail@marcelpetrick.it>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+@file:androidx.annotation.OptIn(androidx.camera.view.TransformExperimental::class)
+
 package it.marcelpetrick.catears.camera
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.PorterDuff
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -28,6 +32,9 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
+import androidx.camera.view.TransformExperimental
+import androidx.camera.view.transform.ImageProxyTransformFactory
+import androidx.camera.view.transform.OutputTransform
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.withMatrix
 import it.marcelpetrick.catears.capture.OverlayCompositor
@@ -61,6 +68,10 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     private val overlayEffectThread = HandlerThread("CatEarsOverlayEffect").also { it.start() }
     private val overlayEffectHandler = Handler(overlayEffectThread.looper)
     private val videoOverlayState = AtomicReference<VideoOverlayState?>(null)
+    private val imageProxyTransformFactory = ImageProxyTransformFactory().apply {
+        setUsingCropRect(true)
+        setUsingRotationDegrees(true)
+    }
     private var currentOverlayEffect: OverlayEffect? = null
 
     @Volatile private var isFrontCamera: Boolean = false
@@ -123,6 +134,9 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             overlayEffectHandler,
         ) { error -> Log.e(TAG, "OverlayEffect error", error) }
         effect.setOnDrawListener { frame ->
+            val overlayCanvas = frame.getOverlayCanvas()
+            // CameraX reuses the overlay surface; clear it so moved/lost faces do not ghost.
+            overlayCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             val state = videoOverlayState.get()
             if (state != null && state.placements.isNotEmpty()) {
                 val fW = frame.getSize().width.toFloat()
@@ -139,7 +153,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
                 if (isFrontCamera && !frame.isMirroring()) {
                     matrix.preScale(-1f, 1f, state.viewWidth / 2f, state.viewHeight / 2f)
                 }
-                frame.getOverlayCanvas().withMatrix(matrix) {
+                overlayCanvas.withMatrix(matrix) {
                     OverlayCompositor.drawEarsOnCanvas(this, state.placements, context?.resources)
                 }
             }
@@ -166,21 +180,22 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         return VideoCapture.withOutput(recorder).also { videoCapture = it }
     }
 
-    @androidx.annotation.OptIn(ExperimentalGetImage::class)
+    @androidx.annotation.OptIn(ExperimentalGetImage::class, TransformExperimental::class)
     private fun analyseFrame(
         detector: FaceDetectorSeam,
         proxy: ImageProxy,
-        onFace: (List<FaceModel>, Int, Int) -> Unit,
+        onFace: (List<FaceModel>, OutputTransform?, Int, Int) -> Unit,
     ) {
         val rotation = proxy.imageInfo.rotationDegrees
         val portrait = rotation == ROTATION_90 || rotation == ROTATION_270
         val width = if (portrait) proxy.height else proxy.width
         val height = if (portrait) proxy.width else proxy.height
+        val imageOutputTransform = imageProxyTransformFactory.getOutputTransform(proxy)
         // Per FaceDetectorSeam contract the implementation closes proxy (sync or async).
         // We still guard against a synchronous throw that would skip the impl's own close.
         @Suppress("TooGenericExceptionCaught")
         try {
-            detector.process(proxy) { face -> onFace(face, width, height) }
+            detector.process(proxy) { face -> onFace(face, imageOutputTransform, width, height) }
         } catch (e: Exception) {
             Log.e(TAG, "Face analysis failed for frame", e)
             runCatching { proxy.close() }
