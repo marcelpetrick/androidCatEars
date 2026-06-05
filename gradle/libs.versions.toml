@@ -5,7 +5,7 @@ kotlin                           = "2.3.21"
 ksp                              = "2.3.9"
 
 # AndroidX core
-core-ktx                         = "1.18.0"
+core-ktx                         = "1.19.0"
 lifecycle                        = "2.10.0"
 activity-compose                 = "1.13.0"
 
