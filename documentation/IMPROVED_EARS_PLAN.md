@@ -83,6 +83,10 @@ This is simpler code than what was built and visually 4× better.
 
 Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
 
+- **2026-06-05 — WP S-5c done.** Extracted `app/src/main/res/drawable-nodpi/ear_sharp_feline.png`
+  from `08_wildcat_realistic.png` and `app/src/main/res/drawable-nodpi/ear_rounded_feline.png`
+  from `01_plush_realistic_tabby.png`. `SHARP_FELINE` and `ROUNDED_FELINE` are now sprite-backed
+  and use the shared live/capture/video sprite renderer.
 - **2026-06-05 — WP S-5b done.** Extracted `app/src/main/res/drawable-nodpi/ear_dense_fluffy.png`
   from `07_fluffy_kitten.png` and `app/src/main/res/drawable-nodpi/ear_fox.png` from
   `06_neon_party_fox_cat.png`. `DENSE_FLUFFY` and `FOX` are now sprite-backed in domain and
