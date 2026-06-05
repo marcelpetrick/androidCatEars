@@ -112,6 +112,43 @@ class HelpContentProviderTest {
     }
 
     @Test
+    fun `help content does not advertise removed procedural styles or tint controls`() {
+        val staleTerms = listOf(
+            "10",
+            "procedural",
+            "prozedural",
+            "proceduraln",
+            "程序生成",
+            "tint",
+            "colour button",
+            "colour tint",
+            "Farbton",
+            "nijans",
+            "颜色按钮",
+            "Canine",
+            "Rabbit",
+            "Bear",
+            "Hund",
+            "Hase",
+            "Bär",
+            "Pseć",
+            "Zečj",
+            "Medvje",
+            "犬型",
+            "兔子",
+            "熊",
+        )
+        HelpLanguage.entries.forEach { lang ->
+            val text = helpContent(lang).let { content ->
+                (listOf(content.appPitch) + content.features + content.howToUseSteps).joinToString(" ")
+            }
+            staleTerms.forEach { staleTerm ->
+                assertFalse(text.contains(staleTerm, ignoreCase = true), "$lang contains stale term: $staleTerm")
+            }
+        }
+    }
+
+    @Test
     fun `Mandarin content contains Chinese characters`() {
         val content = helpContent(HelpLanguage.MANDARIN)
         assertTrue(content.closeLabel == "关闭")

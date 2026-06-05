@@ -40,16 +40,17 @@ internet. `INTERNET` is not in the manifest — the OS enforces this at runtime.
 
 ### 6 photorealistic ear styles, one tap away
 Cycle through **Classic Cat · Sharp Feline · Rounded Feline · Lynx Tufted ·
-Dense Fluffy · Fox** with a single tap on the paw-icon button. Every style
-renders in real time from transparent sprite assets — no loading, no lag, no
-cartoon fallback in the style picker.
+Dense Fluffy · Fox** with a single tap on the paw-icon button. These are not
+flat doodles: every style comes from a transparent fur-textured sprite, rendered
+live with head pose and expression transforms — no loading, no lag, no cartoon
+fallback in the style picker.
 
 ### Ears that actually feel alive
 Each ear style is animated on every frame:
 - **Photorealistic fur sprites** keep their natural authored colour and texture.
 - **Ear-tip twitches** fire periodically, like a real cat listening to something.
 - **Spring tilt** follows your head roll with elastic overshoot — rapid head snaps make the ears wobble comically.
-- **Perspective squeeze** narrows the far ear and widens the near one as you turn, giving genuine 3-D depth.
+- **Perspective squeeze** narrows the far ear and widens the near one as you turn, selling the 3-D illusion.
 
 ### Ears that react to your expressions
 ML Kit reads your face every frame and the ears respond:
@@ -65,7 +66,9 @@ faces overlap.
 ### Party Mode for group selfies
 Turn on Party Mode and every tracked face gets a stable photorealistic ear
 style. The first face starts Classic, the next faces get their own looks, and
-the re-roll button reshuffles the group without changing face positions.
+the re-roll button reshuffles the group without changing face positions. It
+turns a group selfie into a tiny personality quiz: who got Lynx, who got Fox,
+who keeps re-rolling?
 
 ### Baked-in capture
 Tap the shutter to save a photo with the ears composited directly onto the
@@ -75,7 +78,8 @@ with one more tap.
 
 For video, five-second MP4 clips are recorded with the overlay baked into
 every frame at record time via CameraX `OverlayEffect` (`camera-effects:1.6.1`).
-The ears are drawn directly into the video buffer — no post-processing step.
+The ears are drawn directly into the video buffer — no post-processing step,
+just a short clip ready to send.
 
 ---
 
