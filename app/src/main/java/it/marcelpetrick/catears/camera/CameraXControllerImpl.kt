@@ -153,11 +153,12 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             overlayCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             val state = videoOverlayState.get()
             if (state != null && state.placements.isNotEmpty()) {
-                val fW = frame.getSize().width.toFloat()
-                val fH = frame.getSize().height.toFloat()
+                val crop = frame.getCropRect()
                 val matrix = viewToBufferMatrix(
-                    fW,
-                    fH,
+                    crop.left.toFloat(),
+                    crop.top.toFloat(),
+                    crop.width().toFloat().coerceAtLeast(1f),
+                    crop.height().toFloat().coerceAtLeast(1f),
                     state.viewWidth.toFloat(),
                     state.viewHeight.toFloat(),
                     frame.getRotationDegrees(),
@@ -288,22 +289,78 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         const val OVERLAY_QUEUE_DEPTH = 2
 
         /**
-         * Produces a 3×3 affine [Matrix] (row-major) that maps a point (vx, vy) in view-space
-         * to the correct pixel position in the video buffer, accounting for the buffer's
+         * Produces a 3×3 affine [Matrix] (row-major) that maps a point (vx, vy) in view-space to
+         * the correct pixel position in CameraX's visible video crop, accounting for the buffer's
          * rotation relative to the display.
          *
          * Derivation for rotDeg=90 (buffer is landscape, display is portrait):
-         *   bx = vy * fW/vH  (view-y maps to buffer-x)
-         *   by = fH - vx * fH/vW  (view-x maps to inverted buffer-y)
+         *   bx = cropLeft + vy * cropWidth/vH  (view-y maps to buffer-x)
+         *   by = cropTop + cropHeight - vx * cropHeight/vW  (view-x maps to inverted buffer-y)
          * The other three rotations are derived analogously.
          */
-        fun viewToBufferMatrix(fW: Float, fH: Float, vW: Float, vH: Float, rotDeg: Int): Matrix = Matrix().also { m ->
+        @Suppress("LongParameterList")
+        fun viewToBufferMatrix(
+            cropLeft: Float,
+            cropTop: Float,
+            cropWidth: Float,
+            cropHeight: Float,
+            viewWidth: Float,
+            viewHeight: Float,
+            rotDeg: Int,
+        ): Matrix = Matrix().also { m ->
+            val safeCropWidth = cropWidth.coerceAtLeast(1f)
+            val safeCropHeight = cropHeight.coerceAtLeast(1f)
+            val safeViewWidth = viewWidth.coerceAtLeast(1f)
+            val safeViewHeight = viewHeight.coerceAtLeast(1f)
             m.setValues(
                 when (rotDeg) {
-                    ROTATION_90 -> floatArrayOf(0f, fW / vH, 0f, -fH / vW, 0f, fH, 0f, 0f, 1f)
-                    ROTATION_180 -> floatArrayOf(-fW / vW, 0f, fW, 0f, -fH / vH, fH, 0f, 0f, 1f)
-                    ROTATION_270 -> floatArrayOf(0f, -fW / vH, fW, fH / vW, 0f, 0f, 0f, 0f, 1f)
-                    else -> floatArrayOf(fW / vW, 0f, 0f, 0f, fH / vH, 0f, 0f, 0f, 1f)
+                    ROTATION_90 -> floatArrayOf(
+                        0f,
+                        safeCropWidth / safeViewHeight,
+                        cropLeft,
+                        -safeCropHeight / safeViewWidth,
+                        0f,
+                        cropTop + safeCropHeight,
+                        0f,
+                        0f,
+                        1f,
+                    )
+
+                    ROTATION_180 -> floatArrayOf(
+                        -safeCropWidth / safeViewWidth,
+                        0f,
+                        cropLeft + safeCropWidth,
+                        0f,
+                        -safeCropHeight / safeViewHeight,
+                        cropTop + safeCropHeight,
+                        0f,
+                        0f,
+                        1f,
+                    )
+
+                    ROTATION_270 -> floatArrayOf(
+                        0f,
+                        -safeCropWidth / safeViewHeight,
+                        cropLeft + safeCropWidth,
+                        safeCropHeight / safeViewWidth,
+                        0f,
+                        cropTop,
+                        0f,
+                        0f,
+                        1f,
+                    )
+
+                    else -> floatArrayOf(
+                        safeCropWidth / safeViewWidth,
+                        0f,
+                        cropLeft,
+                        0f,
+                        safeCropHeight / safeViewHeight,
+                        cropTop,
+                        0f,
+                        0f,
+                        1f,
+                    )
                 },
             )
         }

@@ -43,8 +43,10 @@ edge-case reliability) · **LOW** (polish or hardening).
    - File: `CameraXControllerImpl.kt`
    - Live preview now uses CameraX output transforms, but recorded video still uses a handwritten
      `viewToBufferMatrix()`. This is a regression risk for devices with unusual crop/rotation output.
-   - Follow-up: replace video overlay mapping with a CameraX-provided transform if the effect API can
-     expose the required source/target transforms.
+   - Status: fixed in this pass for the known crop/rotation risk. The video overlay now maps into
+     CameraX's per-frame crop rect instead of assuming the whole buffer is visible. A later renderer
+     consolidation can still replace the view-space video path entirely if CameraX exposes a direct
+     source/target transform for `OverlayEffect` frames.
 
 6. **MEDIUM — Captured preview bitmaps are never recycled**
    - Files: `CameraPreviewComposable.kt`, `MainViewModel.kt`, `ImageSaver.kt`
