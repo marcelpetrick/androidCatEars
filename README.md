@@ -30,6 +30,9 @@ the human does the thinking.
 
 ---
 
+## View of the UI
+![](media/currentState.jpg)
+
 ## ✨ What makes it special
 
 ### Everything runs on-device — zero network access
