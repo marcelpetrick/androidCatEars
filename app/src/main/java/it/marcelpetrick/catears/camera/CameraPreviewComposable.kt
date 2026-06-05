@@ -38,6 +38,7 @@ import it.marcelpetrick.catears.domain.computeOverlayPlacement
 import it.marcelpetrick.catears.domain.imageToViewBoundingBox
 import it.marcelpetrick.catears.domain.imageToViewCoordinates
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 private const val TAG = "CatEars"
@@ -72,6 +73,7 @@ fun CameraPreview(
     val smoother = remember { MultiFaceSmoother() }
     val currentOnCameraError by rememberUpdatedState(onCameraError)
     val capturePlacements = rememberUpdatedState(overlayPlacements)
+    val disposedRef = remember { AtomicBoolean(false) }
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
     val previewWidthRef = remember { java.util.concurrent.atomic.AtomicInteger(1) }
     val previewHeightRef = remember { java.util.concurrent.atomic.AtomicInteger(1) }
@@ -83,6 +85,16 @@ fun CameraPreview(
             it.load(MediaActionSound.START_VIDEO_RECORDING)
             it.load(MediaActionSound.STOP_VIDEO_RECORDING)
         }
+    }
+
+    LaunchedEffect(lens) {
+        smoother.reset()
+        onFaceDetected(emptyList())
+        controller.updateOverlayPlacements(
+            emptyList(),
+            previewWidthRef.get(),
+            previewHeightRef.get(),
+        )
     }
 
     LaunchedEffect(overlayPlacements) {
@@ -130,6 +142,7 @@ fun CameraPreview(
                     faceDetector = detector,
                     onFaceResult = { faces, imageOutputTransform, w, h ->
                         previewView.post {
+                            if (disposedRef.get()) return@post
                             val fallbackTransform = TransformContext(
                                 imageWidth = w,
                                 imageHeight = h,
@@ -158,7 +171,15 @@ fun CameraPreview(
     )
 
     DisposableEffect(Unit) {
+        disposedRef.set(false)
         onDispose {
+            disposedRef.set(true)
+            onFaceDetected(emptyList())
+            controller.updateOverlayPlacements(
+                emptyList(),
+                previewWidthRef.get(),
+                previewHeightRef.get(),
+            )
             soundPlayer.release()
             controller.close()
             detector.close()

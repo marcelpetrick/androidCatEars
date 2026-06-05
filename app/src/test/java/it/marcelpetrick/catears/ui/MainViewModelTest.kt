@@ -366,6 +366,17 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `onToggleLens while recording is ignored`() = runTest {
+        val vm = viewModel()
+        vm.onRecordTap()
+        vm.lens.test {
+            assertEquals(LensSelector.Front, awaitItem())
+            vm.onToggleLens()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `initial recordingState is Idle`() = runTest {
         viewModel().recordingState.test {
             assertEquals(RecordingState.Idle, awaitItem())

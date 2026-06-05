@@ -36,6 +36,7 @@ class MainViewModel @Inject constructor(
     val lens: StateFlow<LensSelector> = _lens.asStateFlow()
 
     fun onToggleLens() {
+        if (_recordingState.value is RecordingState.Recording) return
         _lens.value = _lens.value.toggled()
     }
 

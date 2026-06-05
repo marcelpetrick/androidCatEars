@@ -539,15 +539,15 @@ far away from the detected head. Portrait placement is acceptable, so the likely
 ear geometry itself; it is the coordinate transform between ML Kit face coordinates and the
 `PreviewView`/Compose overlay space.
 
-Current risk area: `CameraPreviewComposable` builds a custom `TransformContext` from the analysis
-image dimensions and the preview view dimensions, and `CoordinateTransform.kt` approximates
-`PreviewView` with a uniform `FILL_CENTER` scale plus optional front-camera mirroring. That does
-not carry CameraX's full output transform through device rotation, crop rect, sensor orientation,
-and preview mirroring, so landscape can map a correct face box to the wrong screen position.
+Root cause: `CameraPreviewComposable` built a custom `TransformContext` from the analysis image
+dimensions and the preview view dimensions, and `CoordinateTransform.kt` approximated `PreviewView`
+with a uniform `FILL_CENTER` scale plus optional front-camera mirroring. That did not carry
+CameraX's full output transform through device rotation, crop rect, sensor orientation, and preview
+mirroring, so landscape could map a correct face box to the wrong screen position.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 39.0 | DONE | Replace landscape-sensitive custom camera transform with CameraX output transform | The analysis path now passes CameraX's `ImageProxyTransformFactory` output transform with each face result, then combines it with `PreviewView.outputTransform` on the view thread via `CoordinateTransform`. Face boxes and eye landmarks are mapped through that matrix before placement math, with the previous `TransformContext` path retained as a fallback while the preview transform is unavailable. Incremental compile and focused unit tests pass; full quality gate required before commit. |
+| 39.0 | DONE | Replace landscape-sensitive custom camera transform with CameraX output transform | The analysis path now passes CameraX's `ImageProxyTransformFactory` output transform with each face result, then combines it with `PreviewView.outputTransform` on the view thread via `CoordinateTransform`. Face boxes and eye landmarks are mapped through that matrix before placement math, with the previous `TransformContext` path retained as a fallback while the preview transform is unavailable. Full quality gate passed before commit `2f17a92`. |
 
 ---
 

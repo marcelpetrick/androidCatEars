@@ -73,6 +73,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         setUsingRotationDegrees(true)
     }
     private var currentOverlayEffect: OverlayEffect? = null
+    private var boundLens: LensSelector? = null
 
     @Volatile private var isFrontCamera: Boolean = false
 
@@ -93,7 +94,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     override fun bindPreview(lens: LensSelector) {
         val config = bindConfig
         val provider = cameraProvider
-        if (config == null || provider == null) return
+        if (config == null || provider == null || shouldSkipBind(lens)) return
         val owner = config.lifecycleOwner
         val surface = config.previewView
 
@@ -120,11 +121,24 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
                 .addEffect(effect)
             if (analysis != null) groupBuilder.addUseCase(analysis)
             provider.bindToLifecycle(owner, selector, groupBuilder.build())
+            boundLens = lens
             Log.d(TAG, "Camera bound (lens=$lens)")
         } catch (e: Exception) {
+            boundLens = null
+            videoCapture = null
+            currentOverlayEffect = null
+            effect.close()
             Log.e(TAG, "Camera bind failed", e)
             config.onBindFailed?.invoke()
         }
+    }
+
+    private fun shouldSkipBind(lens: LensSelector): Boolean {
+        if (activeRecording != null) {
+            Log.w(TAG, "Ignoring camera rebind while recording")
+            return true
+        }
+        return boundLens == lens && videoCapture != null
     }
 
     private fun buildOverlayEffect(): OverlayEffect {
@@ -205,26 +219,36 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     override fun startVideoRecording(onFinished: (uriString: String?) -> Unit) {
         val ctx = context
         val vc = videoCapture
-        if (activeRecording != null || ctx == null || vc == null) return
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, "cat_ears_${System.currentTimeMillis()}.mp4")
-            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-        }
-        val options = MediaStoreOutputOptions
-            .Builder(ctx.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setContentValues(contentValues)
-            .build()
-        activeRecording = vc.output.prepareRecording(ctx, options)
-            .start(ContextCompat.getMainExecutor(ctx)) { event: VideoRecordEvent ->
-                if (event is VideoRecordEvent.Finalize) {
-                    val uri = if (!event.hasError()) event.outputResults.outputUri.toString() else null
-                    onFinished(uri)
-                    activeRecording = null
-                }
+        if (activeRecording != null) return
+        if (ctx == null || vc == null) {
+            onFinished(null)
+        } else {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Video.Media.DISPLAY_NAME, "cat_ears_${System.currentTimeMillis()}.mp4")
+                put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
             }
-        val runnable = Runnable { stopVideoRecording() }
-        autoStopRunnable = runnable
-        autoStopHandler.postDelayed(runnable, VIDEO_DURATION_MS)
+            val options = MediaStoreOutputOptions
+                .Builder(ctx.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                .setContentValues(contentValues)
+                .build()
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                activeRecording = vc.output.prepareRecording(ctx, options)
+                    .start(ContextCompat.getMainExecutor(ctx)) { event: VideoRecordEvent ->
+                        if (event is VideoRecordEvent.Finalize) {
+                            val uri = if (!event.hasError()) event.outputResults.outputUri.toString() else null
+                            onFinished(uri)
+                            activeRecording = null
+                        }
+                    }
+                val runnable = Runnable { stopVideoRecording() }
+                autoStopRunnable = runnable
+                autoStopHandler.postDelayed(runnable, VIDEO_DURATION_MS)
+            } catch (e: Exception) {
+                Log.e(TAG, "Video recording failed to start", e)
+                onFinished(null)
+            }
+        }
     }
 
     override fun stopVideoRecording() {
@@ -237,6 +261,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     override fun unbind() {
         cameraProvider?.unbindAll()
         videoCapture = null
+        boundLens = null
     }
 
     override fun close() {
