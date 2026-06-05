@@ -12,8 +12,8 @@ private const val DELTA = 0.001f
 class EarTintTest {
 
     @Test
-    fun `EarTint has six values starting with NATURAL`() {
-        assertEquals(6, EarTint.entries.size)
+    fun `EarTint has only NATURAL value`() {
+        assertEquals(1, EarTint.entries.size)
         assertEquals(EarTint.NATURAL, EarTint.entries.first())
     }
 

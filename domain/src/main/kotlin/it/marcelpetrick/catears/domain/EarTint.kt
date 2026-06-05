@@ -8,18 +8,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Optional colour recolouring applied to a whole ear via a hue rotation.
+ * Ear colour treatment applied by renderers.
  *
- * NATURAL leaves the style's own palette untouched; the others rotate every
- * drawn colour by [hueDegrees], preserving luminance and inner/outer contrast.
+ * Photorealistic sprites keep their authored colours, so only [NATURAL] is user-facing.
  */
 enum class EarTint(val hueDegrees: Float) {
     NATURAL(0f),
-    ROSE(330f),
-    GOLD(45f),
-    MINT(140f),
-    SKY(200f),
-    LAVENDER(270f),
 }
 
 /**

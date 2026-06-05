@@ -124,12 +124,12 @@ class OverlayPlacementTest {
     fun `smoother preserves next tracking id and appearance`() {
         val smoother = PlacementSmoother(alpha = 0.5f)
         val first = makePlacement().copy(trackingId = 1, earStyle = EarStyle.CLASSIC, tint = EarTint.NATURAL)
-        val second = makePlacement().copy(trackingId = 2, earStyle = EarStyle.FOX, tint = EarTint.SKY)
+        val second = makePlacement().copy(trackingId = 2, earStyle = EarStyle.FOX, tint = EarTint.NATURAL)
         smoother.smooth(first)
         val result = smoother.smooth(second)
         assertEquals(2, result.trackingId)
         assertEquals(EarStyle.FOX, result.earStyle)
-        assertEquals(EarTint.SKY, result.tint)
+        assertEquals(EarTint.NATURAL, result.tint)
     }
 
     @Test

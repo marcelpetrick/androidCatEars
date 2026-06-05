@@ -20,18 +20,6 @@ enum class EarStyle {
     /** Wide-base ear with dense animated fur fringe along the outer edge. */
     DENSE_FLUFFY,
 
-    /** Drooping teardrop flap resembling a floppy-eared dog. */
-    CANINE_FLOPPY,
-
-    /** Short wide triangles with a rounded cap — husky / perky dog style. */
-    CANINE_PERKY,
-
-    /** Tall narrow ovals with white outer and pink inner — rabbit style. */
-    RABBIT,
-
     /** Small vivid-orange pointed triangle with white tip — fox style. */
     FOX,
-
-    /** Tiny round semicircles close to the head — bear style. */
-    BEAR,
 }

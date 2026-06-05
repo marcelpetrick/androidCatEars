@@ -38,16 +38,15 @@ All face detection, rendering, and compositing happens locally on the device.
 No image ever leaves the phone. No account. No permissions for storage or
 internet. `INTERNET` is not in the manifest — the OS enforces this at runtime.
 
-### 10 ear styles, one tap away
+### 6 photorealistic ear styles, one tap away
 Cycle through **Classic Cat · Sharp Feline · Rounded Feline · Lynx Tufted ·
-Dense Fluffy · Canine Floppy · Canine Perky · Rabbit · Fox · Bear** with a
-single tap on the paw-icon button. Every style renders in real time — no
-loading, no lag. All styles are drawn in code: there are **no image assets** in
-the APK; every triangle, curve, and strand is computed on the fly.
+Dense Fluffy · Fox** with a single tap on the paw-icon button. Every style
+renders in real time from transparent sprite assets — no loading, no lag, no
+cartoon fallback in the style picker.
 
 ### Ears that actually feel alive
-Each ear style is procedurally animated on every frame:
-- **Fur strands sway** at 1.25 Hz with randomised phases — no two strands move the same.
+Each ear style is animated on every frame:
+- **Photorealistic fur sprites** keep their natural authored colour and texture.
 - **Ear-tip twitches** fire periodically, like a real cat listening to something.
 - **Spring tilt** follows your head roll with elastic overshoot — rapid head snaps make the ears wobble comically.
 - **Perspective squeeze** narrows the far ear and widens the near one as you turn, giving genuine 3-D depth.
@@ -64,15 +63,15 @@ animated ears, each smoothed and tracked separately so they don't jump when
 faces overlap.
 
 ### Party Mode for group selfies
-Turn on Party Mode and every tracked face gets a stable style/tint pairing.
-The first face starts classic brown, the next faces get their own looks, and
+Turn on Party Mode and every tracked face gets a stable photorealistic ear
+style. The first face starts Classic, the next faces get their own looks, and
 the re-roll button reshuffles the group without changing face positions.
 
 ### Baked-in capture
 Tap the shutter to save a photo with the ears composited directly onto the
-frame. The same procedural geometry used in the live preview is applied at
-full resolution — what you see is exactly what you get. Share via any Android
-app with one more tap.
+frame. The same sprite renderer used in the live preview is applied at full
+resolution — what you see is exactly what you get. Share via any Android app
+with one more tap.
 
 For video, five-second MP4 clips are recorded with the overlay baked into
 every frame at record time via CameraX `OverlayEffect` (`camera-effects:1.6.1`).
@@ -84,8 +83,8 @@ The ears are drawn directly into the video buffer — no post-processing step.
 
 - Live camera preview with front/rear camera switching
 - On-device face detection via ML Kit (landmarks, head pose, per-eye expression)
-- Animated procedural ears — 10 styles, 6 tints, expression-reactive, tracks up to 4 faces
-- Party Mode with stable per-face style/tint assignments and manual re-roll
+- Animated photorealistic ears — 6 sprite-backed styles, expression-reactive, tracks up to 4 faces
+- Party Mode with stable per-face style assignments and manual re-roll
 - Still photo capture with the overlay baked in at full resolution
 - Five-second MP4 recording with the overlay baked in via `CameraEffect`
 - Save to gallery and share photos/videos via the Android share sheet
@@ -104,7 +103,7 @@ The ears are drawn directly into the video buffer — no post-processing step.
 | Build | Gradle 9.5.1 (Kotlin DSL) |
 | Min SDK | Android 14 (API 34) |
 | Target SDK | Android 16 (API 36) |
-| Drawing | 100% procedural — no PNG/WebP/SVG assets |
+| Drawing | Transparent PNG sprite assets with transform-only live/capture rendering |
 
 ## Module structure and testability
 
@@ -246,20 +245,19 @@ Install on a connected device or running emulator:
 2. The live preview fills the screen. A title bar at the top shows the version
    and git commit stamp so you can always identify the running build.
 3. Tap the **style** button (bottom-right, labelled with the current style name
-   and a paw icon) to cycle through all 10 ear styles — Classic, Sharp Feline,
-   Rounded Feline, Lynx Tufted, Dense Fluffy, Canine Floppy, Canine Perky,
-   Rabbit, Fox, Bear. Each tap advances to the next; it wraps back to Classic.
-4. Tap the **colour** button (palette icon) to cycle the ear tint.
-5. Tap the **Party Mode** button (celebration icon) for group selfies. Each
-   tracked face gets its own stable style/tint pairing; while Party Mode is on,
-   tap the **re-roll** button to reshuffle those pairings.
-6. Tap the **switch** button (bottom-right, below the style controls) to flip
+   and a paw icon) to cycle through all 6 photorealistic ear styles — Classic,
+   Sharp Feline, Rounded Feline, Lynx Tufted, Dense Fluffy, Fox. Each tap
+   advances to the next; it wraps back to Classic.
+4. Tap the **Party Mode** button (celebration icon) for group selfies. Each
+   tracked face gets its own stable style; while Party Mode is on, tap the
+   **re-roll** button to reshuffle those assignments.
+5. Tap the **switch** button (bottom-right, below the style controls) to flip
    between front and rear cameras. Cat ears track detected faces in real time.
-7. Tap the **record** button to save a five-second MP4 clip. Tap the red stop
+6. Tap the **record** button to save a five-second MP4 clip. Tap the red stop
    button to end the clip early.
-8. Tap the **capture** button (bottom-centre) to take a photo with the ears
+7. Tap the **capture** button (bottom-centre) to take a photo with the ears
    baked in; it is saved to your gallery and a status banner confirms it.
-9. Tap the **share** buttons (bottom-left, appearing after a capture or
+8. Tap the **share** buttons (bottom-left, appearing after a capture or
    recording) to send the saved photo or video via the Android share sheet.
 
 ### Make the ears react
@@ -272,7 +270,7 @@ The ears don't just sit there — they respond to your face. Try it:
 - **Open your eyes wide** → the ears shoot up in surprise.
 - **Wink** → the ear on that side flattens, then springs back.
 - **Bring in friends** → up to four faces each get animated ears at the same time.
-- **Turn on Party Mode** → each face keeps its own style/tint until you re-roll.
+- **Turn on Party Mode** → each face keeps its own style until you re-roll.
 
 > Face tracking needs a real face in view. The emulator can use a host webcam
 > (`-camera-front webcam0`) for local testing, but a physical Android 14+

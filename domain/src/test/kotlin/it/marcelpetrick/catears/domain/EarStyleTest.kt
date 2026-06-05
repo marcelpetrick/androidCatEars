@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test
 class EarStyleTest {
 
     @Test
-    fun `EarStyle has exactly ten values`() {
-        assertEquals(10, EarStyle.entries.size)
+    fun `EarStyle has exactly six photorealistic values`() {
+        assertEquals(6, EarStyle.entries.size)
     }
 
     @Test

@@ -6,7 +6,6 @@ package it.marcelpetrick.catears.overlay
 import it.marcelpetrick.catears.R
 import it.marcelpetrick.catears.domain.EarStyle
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class EarSpriteResourcesTest {
@@ -42,19 +41,9 @@ class EarSpriteResourcesTest {
     }
 
     @Test
-    fun `styles without extracted sprites stay procedural in app layer`() {
-        val spriteStyles = setOf(
-            EarStyle.CLASSIC,
-            EarStyle.SHARP_FELINE,
-            EarStyle.ROUNDED_FELINE,
-            EarStyle.LYNX_TUFTED,
-            EarStyle.DENSE_FLUFFY,
-            EarStyle.FOX,
-        )
-        EarStyle.entries
-            .filterNot { it in spriteStyles }
-            .forEach { style ->
-                assertNull(earSpriteDrawableId(style), "$style should not resolve to a sprite yet")
-            }
+    fun `all user-facing styles resolve to sprite drawables`() {
+        EarStyle.entries.forEach { style ->
+            checkNotNull(earSpriteDrawableId(style)) { "$style should resolve to a sprite" }
+        }
     }
 }

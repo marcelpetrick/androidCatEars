@@ -83,6 +83,11 @@ This is simpler code than what was built and visually 4× better.
 
 Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
 
+- **2026-06-05 — WP S-6 done.** The product surface is now photorealistic-only:
+  `CANINE_FLOPPY`, `CANINE_PERKY`, `RABBIT`, and `BEAR` were removed from `EarStyle`, the style
+  switcher, and Party Mode. The colour-tint button and user-facing tint cycling were removed so
+  sprite ears keep their authored fur and rosy inner-ear colours. Party Mode now assigns stable
+  per-face styles only.
 - **2026-06-05 — WP S-5c done.** Extracted `app/src/main/res/drawable-nodpi/ear_sharp_feline.png`
   from `08_wildcat_realistic.png` and `app/src/main/res/drawable-nodpi/ear_rounded_feline.png`
   from `01_plush_realistic_tabby.png`. `SHARP_FELINE` and `ROUNDED_FELINE` are now sprite-backed
@@ -90,9 +95,9 @@ Newest first. Update this whenever a work package advances so another agent can 
 - **2026-06-05 — WP S-5b done.** Extracted `app/src/main/res/drawable-nodpi/ear_dense_fluffy.png`
   from `07_fluffy_kitten.png` and `app/src/main/res/drawable-nodpi/ear_fox.png` from
   `06_neon_party_fox_cat.png`. `DENSE_FLUFFY` and `FOX` are now sprite-backed in domain and
-  mapped in the app-layer drawable resolver. `RABBIT` deliberately stays procedural because the
-  fluffy-kitten proposal is broad and cat-shaped rather than tall and oval; mapping it to rabbit
-  would make the style picker misleading.
+  mapped in the app-layer drawable resolver. The fluffy-kitten proposal is broad and cat-shaped
+  rather than tall and oval, so it became `DENSE_FLUFFY`; `RABBIT` was later removed from the
+  product surface.
 - **2026-06-05 — WP S-5a done.** Extracted `app/src/main/res/drawable-nodpi/ear_lynx_tufted.png`
   from `02_lynx_tufted_premium.png` using the same `rembg` + right-side connected-component
   pipeline as `CLASSIC`. `LYNX_TUFTED` is now marked `EarRendererKind.Sprite` in domain and mapped
@@ -259,9 +264,9 @@ Apply sprites to additional styles as assets become available, in order:
 
 1. `CLASSIC` — default, highest impact
 2. `LYNX_TUFTED` (ref: `02_lynx_tufted_premium.png`)
-3. `DENSE_FLUFFY` / `RABBIT` (ref: `07_fluffy_kitten.png`)
+3. `DENSE_FLUFFY` (ref: `07_fluffy_kitten.png`)
 4. `FOX` (ref: `06_neon_party_fox_cat.png`)
-5. Remaining styles — keep procedural fallback until sprites exist
+5. Removed styles — dog, rabbit, and bear stay out of the app until matching realistic assets exist
 
 ---
 
@@ -311,7 +316,7 @@ OverlayCompositor (photo + video)
 | `01_plush_realistic_tabby.png` | Color/material baseline for CLASSIC |
 | `02_lynx_tufted_premium.png` | Shape reference for LYNX_TUFTED |
 | `03_glossy_stylized_3d.png` | **First prototype sprite — cleanest edges** |
-| `07_fluffy_kitten.png` | Reference for RABBIT / DENSE_FLUFFY |
+| `07_fluffy_kitten.png` | Reference for DENSE_FLUFFY |
 | `09_plush_soft_toy_realistic_fur.png` | Fur density reference |
 | `10_game_ready_pbr_natural.png` | Material target for realistic default |
 
