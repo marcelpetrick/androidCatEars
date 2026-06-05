@@ -83,6 +83,12 @@ This is simpler code than what was built and visually 4× better.
 
 Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
 
+- **2026-06-05 — WP S-5b done.** Extracted `app/src/main/res/drawable-nodpi/ear_dense_fluffy.png`
+  from `07_fluffy_kitten.png` and `app/src/main/res/drawable-nodpi/ear_fox.png` from
+  `06_neon_party_fox_cat.png`. `DENSE_FLUFFY` and `FOX` are now sprite-backed in domain and
+  mapped in the app-layer drawable resolver. `RABBIT` deliberately stays procedural because the
+  fluffy-kitten proposal is broad and cat-shaped rather than tall and oval; mapping it to rabbit
+  would make the style picker misleading.
 - **2026-06-05 — WP S-5a done.** Extracted `app/src/main/res/drawable-nodpi/ear_lynx_tufted.png`
   from `02_lynx_tufted_premium.png` using the same `rembg` + right-side connected-component
   pipeline as `CLASSIC`. `LYNX_TUFTED` is now marked `EarRendererKind.Sprite` in domain and mapped

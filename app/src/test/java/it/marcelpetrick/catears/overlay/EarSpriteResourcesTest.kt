@@ -22,8 +22,18 @@ class EarSpriteResourcesTest {
     }
 
     @Test
+    fun `dense fluffy style resolves to dense fluffy sprite drawable`() {
+        assertEquals(R.drawable.ear_dense_fluffy, earSpriteDrawableId(EarStyle.DENSE_FLUFFY))
+    }
+
+    @Test
+    fun `fox style resolves to fox sprite drawable`() {
+        assertEquals(R.drawable.ear_fox, earSpriteDrawableId(EarStyle.FOX))
+    }
+
+    @Test
     fun `styles without extracted sprites stay procedural in app layer`() {
-        val spriteStyles = setOf(EarStyle.CLASSIC, EarStyle.LYNX_TUFTED)
+        val spriteStyles = setOf(EarStyle.CLASSIC, EarStyle.LYNX_TUFTED, EarStyle.DENSE_FLUFFY, EarStyle.FOX)
         EarStyle.entries
             .filterNot { it in spriteStyles }
             .forEach { style ->

@@ -110,7 +110,12 @@ private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when 
         rendererKind = EarRendererKind.Sprite,
     )
 
-    EarStyle.DENSE_FLUFFY -> naturalFelineSpec(style, furStrokeCount = 14, supportsTufts = true)
+    EarStyle.DENSE_FLUFFY -> naturalFelineSpec(
+        style,
+        furStrokeCount = 14,
+        supportsTufts = true,
+        rendererKind = EarRendererKind.Sprite,
+    )
 
     EarStyle.CANINE_FLOPPY -> warmCanineSpec(style, furStrokeCount = 6)
 
@@ -132,6 +137,7 @@ private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when 
         furStrokeCount = 9,
         supportsTufts = true,
         tintPolicy = EarTintPolicy.OuterFurOnly,
+        rendererKind = EarRendererKind.Sprite,
     )
 
     EarStyle.BEAR -> warmCanineSpec(style, furStrokeCount = 5)
