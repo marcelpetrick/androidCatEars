@@ -11,5 +11,7 @@ internal fun earSpriteDrawableId(style: EarStyle): Int? = when (style) {
     EarStyle.DENSE_FLUFFY -> R.drawable.ear_dense_fluffy
     EarStyle.FOX -> R.drawable.ear_fox
     EarStyle.LYNX_TUFTED -> R.drawable.ear_lynx_tufted
+    EarStyle.ROUNDED_FELINE -> R.drawable.ear_rounded_feline
+    EarStyle.SHARP_FELINE -> R.drawable.ear_sharp_feline
     else -> null
 }

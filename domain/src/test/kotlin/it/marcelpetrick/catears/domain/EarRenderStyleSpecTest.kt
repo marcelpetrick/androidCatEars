@@ -44,7 +44,14 @@ class EarRenderStyleSpecTest {
 
     @Test
     fun `extracted sprite styles are sprite-backed and others default to procedural`() {
-        val spriteStyles = setOf(EarStyle.CLASSIC, EarStyle.LYNX_TUFTED, EarStyle.DENSE_FLUFFY, EarStyle.FOX)
+        val spriteStyles = setOf(
+            EarStyle.CLASSIC,
+            EarStyle.SHARP_FELINE,
+            EarStyle.ROUNDED_FELINE,
+            EarStyle.LYNX_TUFTED,
+            EarStyle.DENSE_FLUFFY,
+            EarStyle.FOX,
+        )
         spriteStyles.forEach { style ->
             assertEquals(EarRendererKind.Sprite, earRenderStyleSpec(style).rendererKind, "$style")
         }

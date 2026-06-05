@@ -22,6 +22,16 @@ class EarSpriteResourcesTest {
     }
 
     @Test
+    fun `sharp feline style resolves to sharp feline sprite drawable`() {
+        assertEquals(R.drawable.ear_sharp_feline, earSpriteDrawableId(EarStyle.SHARP_FELINE))
+    }
+
+    @Test
+    fun `rounded feline style resolves to rounded feline sprite drawable`() {
+        assertEquals(R.drawable.ear_rounded_feline, earSpriteDrawableId(EarStyle.ROUNDED_FELINE))
+    }
+
+    @Test
     fun `dense fluffy style resolves to dense fluffy sprite drawable`() {
         assertEquals(R.drawable.ear_dense_fluffy, earSpriteDrawableId(EarStyle.DENSE_FLUFFY))
     }
@@ -33,7 +43,14 @@ class EarSpriteResourcesTest {
 
     @Test
     fun `styles without extracted sprites stay procedural in app layer`() {
-        val spriteStyles = setOf(EarStyle.CLASSIC, EarStyle.LYNX_TUFTED, EarStyle.DENSE_FLUFFY, EarStyle.FOX)
+        val spriteStyles = setOf(
+            EarStyle.CLASSIC,
+            EarStyle.SHARP_FELINE,
+            EarStyle.ROUNDED_FELINE,
+            EarStyle.LYNX_TUFTED,
+            EarStyle.DENSE_FLUFFY,
+            EarStyle.FOX,
+        )
         EarStyle.entries
             .filterNot { it in spriteStyles }
             .forEach { style ->
