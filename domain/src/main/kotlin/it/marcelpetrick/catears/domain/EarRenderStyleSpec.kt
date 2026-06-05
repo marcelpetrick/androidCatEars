@@ -103,7 +103,12 @@ private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when 
 
     EarStyle.ROUNDED_FELINE -> naturalFelineSpec(style, furStrokeCount = 8, supportsTufts = false)
 
-    EarStyle.LYNX_TUFTED -> naturalFelineSpec(style, furStrokeCount = 10, supportsTufts = true)
+    EarStyle.LYNX_TUFTED -> naturalFelineSpec(
+        style,
+        furStrokeCount = 10,
+        supportsTufts = true,
+        rendererKind = EarRendererKind.Sprite,
+    )
 
     EarStyle.DENSE_FLUFFY -> naturalFelineSpec(style, furStrokeCount = 14, supportsTufts = true)
 
@@ -132,22 +137,27 @@ private fun buildEarRenderStyleSpec(style: EarStyle): EarRenderStyleSpec = when 
     EarStyle.BEAR -> warmCanineSpec(style, furStrokeCount = 5)
 }
 
-private fun naturalFelineSpec(style: EarStyle, furStrokeCount: Int, supportsTufts: Boolean): EarRenderStyleSpec =
-    EarRenderStyleSpec(
-        style = style,
-        material = EarMaterialSpec(
-            outerBaseArgb = 0xFF9A6A45.toInt(),
-            outerRimArgb = 0xFF463026.toInt(),
-            outerHighlightArgb = 0xFFD6AA7A.toInt(),
-            innerBaseArgb = 0xFFEFA4A5.toInt(),
-            innerHighlightArgb = 0xFFFFCEC2.toInt(),
-            shadowArgb = 0x33000000,
-        ),
-        anchor = defaultCatAnchor(),
-        furStrokeCount = furStrokeCount,
-        supportsTufts = supportsTufts,
-        tintPolicy = EarTintPolicy.OuterFurOnly,
-    )
+private fun naturalFelineSpec(
+    style: EarStyle,
+    furStrokeCount: Int,
+    supportsTufts: Boolean,
+    rendererKind: EarRendererKind = EarRendererKind.Procedural,
+): EarRenderStyleSpec = EarRenderStyleSpec(
+    style = style,
+    material = EarMaterialSpec(
+        outerBaseArgb = 0xFF9A6A45.toInt(),
+        outerRimArgb = 0xFF463026.toInt(),
+        outerHighlightArgb = 0xFFD6AA7A.toInt(),
+        innerBaseArgb = 0xFFEFA4A5.toInt(),
+        innerHighlightArgb = 0xFFFFCEC2.toInt(),
+        shadowArgb = 0x33000000,
+    ),
+    anchor = defaultCatAnchor(),
+    furStrokeCount = furStrokeCount,
+    supportsTufts = supportsTufts,
+    tintPolicy = EarTintPolicy.OuterFurOnly,
+    rendererKind = rendererKind,
+)
 
 private fun warmCanineSpec(style: EarStyle, furStrokeCount: Int): EarRenderStyleSpec = EarRenderStyleSpec(
     style = style,
