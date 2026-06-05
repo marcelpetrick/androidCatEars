@@ -17,9 +17,15 @@ class EarSpriteResourcesTest {
     }
 
     @Test
+    fun `lynx tufted style resolves to lynx sprite drawable`() {
+        assertEquals(R.drawable.ear_lynx_tufted, earSpriteDrawableId(EarStyle.LYNX_TUFTED))
+    }
+
+    @Test
     fun `styles without extracted sprites stay procedural in app layer`() {
+        val spriteStyles = setOf(EarStyle.CLASSIC, EarStyle.LYNX_TUFTED)
         EarStyle.entries
-            .filter { it != EarStyle.CLASSIC }
+            .filterNot { it in spriteStyles }
             .forEach { style ->
                 assertNull(earSpriteDrawableId(style), "$style should not resolve to a sprite yet")
             }

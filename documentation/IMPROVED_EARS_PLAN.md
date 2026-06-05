@@ -83,6 +83,11 @@ This is simpler code than what was built and visually 4× better.
 
 Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
 
+- **2026-06-05 — WP S-5a done.** Extracted `app/src/main/res/drawable-nodpi/ear_lynx_tufted.png`
+  from `02_lynx_tufted_premium.png` using the same `rembg` + right-side connected-component
+  pipeline as `CLASSIC`. `LYNX_TUFTED` is now marked `EarRendererKind.Sprite` in domain and mapped
+  to the new drawable in the app layer. Live preview, still capture, and video inherit sprite
+  rendering through the S-3/S-4 renderer paths. Tests updated for the second sprite-backed style.
 - **2026-06-05 — WP S-4 done.** Still capture and CameraX video overlay now pass
   Android `Resources` into `OverlayCompositor`, which lazily decodes sprite-backed styles through
   the same app-layer `earSpriteDrawableId(EarStyle)` resolver used by live preview. The compositor

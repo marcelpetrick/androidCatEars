@@ -8,5 +8,6 @@ import it.marcelpetrick.catears.domain.EarStyle
 
 internal fun earSpriteDrawableId(style: EarStyle): Int? = when (style) {
     EarStyle.CLASSIC -> R.drawable.ear_classic
+    EarStyle.LYNX_TUFTED -> R.drawable.ear_lynx_tufted
     else -> null
 }
