@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -58,6 +59,7 @@ fun CameraPreview(
     onCameraError: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val detector = remember { faceDetectorFactory() }
     val smoother = remember { MultiFaceSmoother() }
@@ -87,7 +89,7 @@ fun CameraPreview(
 
     LaunchedEffect(captureRequested) {
         if (captureRequested) {
-            val bitmap = captureComposited(previewViewRef.get(), capturePlacements.value)
+            val bitmap = captureComposited(resources, previewViewRef.get(), capturePlacements.value)
             if (bitmap != null) soundPlayer.play(MediaActionSound.SHUTTER_CLICK)
             onComposited(bitmap)
         }
@@ -155,7 +157,11 @@ fun CameraPreview(
  * gracefully); if no face was detected ([placement] is null), returns the plain frame and
  * applies **no** ears; if compositing itself fails, falls back to the plain frame. Never throws.
  */
-private fun captureComposited(previewView: PreviewView?, placements: List<OverlayPlacement>): Bitmap? {
+private fun captureComposited(
+    resources: android.content.res.Resources,
+    previewView: PreviewView?,
+    placements: List<OverlayPlacement>,
+): Bitmap? {
     val frame = previewView?.bitmap
     if (frame == null) {
         Log.w(TAG, "Capture skipped: preview frame not ready")
@@ -165,14 +171,18 @@ private fun captureComposited(previewView: PreviewView?, placements: List<Overla
         Log.d(TAG, "Capturing without ears: no face detected")
         frame
     } else {
-        compositeEarsOrFrame(frame, placements)
+        compositeEarsOrFrame(frame, placements, resources)
     }
 }
 
 /** Draws procedural ears onto [frame]; any failure yields the plain frame. */
 @Suppress("TooGenericExceptionCaught")
-private fun compositeEarsOrFrame(frame: Bitmap, placements: List<OverlayPlacement>): Bitmap = try {
-    OverlayCompositor.composite(frame, placements)
+private fun compositeEarsOrFrame(
+    frame: Bitmap,
+    placements: List<OverlayPlacement>,
+    resources: android.content.res.Resources,
+): Bitmap = try {
+    OverlayCompositor.composite(frame, placements, resources)
 } catch (e: Exception) {
     Log.e(TAG, "Compositing ears failed; saving plain frame", e)
     frame
