@@ -83,6 +83,13 @@ This is simpler code than what was built and visually 4× better.
 
 Newest first. Update this whenever a work package advances so another agent can pick up cleanly.
 
+- **2026-06-05 — WP S-4 done.** Still capture and CameraX video overlay now pass
+  Android `Resources` into `OverlayCompositor`, which lazily decodes sprite-backed styles through
+  the same app-layer `earSpriteDrawableId(EarStyle)` resolver used by live preview. The compositor
+  caches decoded bitmaps in a `ConcurrentHashMap`, draws `CLASSIC` sprites with base alignment,
+  screen-left mirroring, perspective scale, and rotation, and falls back to the existing procedural
+  Canvas path when a style has no sprite or resources are unavailable. Sprite-backed capture avoids
+  the procedural tint layer so the single-layer classic sprite keeps its warm inner ear.
 - **2026-06-05 — WP S-3 done.** Live preview now resolves sprite resources in the
   app layer via `earSpriteDrawableId(EarStyle)`, loads the `CLASSIC` sprite once per style in
   Compose, and draws sprite-backed ears with transform-only placement: height-scaled to the

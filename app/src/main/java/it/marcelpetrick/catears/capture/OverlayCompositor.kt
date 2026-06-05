@@ -3,7 +3,9 @@
 
 package it.marcelpetrick.catears.capture
 
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
@@ -15,11 +17,14 @@ import androidx.core.graphics.withMatrix
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarMaterialSpec
 import it.marcelpetrick.catears.domain.EarRenderStyleSpec
+import it.marcelpetrick.catears.domain.EarRendererKind
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.earRenderStyleSpec
 import it.marcelpetrick.catears.domain.hueRotationMatrix
+import it.marcelpetrick.catears.overlay.earSpriteDrawableId
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -48,6 +53,8 @@ object OverlayCompositor {
         val rightBaseY: Float,
     )
 
+    private data class CanvasEarFrame(val style: EarStyle, val resources: Resources?, val tintPaint: Paint?)
+
     /** Computes the six vertices for the outer and inner classic-ear triangles. */
     fun computeEarGeometry(anchor: EarAnchor): EarGeometry {
         val cx = anchor.x
@@ -67,13 +74,15 @@ object OverlayCompositor {
      * Draws cat ears for every placement in [placements] directly onto [canvas].
      * Used by the video overlay effect to bake ears into recorded frames.
      */
-    fun drawEarsOnCanvas(canvas: Canvas, placements: List<OverlayPlacement>) {
+    fun drawEarsOnCanvas(canvas: Canvas, placements: List<OverlayPlacement>, resources: Resources? = null) {
         for (p in placements) {
-            val tintPaint = tintPaints[p.tint]
-            if (tintPaint != null) canvas.saveLayer(earsBounds(p), tintPaint)
-            drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
-            drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
-            if (tintPaint != null) canvas.restore()
+            val frame = CanvasEarFrame(
+                style = p.earStyle,
+                resources = resources,
+                tintPaint = tintPaints[p.tint],
+            )
+            drawEarOnCanvas(canvas, p.leftEar, isLeft = true, frame)
+            drawEarOnCanvas(canvas, p.rightEar, isLeft = false, frame)
         }
     }
 
@@ -81,41 +90,63 @@ object OverlayCompositor {
      * Draws cat ears for every placement in [placements] onto [frame] and returns the result.
      * Returns a copy of [frame] unchanged when [placements] is empty.
      */
-    fun composite(frame: Bitmap, placements: List<OverlayPlacement>): Bitmap {
+    fun composite(frame: Bitmap, placements: List<OverlayPlacement>, resources: Resources? = null): Bitmap {
         val result = frame.copy(Bitmap.Config.ARGB_8888, true)
         if (placements.isEmpty()) return result
         val canvas = Canvas(result)
         for (p in placements) {
-            val tintPaint = tintPaints[p.tint]
-            if (tintPaint != null) canvas.saveLayer(earsBounds(p), tintPaint)
-            drawEarOnCanvas(canvas, p.leftEar, p.earStyle)
-            drawEarOnCanvas(canvas, p.rightEar, p.earStyle)
-            if (tintPaint != null) canvas.restore()
+            val frameState = CanvasEarFrame(
+                style = p.earStyle,
+                resources = resources,
+                tintPaint = tintPaints[p.tint],
+            )
+            drawEarOnCanvas(canvas, p.leftEar, isLeft = true, frameState)
+            drawEarOnCanvas(canvas, p.rightEar, isLeft = false, frameState)
         }
         return result
     }
 
-    private fun earsBounds(p: OverlayPlacement): RectF {
-        val margin = p.leftEar.size.coerceAtLeast(p.rightEar.size)
-        return RectF(
-            minOf(p.leftEar.x, p.rightEar.x) - margin,
-            minOf(p.leftEar.y, p.rightEar.y) - margin * 0.1f,
-            maxOf(p.leftEar.x, p.rightEar.x) + margin,
-            maxOf(p.leftEar.y, p.rightEar.y) + margin * 2f,
-        )
+    private fun drawEarOnCanvas(canvas: Canvas, anchor: EarAnchor, isLeft: Boolean, frame: CanvasEarFrame) {
+        val spec = earRenderStyleSpec(frame.style)
+        val sprite = spriteBitmapFor(frame.style, frame.resources)
+        if (spec.rendererKind == EarRendererKind.Sprite && sprite != null) {
+            drawSpriteEar(canvas, anchor, sprite, isLeft)
+        } else {
+            drawProceduralEarOnCanvas(canvas, anchor, spec, frame)
+        }
     }
 
-    private fun drawEarOnCanvas(canvas: Canvas, anchor: EarAnchor, style: EarStyle) {
+    private fun drawSpriteEar(canvas: Canvas, anchor: EarAnchor, bitmap: Bitmap, isLeft: Boolean) {
+        val spriteHeight = anchor.size
+        val spriteWidth = spriteHeight * bitmap.width / bitmap.height
+        val baseY = anchor.y + anchor.size
+        val basePivotX = anchor.x
+        val matrix = Matrix().apply {
+            setScale(spriteWidth / bitmap.width, spriteHeight / bitmap.height)
+            postTranslate(anchor.x - spriteWidth / 2f, baseY - spriteHeight)
+            postScale(if (isLeft) -1f else 1f, 1f, basePivotX, baseY)
+            postScale(anchor.xScale, 1f, basePivotX, baseY)
+            postRotate(anchor.tiltDegrees, basePivotX, baseY)
+        }
+        canvas.drawBitmap(bitmap, matrix, null)
+    }
+
+    private fun drawProceduralEarOnCanvas(
+        canvas: Canvas,
+        anchor: EarAnchor,
+        spec: EarRenderStyleSpec,
+        frame: CanvasEarFrame,
+    ) {
+        if (frame.tintPaint != null) canvas.saveLayer(earBounds(anchor), frame.tintPaint)
         val pivotX = anchor.x
         val pivotY = anchor.y + anchor.size / 2f
-        val spec = earRenderStyleSpec(style)
         val matrix = Matrix().apply {
             postRotate(anchor.tiltDegrees, pivotX, pivotY)
             postScale(anchor.xScale, 1f, pivotX, pivotY)
         }
         canvas.withMatrix(matrix) {
             drawSoftEarShadow(this, anchor, spec.material)
-            when (style) {
+            when (frame.style) {
                 EarStyle.CLASSIC -> drawClassicEar(this, anchor)
                 EarStyle.SHARP_FELINE -> drawSharpFelineEar(this, anchor)
                 EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(this, anchor)
@@ -129,7 +160,24 @@ object OverlayCompositor {
             }
             drawMaterialFinish(this, anchor, spec)
         }
+        if (frame.tintPaint != null) canvas.restore()
     }
+
+    private fun earBounds(anchor: EarAnchor): RectF = RectF(
+        anchor.x - anchor.size,
+        anchor.y - anchor.size * 0.25f,
+        anchor.x + anchor.size,
+        anchor.y + anchor.size * 1.5f,
+    )
+
+    private fun spriteBitmapFor(style: EarStyle, resources: Resources?): Bitmap? =
+        earSpriteDrawableId(style)?.let { drawableId ->
+            resources?.let {
+                spriteBitmapCache.getOrPut(drawableId) {
+                    BitmapFactory.decodeResource(it, drawableId)
+                }
+            }
+        }
 
     private fun drawSoftEarShadow(canvas: Canvas, anchor: EarAnchor, material: EarMaterialSpec) {
         val s = anchor.size
@@ -554,6 +602,8 @@ object OverlayCompositor {
                 }
             }
     }
+
+    private val spriteBitmapCache = ConcurrentHashMap<Int, Bitmap>()
 
     // ─── paints — lazy to avoid android.graphics.Color at class-load in JVM tests ──
 
