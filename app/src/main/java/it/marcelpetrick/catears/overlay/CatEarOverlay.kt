@@ -3,6 +3,7 @@
 
 package it.marcelpetrick.catears.overlay
 
+import android.graphics.BitmapFactory
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -26,16 +28,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.platform.LocalResources
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarMaterialSpec
 import it.marcelpetrick.catears.domain.EarRenderStyleSpec
+import it.marcelpetrick.catears.domain.EarRendererKind
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.EarTint
 import it.marcelpetrick.catears.domain.OverlayPlacement
@@ -43,6 +49,7 @@ import it.marcelpetrick.catears.domain.earRenderStyleSpec
 import it.marcelpetrick.catears.domain.hueRotationMatrix
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /** Bundled animated values driven by time and expression probabilities. */
@@ -54,6 +61,14 @@ private data class EarAnimState(
     val yShiftFraction: Float,
     val leftWinkScale: Float,
     val rightWinkScale: Float,
+)
+
+private data class EarDrawFrame(
+    val style: EarStyle,
+    val swayTime: Float,
+    val twitchTime: Float,
+    val spriteBitmap: ImageBitmap?,
+    val tintPaint: Paint?,
 )
 
 private data class MaterialEarGeometry(val tip: Offset, val leftBase: Offset, val rightBase: Offset)
@@ -128,7 +143,20 @@ fun CatEarOverlay(placements: List<OverlayPlacement>, modifier: Modifier = Modif
 private fun SingleFaceEarOverlay(placement: OverlayPlacement) {
     val anim = rememberEarAnimState(placement)
     val style = placement.earStyle
+    val resources = LocalResources.current
+    val spriteBitmap = remember(style, resources) {
+        earSpriteDrawableId(style)?.let { drawableId ->
+            BitmapFactory.decodeResource(resources, drawableId)?.asImageBitmap()
+        }
+    }
     val tintPaint: Paint? = tintPaintCache[placement.tint]
+    val drawFrame = EarDrawFrame(
+        style = style,
+        swayTime = anim.swayTime,
+        twitchTime = anim.twitchTime,
+        spriteBitmap = spriteBitmap,
+        tintPaint = tintPaint,
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -144,26 +172,8 @@ private fun SingleFaceEarOverlay(placement: OverlayPlacement) {
                     y = placement.rightEar.y + placement.rightEar.size * anim.yShiftFraction,
                     xScale = placement.rightEar.xScale * anim.rightWinkScale,
                 )
-                val drawEars: DrawScope.() -> Unit = {
-                    drawEar(leftEar, style, anim.swayTime, anim.twitchTime)
-                    drawEar(rightEar, style, anim.swayTime, anim.twitchTime)
-                }
-                if (tintPaint == null) {
-                    drawEars()
-                } else {
-                    val margin = leftEar.size.coerceAtLeast(rightEar.size)
-                    val bounds = Rect(
-                        left = minOf(leftEar.x, rightEar.x) - margin,
-                        top = minOf(leftEar.y, rightEar.y) - margin * 0.1f,
-                        right = maxOf(leftEar.x, rightEar.x) + margin,
-                        bottom = maxOf(leftEar.y, rightEar.y) + margin * 2f,
-                    )
-                    drawIntoCanvas { canvas ->
-                        canvas.saveLayer(bounds, tintPaint)
-                        drawEars()
-                        canvas.restore()
-                    }
-                }
+                drawEar(leftEar, isLeft = true, drawFrame)
+                drawEar(rightEar, isLeft = false, drawFrame)
             },
     )
 }
@@ -206,32 +216,74 @@ private const val MATERIAL_TUFT_SWAY_DEG = 4f
 private const val MATERIAL_TUFT_LENGTH_RATIO = 0.18f
 private const val MATERIAL_TUFT_WIDTH_RATIO = 0.032f
 
-private fun DrawScope.drawEar(anchor: EarAnchor, style: EarStyle, swayTime: Float, twitchTime: Float) {
+private fun DrawScope.drawEar(anchor: EarAnchor, isLeft: Boolean, frame: EarDrawFrame) {
+    val spec = earRenderStyleSpec(frame.style)
+    if (spec.rendererKind == EarRendererKind.Sprite && frame.spriteBitmap != null) {
+        drawSpriteEar(anchor, frame.spriteBitmap, isLeft, frame.twitchTime)
+    } else {
+        drawProceduralEar(anchor, spec, frame)
+    }
+}
+
+private fun DrawScope.drawSpriteEar(anchor: EarAnchor, bitmap: ImageBitmap, isLeft: Boolean, twitchTime: Float) {
+    val spriteHeight = anchor.size
+    val spriteWidth = spriteHeight * bitmap.width / bitmap.height
+    val baseY = anchor.y + anchor.size
+    val top = baseY - spriteHeight
+    val left = anchor.x - spriteWidth / 2f
+    val basePivot = Offset(anchor.x, baseY)
+    val twitchAngle = sin(twitchTime) * TWITCH_AMPLITUDE * sin(twitchTime * TWITCH_FREQ_MOD)
+    rotate(degrees = anchor.tiltDegrees + twitchAngle, pivot = basePivot) {
+        scale(scaleX = anchor.xScale, scaleY = 1f, pivot = basePivot) {
+            scale(scaleX = if (isLeft) -1f else 1f, scaleY = 1f, pivot = basePivot) {
+                drawImage(
+                    image = bitmap,
+                    dstOffset = androidx.compose.ui.unit.IntOffset(left.roundToInt(), top.roundToInt()),
+                    dstSize = androidx.compose.ui.unit.IntSize(spriteWidth.roundToInt(), spriteHeight.roundToInt()),
+                )
+            }
+        }
+    }
+}
+
+private fun DrawScope.drawProceduralEar(anchor: EarAnchor, spec: EarRenderStyleSpec, frame: EarDrawFrame) {
+    if (frame.tintPaint != null) {
+        drawIntoCanvas { it.saveLayer(earLayerBounds(anchor), frame.tintPaint) }
+    }
     val cx = anchor.x
     val top = anchor.y
     val s = anchor.size
     val pivot = Offset(cx, top + s / 2f)
-    val twitchAngle = sin(twitchTime) * TWITCH_AMPLITUDE * sin(twitchTime * TWITCH_FREQ_MOD)
-    val spec = earRenderStyleSpec(style)
+    val twitchAngle = sin(frame.twitchTime) * TWITCH_AMPLITUDE * sin(frame.twitchTime * TWITCH_FREQ_MOD)
     rotate(degrees = anchor.tiltDegrees + twitchAngle, pivot = pivot) {
         scale(scaleX = anchor.xScale, scaleY = 1f, pivot = pivot) {
             drawSoftEarShadow(cx, top, s, spec.material)
-            when (style) {
-                EarStyle.CLASSIC -> drawClassicEar(cx, top, s, swayTime)
-                EarStyle.SHARP_FELINE -> drawSharpFelineEar(cx, top, s, swayTime)
-                EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(cx, top, s, swayTime)
-                EarStyle.LYNX_TUFTED -> drawLynxTuftedEar(cx, top, s, swayTime)
-                EarStyle.DENSE_FLUFFY -> drawDenseFluffyEar(cx, top, s, swayTime)
-                EarStyle.CANINE_FLOPPY -> drawCanineFloppyEar(cx, top, s, swayTime)
-                EarStyle.CANINE_PERKY -> drawCaninePerkyEar(cx, top, s, swayTime)
+            when (frame.style) {
+                EarStyle.CLASSIC -> drawClassicEar(cx, top, s, frame.swayTime)
+                EarStyle.SHARP_FELINE -> drawSharpFelineEar(cx, top, s, frame.swayTime)
+                EarStyle.ROUNDED_FELINE -> drawRoundedFelineEar(cx, top, s, frame.swayTime)
+                EarStyle.LYNX_TUFTED -> drawLynxTuftedEar(cx, top, s, frame.swayTime)
+                EarStyle.DENSE_FLUFFY -> drawDenseFluffyEar(cx, top, s, frame.swayTime)
+                EarStyle.CANINE_FLOPPY -> drawCanineFloppyEar(cx, top, s, frame.swayTime)
+                EarStyle.CANINE_PERKY -> drawCaninePerkyEar(cx, top, s, frame.swayTime)
                 EarStyle.RABBIT -> drawRabbitEar(cx, top, s)
-                EarStyle.FOX -> drawFoxEar(cx, top, s, swayTime)
+                EarStyle.FOX -> drawFoxEar(cx, top, s, frame.swayTime)
                 EarStyle.BEAR -> drawBearEar(cx, top, s)
             }
-            drawMaterialFinish(cx, top, s, spec, swayTime)
+            drawMaterialFinish(cx, top, s, spec, frame.swayTime)
         }
     }
+    if (frame.tintPaint != null) {
+        drawIntoCanvas { it.restore() }
+    }
 }
+
+private fun earLayerBounds(anchor: EarAnchor): Rect = Rect(
+    left = anchor.x - anchor.size,
+    top = anchor.y - anchor.size * 0.25f,
+    right = anchor.x + anchor.size,
+    bottom = anchor.y + anchor.size * 1.5f,
+)
 
 private fun DrawScope.drawSoftEarShadow(cx: Float, top: Float, s: Float, material: EarMaterialSpec) {
     drawOval(
