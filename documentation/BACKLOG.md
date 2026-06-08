@@ -343,7 +343,7 @@ Keep the build log clean and forward-compatible with future Gradle majors.
 
 ---
 
-### WP 27 — In-app Help / About dialog (localised: EN · DE · ZH)
+### WP 27 — In-app Help / About dialog (localised: EN · DE · HR · ZH)
 
 A first-class way for new users to understand the app, reach the author, and
 give feedback. This is an open, for-fun project — the author actively wants input.
@@ -352,8 +352,9 @@ give feedback. This is an open, for-fun project — the author actively wants in
 |----|--------|------|---------------------|
 | 27.0 | DONE | Help button + dialog scaffold | `Icons.Filled.Info` `IconButton` at `TopEnd`; tapping opens a full `Dialog` + `Surface` with a scrollable `Column`. `HelpControl` composable manages its own open/close state. |
 | 27.1 | DONE | About + author + repo + feedback content | Dialog shows app pitch, "by Marcel Petrick", clickable `REPO_URL` and `FEEDBACK_URL` (open via `LocalUriHandler`), and feedback invitation text. |
-| 27.2 | DONE | Feature overview + how-to-use | Bullet list of 6 features and 7 numbered how-to-use steps, fully localised in all three languages. |
-| 27.3 | DONE | Language switch EN / DE / ZH inside the dialog | `SingleChoiceSegmentedButtonRow` switches all dialog copy between English, German, Mandarin at runtime. `HelpLanguage` enum + `HelpContent` data class + `helpContent()` pure function in `:domain`; 14 unit tests; Kover gate ≥95%. |
+| 27.2 | DONE | Feature overview + how-to-use | Bullet list of 6 features and 7 numbered how-to-use steps, fully localised in English, German, Croatian, and Mandarin. |
+| 27.3 | DONE | Language switch EN / DE / HR / ZH inside the dialog | `SingleChoiceSegmentedButtonRow` switches all dialog copy between English, German, Croatian, and Mandarin at runtime. `HelpLanguage` enum + `HelpContent` data class + `helpContent()` pure function in `:domain`; unit tests cover every language; Kover gate ≥95%. |
+| 27.4 | DONE | Save help language across recreation | The selected help language uses `rememberSaveable`, so rotation or dialog recreation keeps the user's active language. |
 
 ---
 

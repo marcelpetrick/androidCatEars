@@ -77,11 +77,10 @@ edge-case reliability) · **LOW** (polish or hardening).
      pressure. The current asset set is small, but future high-resolution sprites can become costly.
    - Follow-up: use size-bounded/lifecycle-aware bitmap caching or Android resource decoding helpers.
 
-10. **LOW — Help language selection is not saved across dialog recreation**
+10. **LOW — Help language selection is not saved across dialog recreation — fixed 2026-06-08**
     - File: `HelpDialog.kt`
-    - The selected help language uses `remember`, not `rememberSaveable`. Rotation or process
-      recreation inside the dialog resets to English.
-    - Follow-up: use `rememberSaveable` for the selected `HelpLanguage`.
+    - The selected help language now uses `rememberSaveable`, so rotation or recreation inside the
+      dialog keeps the active language instead of resetting to English.
 
 ## Critical Fix Plan
 
