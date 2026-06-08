@@ -90,18 +90,24 @@ object OverlayCompositor {
      * Draws cat ears for every placement in [placements] onto [frame] and returns the result.
      * Returns a copy of [frame] unchanged when [placements] is empty.
      */
+    @Suppress("TooGenericExceptionCaught")
     fun composite(frame: Bitmap, placements: List<OverlayPlacement>, resources: Resources? = null): Bitmap {
         val result = frame.copy(Bitmap.Config.ARGB_8888, true)
-        if (placements.isEmpty()) return result
-        val canvas = Canvas(result)
-        for (p in placements) {
-            val frameState = CanvasEarFrame(
-                style = p.earStyle,
-                resources = resources,
-                tintPaint = tintPaints[p.tint],
-            )
-            drawEarOnCanvas(canvas, p.leftEar, isLeft = true, frameState)
-            drawEarOnCanvas(canvas, p.rightEar, isLeft = false, frameState)
+        try {
+            if (placements.isEmpty()) return result
+            val canvas = Canvas(result)
+            for (p in placements) {
+                val frameState = CanvasEarFrame(
+                    style = p.earStyle,
+                    resources = resources,
+                    tintPaint = tintPaints[p.tint],
+                )
+                drawEarOnCanvas(canvas, p.leftEar, isLeft = true, frameState)
+                drawEarOnCanvas(canvas, p.rightEar, isLeft = false, frameState)
+            }
+        } catch (e: RuntimeException) {
+            result.recycle()
+            throw e
         }
         return result
     }
