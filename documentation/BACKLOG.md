@@ -303,13 +303,18 @@ are already clean enough to extend).
 
 A shareable MP4 with animated ears is significantly more viral than a still photo.
 CameraX provides a `VideoCapture` use case; the compositing challenge is applying
-the procedural ear overlay to every recorded frame.
+the ear overlay to every recorded frame.
+
+**Status note 2026-06-08:** WP 24 is implemented through the narrower WP 29 and WP 32
+delivery path. The shipped feature is a fixed five-second MP4 with ears baked in via
+CameraX `OverlayEffect`, saved through MediaStore, and shareable from the app. GIF export
+remains a separate stretch feature.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 24.0 | TODO | CameraX `VideoCapture` integration | Add `VideoCapture` use case to `CameraXControllerImpl`; bind it alongside `Preview` and `ImageAnalysis`. Add start/stop recording API to the camera controller seam. Unit-testable parts covered; all gates green. |
-| 24.1 | TODO | Overlay compositor for video frames | Extend `OverlayCompositor` (or create `VideoFrameCompositor`) to composite ears onto each `Surface`-delivered `Bitmap` frame during recording. The current `OverlayPlacement` from the face detector is used for each frame; ears are rendered at the last known placement when no face is detected. |
-| 24.2 | TODO | Record button UI | Add a record/stop toggle FAB (or long-press on the capture button). Show a recording-time counter. On stop, save the MP4 to MediaStore and enable sharing via the existing share sheet. |
+| 24.0 | DONE | CameraX `VideoCapture` integration | Implemented by WP 29.0: `CameraXControllerImpl` binds `VideoCapture` with `Preview` and `ImageAnalysis`, records a fixed 5 s MP4, and exposes start/stop through `CameraControllerSeam`. |
+| 24.1 | DONE | Overlay compositor for video frames | Implemented by WP 32.0/32.1 and hardened in `436b96e`: `OverlayEffect` targets `VIDEO_CAPTURE`, clears the reused overlay canvas every frame, maps placements into the frame crop, and draws ears through `OverlayCompositor.drawEarsOnCanvas`. |
+| 24.2 | DONE | Record button UI | Implemented by WP 29.2/29.3 and WP 35: the record/stop FAB starts a 5 s clip, can stop early, saves to MediaStore, and exposes video sharing. |
 | 24.3 | TODO | Animated GIF export (stretch) | Post-process a short recording segment into an animated GIF using a bundled encoder (e.g., gifencoder). Share via the existing share intent. |
 
 ---
@@ -323,7 +328,7 @@ Individually small improvements that collectively lift the "first launch" and
 |----|--------|------|---------------------|
 | 25.0 | TODO | README screenshots / demo GIF (WP 14.4) | Capture at least two screenshots (ears visible, different styles) plus one animated GIF on a real device or webcam-backed emulator. Add to `media/` and embed in README. Supersedes the existing WP 14.4 TODO entry. |
 | 25.1 | DONE | Haptic feedback on capture | Single `HapticFeedbackConstants.CONFIRM` vibration on shutter tap via Compose `LocalHapticFeedback`. Costs one line; noticeably improves the capture feel. |
-| 25.2 | DONE | Ear colour customisation | Let users pick a base hue for the active ear style via a compact colour-wheel or preset swatches (bottom-sheet or in-camera overlay). `EarAnchor` gains an optional `tintColor: Color`; renderers apply it as a `BlendMode.Modulate` or tint parameter. |
+| 25.2 | DONE | Remove user-facing ear colour customisation | Earlier tint cycling shipped for procedural ears, but it was removed in `4645c0f` when the app moved to photorealistic-only sprite ears. The current product intentionally keeps authored fur and inner-ear colours; no colour/tint button is shown. |
 | 25.3 | TODO | First-launch onboarding screen | Single illustrated screen shown once (persisted via `DataStore<Preferences>`): shows an example of the ear overlay and the three main controls (capture, switch, style). Dismisses to the normal camera view. |
 
 ---
@@ -388,8 +393,8 @@ silent, looping clip is far more viral than a still and keeps the scope testable
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 29.0 | DONE | CameraX `VideoCapture` for a fixed 5 s clip | `camera-video` dependency added. `CameraXControllerImpl` builds a `Recorder` + `VideoCapture` use case bound alongside `Preview` + `ImageAnalysis`. `startVideoRecording()` writes to MediaStore via `MediaStoreOutputOptions`; `Handler.postDelayed` auto-stops after 5 s. Seam default no-ops; `RecordingState` sealed class + 7 domain tests; 6 ViewModel tests. |
-| 29.1 | BLOCKED | Bake ears into recorded frames | Requires a `CameraEffect`/`SurfaceProcessor` pipeline that can only be verified on a real device. The current implementation records plain video (no overlay). Unblock by adding a `CameraEffect` that applies `OverlayCompositor` to each frame buffer. |
-| 29.2 | DONE | Record button UI + countdown | `RecordButton` SmallFAB: `FiberManualRecord` icon when idle; red `Stop` icon (error colour) when recording. Added above the tint button in the right FAB column. |
+| 29.1 | DONE | Bake ears into recorded frames | Implemented by WP 32 using CameraX `OverlayEffect` targeting `VIDEO_CAPTURE`. Follow-up fixes cleared the reused canvas each frame (`2f17a92`) and mapped the overlay into CameraX's frame crop (`436b96e`). |
+| 29.2 | DONE | Record button UI + countdown | `RecordButton` SmallFAB: `FiberManualRecord` icon when idle; red `Stop` icon (error colour) when recording. Added to the right FAB column. |
 | 29.3 | DONE | Share the clip | `ShareButtonColumn` shows "Share Video" `SmallFAB` (Videocam icon) above "Share Photo" at `BottomStart`. Shares via `buildShareConfig(..., "video/mp4").toChooserIntent()`; `onRecordingConsumed()` resets state. |
 
 ---
@@ -402,7 +407,7 @@ Two regressions were observed in release **0.1.119** during real-device use. The
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 30.0 | DONE | Fix cat-ear head attachment after landmark anchoring change | In release 0.1.119 the ears were positioned too high above the skull; the bases no longer touched the visible top of the head. Fixed by changing the vertical anchor so each ear base slightly overlaps the top of the detected head/face box (`box.top + 4% height`) instead of floating above it. Fixture and focused placement tests now prove the base point lands on/near the top-of-head attachment zone while staying above human-ear landmarks. |
-| 30.1 | DONE | Apply selected ear tint to saved captures | Saved images still render the default brown ears even when the live preview uses a selected hue such as lila. Fixed by making the capture path use the same appearance-enriched `overlayPlacements` list as the live overlay, instead of the raw face-detector placements. The compositor already applied non-default `EarTint`; the missing piece was propagation into the captured bitmap path. |
+| 30.1 | DONE | Apply selected ear tint to saved captures | Historical procedural-ear fix: saved images used the same appearance-enriched `overlayPlacements` list as the live overlay, instead of raw face-detector placements. This remains useful history, but user-facing tint cycling was later removed in `4645c0f` for photorealistic sprite ears. |
 
 ---
 
@@ -439,29 +444,30 @@ down. The instance should be scoped to the camera composable lifecycle (`Disposa
 
 ### WP 32 — Bug: recorded video clip missing ear overlay
 
-The 5-second clip saved to the gallery contains **plain camera frames with no cat-ear overlay**.
-The overlay is a Compose layer drawn on top of the preview surface; `CameraX VideoCapture` only
-records the raw camera stream and never sees the Compose layer.
+Historical bug: the 5-second clip saved to the gallery contained **plain camera frames with no
+cat-ear overlay**. The overlay was a Compose layer drawn on top of the preview surface; `CameraX
+VideoCapture` recorded the raw camera stream and never saw the Compose layer.
 
-This supersedes **WP 29.1** (previously BLOCKED pending device verification). The fix requires
-compositing the ears into the frame before it reaches the `VideoCapture` use case.
+This superseded **WP 29.1** (previously BLOCKED pending device verification). The fix composites
+the ears into the frame before it reaches the `VideoCapture` use case.
 
-**Resolution path — `CameraEffect` / `SurfaceProcessor`:**
-CameraX (1.3+) exposes `CameraEffect` which intercepts the camera output as an OpenGL texture,
-allowing arbitrary per-frame processing before the frame reaches `Preview` and/or `VideoCapture`.
-A custom `SurfaceProcessor` would:
-1. Receive the raw OpenGL texture from the camera pipeline.
-2. Render the ear overlay (the same `OverlayPlacement` data the live preview uses) onto it.
-3. Output the composited frame to the bound `VideoCapture` use case.
+**Resolution path — CameraX `OverlayEffect`:**
+CameraX `camera-effects:1.6.1` provides `OverlayEffect`, which draws onto frames targeted at
+`VIDEO_CAPTURE`. The shipped implementation:
+1. Receives the current frame's overlay canvas from CameraX.
+2. Clears the reused overlay canvas so previous ears cannot ghost into later frames.
+3. Maps the latest `OverlayPlacement` list from preview coordinates into the frame crop.
+4. Draws the same sprite-backed ears used by live preview and still capture.
 
-Because the overlay placement data lives in the ViewModel state (collected by `AppContent`) and the
-`SurfaceProcessor` runs on a GL thread, the placement list must be fed to the processor via a
-thread-safe `AtomicReference`.
+Because the overlay placement data lives in Compose/ViewModel state and the draw listener runs on
+CameraX's overlay thread, the placement list is fed to the effect via a thread-safe
+`AtomicReference`.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 32.0 | DONE | Implement `CameraEffect` + `SurfaceProcessor` to bake ears into video | Recorded video shows the same ear overlay visible in the live preview at recording time. Used `OverlayEffect` from `camera-effects:1.6.1` targeting `VIDEO_CAPTURE`. The `setOnDrawListener` callback scales the current `List<OverlayPlacement>` from view-space to video-frame-space via an `AtomicReference<VideoOverlayState>` updated on every placement change from `CameraPreviewComposable`. `OverlayCompositor.drawEarsOnCanvas` (new public function) draws directly onto `Frame.getOverlayCanvas()`. Preview stream is unaffected. All quality gates pass. |
-| 32.1 | DONE | Fix recorded-video ear ghosting/drift | The video overlay state stores only the latest placement list, but CameraX reuses the `OverlayEffect` canvas across frames. The draw listener now clears the overlay canvas with transparent `PorterDuff.Mode.CLEAR` before drawing current placements, so moved faces and no-face frames cannot leave previous ear positions painted into the clip. Incremental compile and focused unit tests pass. |
+| 32.1 | DONE | Fix recorded-video ear ghosting/drift | The video overlay state stores only the latest placement list, but CameraX reuses the `OverlayEffect` canvas across frames. The draw listener now clears the overlay canvas with transparent `PorterDuff.Mode.CLEAR` before drawing current placements, so moved faces and no-face frames cannot leave previous ear positions painted into the clip. Full CI passed before commit `2f17a92`. |
+| 32.2 | DONE | Map recorded-video overlay into frame crop | The video draw path now maps preview-space placements into `Frame.getCropRect()` instead of assuming the full video buffer is visible. This closes the known crop/rotation drift risk for unusual CameraX outputs. Full CI passed before commit `436b96e`. |
 
 ---
 
@@ -523,12 +529,13 @@ state transition to `Saved`/`Failed` as before — no ViewModel changes needed.
 ### WP 38 — Party Mode: one face, one style
 
 Product idea from `productIdeas20260604.md`: when multiple faces are detected,
-each face gets its own style/tint pairing that stays stable for the ML Kit
-tracking ID until the user explicitly re-rolls.
+each face gets its own style assignment that stays stable for the ML Kit tracking ID until
+the user explicitly re-rolls. Earlier idea text mentioned tint pairings; the current
+photorealistic-only product intentionally keeps authored sprite colours.
 
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
-| 38.0 | DONE | Stable per-face Party Mode assignments | Add a Party Mode toggle and re-roll button. In normal mode, global style/tint controls keep applying to all faces. In Party Mode, `MainViewModel` assigns each tracking ID a persistent style/tint slot, first slot starts as Classic/Natural, and re-roll reshuffles active faces without changing face geometry. `PlacementSmoother` preserves `trackingId`, style, and tint so assignments do not collapse after smoothing. Focused unit tests cover stable assignments, re-roll, disabled re-roll, and tracking-ID propagation. README usage updated. |
+| 38.0 | DONE | Stable per-face Party Mode assignments | Add a Party Mode toggle and re-roll button. In normal mode, the global style control applies to all faces. In Party Mode, `MainViewModel` assigns each tracking ID a persistent style slot, first slot starts as Classic, and re-roll reshuffles active faces without changing face geometry. `PlacementSmoother` preserves `trackingId`, style, and tint metadata so assignments do not collapse after smoothing. Focused unit tests cover stable assignments, replacement-face slot collisions, re-roll, disabled re-roll, and tracking-ID propagation. README usage updated. |
 
 ---
 

@@ -1,10 +1,18 @@
 # Code Review 2026-06-05 - Agent 1
 
+**Current status 2026-06-08:** this review is historical. Both findings were superseded by
+`4645c0f feat(ears): keep only photorealistic styles`, which removed `EarStyle.BEAR`, removed the
+user-facing tint button, and limited the shipped UI to sprite-backed photorealistic styles with
+authored colours. There is no current bear-ear rendering path and no current user-facing non-natural
+tint flow to fix.
+
 The patch builds, but the new material renderer introduces visible rendering bugs for bear ears and does not honor the newly added outer-fur-only tint policy. These are user-visible issues in the overlay behavior.
 
 ## Findings
 
 ### P2 - Keep material geometry inside round bear ears
+
+**Status: superseded.** `EarStyle.BEAR` no longer exists in the app or domain model.
 
 File: `app/src/main/java/it/marcelpetrick/catears/overlay/CatEarOverlay.kt`
 
@@ -13,6 +21,9 @@ When `EarStyle.BEAR` is selected, the generic material finish uses `top + s` as 
 Recommended fix: use a style-specific baseline for round ears or skip the triangular material finish for bear ears.
 
 ### P2 - Honor outer-only tinting for inner ear layers
+
+**Status: superseded for user-facing behavior.** The tint button and tint cycling were removed from
+the camera UI so photorealistic sprites keep their authored fur and rosy inner-ear colours.
 
 File: `app/src/main/java/it/marcelpetrick/catears/overlay/CatEarOverlay.kt`
 

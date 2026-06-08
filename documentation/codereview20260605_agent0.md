@@ -117,6 +117,11 @@ has been partially — not fully — resolved.
 
 ### 5. `EarTintPolicy.OuterFurOnly` is dead code — **MEDIUM**
 
+**Status: superseded for user-facing behavior by `4645c0f`.** User-facing tint cycling was removed
+when the product switched to photorealistic-only sprites, so users no longer see non-natural tints
+that can corrupt inner-ear colour. `EarTintPolicy` still exists in the domain model and should
+either be removed or reactivated only if tinting returns.
+
 The policy is declared, assigned `OuterFurOnly` in every spec, and never read. Both renderers
 check `p.tint != EarTint.NATURAL` and apply `saveLayer` to the whole ear regardless. The inner
 rosy glaze gets tinted alongside the outer fur — the ear turns lavender or sky-blue inner-ear
@@ -136,6 +141,10 @@ The domain-layer geometry sharing was started but not finished.
 
 ### 7. Straight outer-rim lines don't match curved silhouettes — **MEDIUM (visual)**
 
+**Status: mostly superseded by sprite-backed rendering.** The removed canine/rabbit/bear procedural
+styles no longer ship. Renderer duplication remains a real technical debt for fallback paths, but
+the visible curved-silhouette rim bug is no longer on the current user-facing style list.
+
 `drawOuterRim` draws straight lines from `leftBase` to `tip` and `rightBase` to `tip`.
 The base coordinates come from `styleLeftBase()` / `styleRightBase()` which return the
 triangle-ear base ratios even for CANINE_FLOPPY (a drooping Bézier curve) and ROUNDED_FELINE
@@ -143,6 +152,8 @@ triangle-ear base ratios even for CANINE_FLOPPY (a drooping Bézier curve) and R
 styles — floating inside or crossing the curve.
 
 ### 8. BEAR shadow oval lands inside the ear body — **LOW (visual)**
+
+**Status: superseded.** `EarStyle.BEAR` no longer exists in the app or domain model.
 
 `SHADOW_TOP_RATIO = 0.68` places the shadow oval at 68% of the ear's bounding-box height.
 The BEAR ear is a circle of radius `0.32 × size` centered at `top + 0.32 × size`. The shadow
@@ -167,25 +178,23 @@ call to `s * SHADOW_HALF_WIDTH * 2f`.
 
 ## Will it run?
 
-**Yes, but with a performance regression.** Issues 1 and 2 together put several hundred object
-allocations per second on the render thread during video recording, reversing the hot-path work
-from the previous session. On a mid-range device at 1080p/30 this will cause intermittent GC
-pauses visible as frame-rate drops.
+**Yes.** The original branch had a performance regression from Issues 1 and 2, but both hot-path
+allocation problems are fixed in the current codebase.
 
 ## Will it look good?
 
 **Mostly, with two visible exceptions:**
 
-- Issue 5 (inner ear tinted the wrong colour when any non-Natural tint is selected) is
-  visible at normal viewing distance on all tinted placements.
-- Issue 7 (rim lines float off CANINE_FLOPPY and ROUNDED_FELINE silhouettes) is reproducible
-  on two of the ten styles.
+- Issue 5 (inner ear tinted the wrong colour when any non-Natural tint is selected) is superseded
+  in the shipped UI because tint cycling was removed for photorealistic sprites.
+- Issue 7 (rim lines float off CANINE_FLOPPY and ROUNDED_FELINE silhouettes) is mostly superseded
+  because removed procedural styles no longer ship; renderer duplication remains technical debt.
 - Issue 3 (static fur in video vs animated fur in preview) is subtle but noticeable
   frame-by-frame.
 
-The material finish layer itself — when viewed on CLASSIC, SHARP_FELINE, LYNX_TUFTED, FOX,
-RABBIT, BEAR — adds genuine depth and warmth to the ears. The direction is right; the
-performance and visual edge-cases need a follow-up pass.
+At the time of this branch review, the material finish layer added depth and warmth to the
+procedural styles. The current shipped app is sprite-first; the remaining relevant follow-up is
+renderer consolidation, not fixing removed rabbit/bear styles.
 
 ---
 
@@ -195,11 +204,11 @@ performance and visual edge-cases need a follow-up pass.
 |---|-------|----------|
 | 1 | `earRenderStyleSpec()` allocates per frame | CRITICAL — fixed |
 | 2 | `fillPaint()`/`strokePaint()` allocates per sub-draw | CRITICAL — fixed |
-| 5 | `EarTintPolicy.OuterFurOnly` ignored — inner ear wrong colour | MEDIUM |
+| 5 | `EarTintPolicy.OuterFurOnly` ignored — inner ear wrong colour | MEDIUM — superseded in shipped UI |
 | 3 | Canvas fur static, Compose fur animated | MEDIUM |
 | 4 | Geometry helpers duplicated in both files | MEDIUM |
 | 6 | `MaterialEarGeometry` duplicated in both files | MEDIUM |
-| 7 | Rim lines don't follow curved ear silhouettes | MEDIUM |
-| 8 | BEAR shadow inside ear body | LOW |
+| 7 | Rim lines don't follow curved ear silhouettes | MEDIUM — mostly superseded |
+| 8 | BEAR shadow inside ear body | LOW — superseded |
 | 9 | `MaterialEarGeometry` data class allocation per call | LOW |
 | 10 | `SHADOW_WIDTH` magic constant | LOW |

@@ -150,7 +150,7 @@ Minimum acceptable Android 10 validation:
 2. Camera permission flow works.
 3. Preview opens on front and rear cameras.
 4. Face detection places ears correctly.
-5. Style and tint switching work.
+5. Style switching works and only sprite-backed photorealistic styles are exposed.
 6. Party Mode assigns stable styles and re-rolls.
 7. Still photo saves to gallery and shares.
 8. Five-second video records, auto-stops, appears in gallery, and shares.
@@ -175,7 +175,7 @@ The most pragmatic product position would be:
 
 - Support Android 10+ for live preview, photos, Party Mode, and sharing.
 - Treat baked-in video ears as best-effort on Android 10 until validated on real
-  hardware.
+  hardware, especially across older camera HAL and encoder combinations.
 - Keep target SDK modern so Play requirements stay satisfied.
 
 ## Recommendation
