@@ -23,6 +23,6 @@ data class CameraBindConfig(
     val lifecycleOwner: LifecycleOwner,
     val context: Context,
     val faceDetector: FaceDetectorSeam?,
-    val onFaceResult: ((List<FaceModel>, OutputTransform?, Int, Int) -> Unit)?,
+    val onFaceResult: ((List<FaceModel>, OutputTransform?, Int, Int, Int) -> Unit)?,
     val onBindFailed: (() -> Unit)?,
 )

@@ -15,6 +15,7 @@ import android.os.HandlerThread
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Surface
 import androidx.camera.core.CameraEffect
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -74,6 +75,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
     }
     private var currentOverlayEffect: OverlayEffect? = null
     private var boundLens: LensSelector? = null
+    private var boundRotation: Int? = null
 
     @Volatile private var isFrontCamera: Boolean = false
 
@@ -97,15 +99,19 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         if (config == null || provider == null || shouldSkipBind(lens)) return
         val owner = config.lifecycleOwner
         val surface = config.previewView
+        val targetRotation = surface.display?.rotation ?: Surface.ROTATION_0
 
         isFrontCamera = lens == LensSelector.Front
         val selector = when (lens) {
             LensSelector.Front -> CameraSelector.DEFAULT_FRONT_CAMERA
             LensSelector.Rear -> CameraSelector.DEFAULT_BACK_CAMERA
         }
-        val preview = Preview.Builder().build().also { it.surfaceProvider = surface.surfaceProvider }
-        val analysis = buildAnalysisUseCase(config)
-        val vc = buildVideoUseCase()
+        val preview = Preview.Builder()
+            .setTargetRotation(targetRotation)
+            .build()
+            .also { it.surfaceProvider = surface.surfaceProvider }
+        val analysis = buildAnalysisUseCase(config, targetRotation)
+        val vc = buildVideoUseCase(targetRotation)
         currentOverlayEffect?.close()
         val effect = buildOverlayEffect()
         currentOverlayEffect = effect
@@ -122,9 +128,11 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             if (analysis != null) groupBuilder.addUseCase(analysis)
             provider.bindToLifecycle(owner, selector, groupBuilder.build())
             boundLens = lens
-            Log.d(TAG, "Camera bound (lens=$lens)")
+            boundRotation = targetRotation
+            Log.d(TAG, "Camera bound (lens=$lens, rotation=$targetRotation)")
         } catch (e: Exception) {
             boundLens = null
+            boundRotation = null
             videoCapture = null
             currentOverlayEffect = null
             effect.close()
@@ -138,7 +146,8 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
             Log.w(TAG, "Ignoring camera rebind while recording")
             return true
         }
-        return boundLens == lens && videoCapture != null
+        val targetRotation = bindConfig?.previewView?.display?.rotation ?: Surface.ROTATION_0
+        return boundLens == lens && boundRotation == targetRotation && videoCapture != null
     }
 
     private fun buildOverlayEffect(): OverlayEffect {
@@ -177,29 +186,33 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         return effect
     }
 
-    private fun buildAnalysisUseCase(config: CameraBindConfig): UseCase? {
+    private fun buildAnalysisUseCase(config: CameraBindConfig, targetRotation: Int): UseCase? {
         val detector = config.faceDetector
         val onFace = config.onFaceResult
         if (detector == null || onFace == null) return null
         val analysis = ImageAnalysis.Builder()
+            .setTargetRotation(targetRotation)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
         analysis.setAnalyzer(analysisExecutor) { proxy -> analyseFrame(detector, proxy, onFace) }
         return analysis
     }
 
-    private fun buildVideoUseCase(): UseCase {
+    private fun buildVideoUseCase(targetRotation: Int): UseCase {
         val recorder = Recorder.Builder()
             .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
             .build()
-        return VideoCapture.withOutput(recorder).also { videoCapture = it }
+        return VideoCapture.withOutput(recorder).also {
+            it.targetRotation = targetRotation
+            videoCapture = it
+        }
     }
 
     @androidx.annotation.OptIn(ExperimentalGetImage::class, TransformExperimental::class)
     private fun analyseFrame(
         detector: FaceDetectorSeam,
         proxy: ImageProxy,
-        onFace: (List<FaceModel>, OutputTransform?, Int, Int) -> Unit,
+        onFace: (List<FaceModel>, OutputTransform?, Int, Int, Int) -> Unit,
     ) {
         val rotation = proxy.imageInfo.rotationDegrees
         val portrait = rotation == ROTATION_90 || rotation == ROTATION_270
@@ -210,7 +223,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         // We still guard against a synchronous throw that would skip the impl's own close.
         @Suppress("TooGenericExceptionCaught")
         try {
-            detector.process(proxy) { face -> onFace(face, imageOutputTransform, width, height) }
+            detector.process(proxy) { face -> onFace(face, imageOutputTransform, width, height, rotation) }
         } catch (e: Exception) {
             Log.e(TAG, "Face analysis failed for frame", e)
             runCatching { proxy.close() }
@@ -263,6 +276,7 @@ class CameraXControllerImpl @Inject constructor() : CameraControllerSeam {
         cameraProvider?.unbindAll()
         videoCapture = null
         boundLens = null
+        boundRotation = null
     }
 
     override fun close() {

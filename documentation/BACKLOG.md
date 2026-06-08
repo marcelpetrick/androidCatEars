@@ -556,6 +556,7 @@ mirroring, so landscape could map a correct face box to the wrong screen positio
 | ID | Status | Task | Acceptance criteria |
 |----|--------|------|---------------------|
 | 39.0 | DONE | Replace landscape-sensitive custom camera transform with CameraX output transform | The analysis path now passes CameraX's `ImageProxyTransformFactory` output transform with each face result, then combines it with `PreviewView.outputTransform` on the view thread via `CoordinateTransform`. Face boxes and eye landmarks are mapped through that matrix before placement math, with the previous `TransformContext` path retained as a fallback while the preview transform is unavailable. Full quality gate passed before commit `2f17a92`. |
+| 39.1 | DONE | Harden rotation recovery and remove unsafe live fallback | Live overlay placement now requires the CameraX image-to-preview matrix; when CameraX has not published a usable transform during rotation, the app clears current placements instead of drawing with the old approximate transform. Preview layout size/rotation changes reset smoothing and overlay state, same-lens rotation changes trigger a camera rebind, and Preview/ImageAnalysis/VideoCapture bind with the current display rotation. Bounded logcat telemetry reports transform availability and dimensions for real-device validation. |
 
 ---
 

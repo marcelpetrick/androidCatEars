@@ -10,6 +10,7 @@ import android.graphics.Matrix
 import android.graphics.RectF
 import android.media.MediaActionSound
 import android.util.Log
+import android.view.Surface
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -33,15 +34,24 @@ import it.marcelpetrick.catears.capture.OverlayCompositor
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.MultiFaceSmoother
 import it.marcelpetrick.catears.domain.OverlayPlacement
-import it.marcelpetrick.catears.domain.TransformContext
 import it.marcelpetrick.catears.domain.computeOverlayPlacement
-import it.marcelpetrick.catears.domain.imageToViewBoundingBox
-import it.marcelpetrick.catears.domain.imageToViewCoordinates
 import it.marcelpetrick.catears.facedetect.FaceDetectorSeam
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 private const val TAG = "CatEars"
+
+private data class TransformDebugSnapshot(
+    val faces: List<it.marcelpetrick.catears.domain.FaceModel>,
+    val matrixAvailable: Boolean,
+    val frameRotation: Int,
+    val imageWidth: Int,
+    val imageHeight: Int,
+    val viewWidth: Int,
+    val viewHeight: Int,
+    val viewRotation: Int,
+)
 
 /**
  * Full-screen CameraX preview composable with live face-tracked overlay placement and capture.
@@ -75,8 +85,10 @@ fun CameraPreview(
     val capturePlacements = rememberUpdatedState(overlayPlacements)
     val disposedRef = remember { AtomicBoolean(false) }
     val previewViewRef = remember { AtomicReference<PreviewView?>(null) }
-    val previewWidthRef = remember { java.util.concurrent.atomic.AtomicInteger(1) }
-    val previewHeightRef = remember { java.util.concurrent.atomic.AtomicInteger(1) }
+    val previewWidthRef = remember { AtomicInteger(1) }
+    val previewHeightRef = remember { AtomicInteger(1) }
+    val previewRotationRef = remember { AtomicInteger(Surface.ROTATION_0) }
+    val transformDebugKeyRef = remember { AtomicReference<String?>(null) }
     // Stable reference so the factory-block closure always reads the current lens.
     val currentLens by rememberUpdatedState(lens)
     val soundPlayer = remember {
@@ -131,8 +143,18 @@ fun CameraPreview(
             }
             previewViewRef.set(previewView)
             previewView.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
-                previewWidthRef.set((right - left).coerceAtLeast(1))
-                previewHeightRef.set((bottom - top).coerceAtLeast(1))
+                val newWidth = (right - left).coerceAtLeast(1)
+                val newHeight = (bottom - top).coerceAtLeast(1)
+                val newRotation = previewView.displayRotation()
+                val changed = previewWidthRef.getAndSet(newWidth) != newWidth ||
+                    previewHeightRef.getAndSet(newHeight) != newHeight ||
+                    previewRotationRef.getAndSet(newRotation) != newRotation
+                if (changed) {
+                    smoother.reset()
+                    onFaceDetected(emptyList())
+                    controller.updateOverlayPlacements(emptyList(), newWidth, newHeight)
+                    controller.bindPreview(currentLens)
+                }
             }
             controller.configure(
                 CameraBindConfig(
@@ -140,21 +162,37 @@ fun CameraPreview(
                     lifecycleOwner = lifecycleOwner,
                     context = ctx,
                     faceDetector = detector,
-                    onFaceResult = { faces, imageOutputTransform, w, h ->
+                    onFaceResult = { faces, imageOutputTransform, w, h, frameRotation ->
                         previewView.post {
                             if (disposedRef.get()) return@post
-                            val fallbackTransform = TransformContext(
-                                imageWidth = w,
-                                imageHeight = h,
-                                viewWidth = previewWidthRef.get(),
-                                viewHeight = previewHeightRef.get(),
-                                isFrontCamera = currentLens == LensSelector.Front,
+                            val imageToViewMatrix = imageToViewMatrix(imageOutputTransform, previewView)
+                            logTransformState(
+                                debugKeyRef = transformDebugKeyRef,
+                                snapshot = TransformDebugSnapshot(
+                                    faces = faces,
+                                    matrixAvailable = imageToViewMatrix != null,
+                                    frameRotation = frameRotation,
+                                    imageWidth = w,
+                                    imageHeight = h,
+                                    viewWidth = previewWidthRef.get(),
+                                    viewHeight = previewHeightRef.get(),
+                                    viewRotation = previewView.displayRotation(),
+                                ),
                             )
+                            if (imageToViewMatrix == null) {
+                                smoother.reset()
+                                onFaceDetected(emptyList())
+                                controller.updateOverlayPlacements(
+                                    emptyList(),
+                                    previewWidthRef.get(),
+                                    previewHeightRef.get(),
+                                )
+                                return@post
+                            }
                             onFaceDetected(
                                 facePlacements(
                                     faces = faces,
-                                    imageToViewMatrix = imageToViewMatrix(imageOutputTransform, previewView),
-                                    fallbackTransform = fallbackTransform,
+                                    imageToViewMatrix = imageToViewMatrix,
                                     smoother = smoother,
                                 ),
                             )
@@ -230,8 +268,7 @@ private fun compositeEarsOrFrame(
 /** Transforms all detected faces to smoothed view-space [OverlayPlacement]s. */
 private fun facePlacements(
     faces: List<it.marcelpetrick.catears.domain.FaceModel>,
-    imageToViewMatrix: Matrix?,
-    fallbackTransform: TransformContext,
+    imageToViewMatrix: Matrix,
     smoother: MultiFaceSmoother,
 ): List<OverlayPlacement> {
     if (faces.isEmpty()) {
@@ -239,44 +276,28 @@ private fun facePlacements(
         return emptyList()
     }
     val entries = faces.mapNotNull { face ->
-        val placement = singleFacePlacement(face, imageToViewMatrix, fallbackTransform) ?: return@mapNotNull null
+        val viewBox = mapBoundingBox(face.boundingBox, imageToViewMatrix)
+        val leftEye = face.leftEyePosition?.let { point -> mapPoint(point, imageToViewMatrix) }
+        val rightEye = face.rightEyePosition?.let { point -> mapPoint(point, imageToViewMatrix) }
+        val eyeOpennessMean = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
+            .takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 1f
+        val leftEyeOpenness = face.leftEyeOpenProbability ?: 1f
+        val rightEyeOpenness = face.rightEyeOpenProbability ?: 1f
+        val placement = computeOverlayPlacement(
+            viewBox = viewBox,
+            headEulerAngleZ = face.headEulerAngleZ,
+            headEulerAngleY = face.headEulerAngleY,
+            leftEyeAnchor = leftEye,
+            rightEyeAnchor = rightEye,
+            smilingProbability = face.smilingProbability ?: 0f,
+            eyeOpennessMean = eyeOpennessMean,
+            leftEyeOpenness = leftEyeOpenness,
+            rightEyeOpenness = rightEyeOpenness,
+            trackingId = face.trackingId,
+        )
         Pair(face.trackingId, placement)
     }
     return if (entries.isEmpty()) emptyList() else smoother.smooth(entries)
-}
-
-private fun singleFacePlacement(
-    face: it.marcelpetrick.catears.domain.FaceModel,
-    imageToViewMatrix: Matrix?,
-    fallbackTransform: TransformContext,
-): OverlayPlacement? {
-    val viewBox = if (imageToViewMatrix != null) {
-        mapBoundingBox(face.boundingBox, imageToViewMatrix)
-    } else {
-        imageToViewBoundingBox(face.boundingBox, fallbackTransform)
-    }
-    val leftEye = face.leftEyePosition?.let { point ->
-        imageToViewMatrix?.let { mapPoint(point, it) } ?: imageToViewCoordinates(point, fallbackTransform)
-    }
-    val rightEye = face.rightEyePosition?.let { point ->
-        imageToViewMatrix?.let { mapPoint(point, it) } ?: imageToViewCoordinates(point, fallbackTransform)
-    }
-    val eyeOpennessMean = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
-        .takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 1f
-    val leftEyeOpenness = face.leftEyeOpenProbability ?: 1f
-    val rightEyeOpenness = face.rightEyeOpenProbability ?: 1f
-    return computeOverlayPlacement(
-        viewBox = viewBox,
-        headEulerAngleZ = face.headEulerAngleZ,
-        headEulerAngleY = face.headEulerAngleY,
-        leftEyeAnchor = leftEye,
-        rightEyeAnchor = rightEye,
-        smilingProbability = face.smilingProbability ?: 0f,
-        eyeOpennessMean = eyeOpennessMean,
-        leftEyeOpenness = leftEyeOpenness,
-        rightEyeOpenness = rightEyeOpenness,
-        trackingId = face.trackingId,
-    )
 }
 
 @androidx.annotation.OptIn(TransformExperimental::class)
@@ -310,6 +331,30 @@ private fun mapPoint(
     val mapped = floatArrayOf(point.x, point.y)
     matrix.mapPoints(mapped)
     return it.marcelpetrick.catears.domain.Point2D(mapped[0], mapped[1])
+}
+
+private fun PreviewView.displayRotation(): Int = display?.rotation ?: Surface.ROTATION_0
+
+private fun logTransformState(debugKeyRef: AtomicReference<String?>, snapshot: TransformDebugSnapshot) {
+    val firstBox = snapshot.faces.firstOrNull()?.boundingBox
+    val key = listOf(
+        snapshot.matrixAvailable,
+        snapshot.frameRotation,
+        snapshot.imageWidth,
+        snapshot.imageHeight,
+        snapshot.viewWidth,
+        snapshot.viewHeight,
+        snapshot.viewRotation,
+        snapshot.faces.isNotEmpty(),
+    ).joinToString(separator = "|")
+    if (debugKeyRef.getAndSet(key) == key) return
+    Log.d(
+        TAG,
+        "Face transform state: matrix=${snapshot.matrixAvailable} frameRotation=${snapshot.frameRotation} " +
+            "image=${snapshot.imageWidth}x${snapshot.imageHeight} " +
+            "view=${snapshot.viewWidth}x${snapshot.viewHeight} viewRotation=${snapshot.viewRotation} " +
+            "faces=${snapshot.faces.size} firstBox=$firstBox",
+    )
 }
 
 private fun startCamera(context: android.content.Context, controller: CameraXControllerImpl, lens: LensSelector) {
