@@ -10,7 +10,7 @@ lifecycle                        = "2.10.0"
 activity-compose                 = "1.13.0"
 
 # Compose (managed via BOM — no individual versions needed)
-compose-bom                      = "2026.05.01"
+compose-bom                      = "2026.06.00"
 
 # Camera
 camerax                          = "1.6.1"
