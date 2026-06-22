@@ -30,7 +30,7 @@ kotlinx-coroutines               = "1.11.0"
 
 # Quality
 detekt                           = "1.23.8"
-spotless                         = "8.6.0"
+spotless                         = "8.7.0"
 kover                            = "0.9.8"
 cyclonedx                        = "3.2.4"
 
