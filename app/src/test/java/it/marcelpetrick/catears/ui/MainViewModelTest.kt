@@ -12,13 +12,17 @@ import io.mockk.verify
 import it.marcelpetrick.catears.capture.CaptureRuntime
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.domain.EarAdjustment
 import it.marcelpetrick.catears.domain.EarAnchor
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.RecordingState
+import it.marcelpetrick.catears.settings.EarAdjustmentStoreSeam
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -29,7 +33,12 @@ class MainViewModelTest {
     private fun viewModel(
         imageSaver: ImageSaver = mockk<ImageSaver>(relaxed = true),
         captureRuntime: CaptureRuntime = FakeCaptureRuntime(),
-    ) = MainViewModel(imageSaver = imageSaver, captureRuntime = captureRuntime)
+        earAdjustmentStore: EarAdjustmentStoreSeam = FakeEarAdjustmentStore(),
+    ) = MainViewModel(
+        imageSaver = imageSaver,
+        captureRuntime = captureRuntime,
+        earAdjustmentStore = earAdjustmentStore,
+    )
 
     @Test
     fun `initial state is Initialising`() = runTest {
@@ -550,5 +559,110 @@ class MainViewModelTest {
         override fun nowMillis(): Long = 1234L
 
         override fun randomSuffix(): String = "beef"
+    }
+
+    private class FakeEarAdjustmentStore(initial: EarAdjustment = EarAdjustment.DEFAULT) : EarAdjustmentStoreSeam {
+        private val state = MutableStateFlow(initial)
+        override val adjustment: Flow<EarAdjustment> = state
+
+        var saveCount = 0
+            private set
+        var resetCount = 0
+            private set
+
+        val stored: EarAdjustment get() = state.value
+
+        override suspend fun save(adjustment: EarAdjustment) {
+            saveCount += 1
+            state.value = adjustment
+        }
+
+        override suspend fun reset() {
+            resetCount += 1
+            state.value = EarAdjustment.DEFAULT
+        }
+    }
+
+    // ---- ear adjustment ----
+
+    @Test
+    fun `stored adjustment is loaded on start`() = runTest {
+        val stored = EarAdjustment(verticalOffset = 0.1f, spreadOffset = -0.2f)
+        val vm = viewModel(earAdjustmentStore = FakeEarAdjustmentStore(stored))
+        assertEquals(stored, vm.earAdjustment.value)
+    }
+
+    @Test
+    fun `onAdjustmentChanged updates state live without persisting`() = runTest {
+        val store = FakeEarAdjustmentStore()
+        val vm = viewModel(earAdjustmentStore = store)
+        vm.onAdjustmentChanged(EarAdjustment(verticalOffset = 0.15f))
+        assertEquals(EarAdjustment(verticalOffset = 0.15f), vm.earAdjustment.value)
+        assertEquals(0, store.saveCount)
+    }
+
+    @Test
+    fun `onAdjustmentChanged clamps out-of-range values`() = runTest {
+        val vm = viewModel()
+        vm.onAdjustmentChanged(EarAdjustment(verticalOffset = 9f, spreadOffset = -9f))
+        assertEquals(
+            EarAdjustment(
+                verticalOffset = EarAdjustment.MAX_VERTICAL_OFFSET,
+                spreadOffset = -EarAdjustment.MAX_SPREAD_OFFSET,
+            ),
+            vm.earAdjustment.value,
+        )
+    }
+
+    @Test
+    fun `onAdjustmentCommitted persists the current adjustment`() = runTest {
+        val store = FakeEarAdjustmentStore()
+        val vm = viewModel(earAdjustmentStore = store)
+        vm.onAdjustmentChanged(EarAdjustment(spreadOffset = 0.3f))
+        vm.onAdjustmentCommitted()
+        assertEquals(EarAdjustment(spreadOffset = 0.3f), store.stored)
+        assertEquals(1, store.saveCount)
+    }
+
+    @Test
+    fun `onAdjustmentReset restores default state and clears the store`() = runTest {
+        val store = FakeEarAdjustmentStore(EarAdjustment(verticalOffset = 0.2f))
+        val vm = viewModel(earAdjustmentStore = store)
+        vm.onAdjustmentReset()
+        assertEquals(EarAdjustment.DEFAULT, vm.earAdjustment.value)
+        assertEquals(EarAdjustment.DEFAULT, store.stored)
+        assertEquals(1, store.resetCount)
+        assertEquals("Ear fit reset to auto", vm.fitStatusMessage.value)
+    }
+
+    @Test
+    fun `closing the fit panel persists and confirms a custom change`() = runTest {
+        val store = FakeEarAdjustmentStore()
+        val vm = viewModel(earAdjustmentStore = store)
+        vm.onToggleFitPanel()
+        assertEquals(true, vm.fitPanelVisible.value)
+        vm.onAdjustmentChanged(EarAdjustment(verticalOffset = -0.1f))
+        vm.onToggleFitPanel()
+        assertEquals(false, vm.fitPanelVisible.value)
+        assertEquals(EarAdjustment(verticalOffset = -0.1f), store.stored)
+        assertEquals(1, store.saveCount)
+        assertEquals("Custom ear fit applied", vm.fitStatusMessage.value)
+    }
+
+    @Test
+    fun `closing the fit panel without changes shows no banner`() = runTest {
+        val vm = viewModel()
+        vm.onToggleFitPanel()
+        vm.onToggleFitPanel()
+        assertEquals(null, vm.fitStatusMessage.value)
+    }
+
+    @Test
+    fun `onFitStatusShown clears the banner message`() = runTest {
+        val vm = viewModel()
+        vm.onAdjustmentReset()
+        assertNotEquals(null, vm.fitStatusMessage.value)
+        vm.onFitStatusShown()
+        assertEquals(null, vm.fitStatusMessage.value)
     }
 }

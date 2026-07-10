@@ -10,15 +10,19 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.marcelpetrick.catears.capture.CaptureRuntime
 import it.marcelpetrick.catears.capture.ImageSaver
 import it.marcelpetrick.catears.domain.CaptureState
+import it.marcelpetrick.catears.domain.EarAdjustment
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
 import it.marcelpetrick.catears.domain.PermissionState
 import it.marcelpetrick.catears.domain.RecordingState
 import it.marcelpetrick.catears.domain.permissionResultToState
+import it.marcelpetrick.catears.settings.EarAdjustmentStoreSeam
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -27,6 +31,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val imageSaver: ImageSaver,
     private val captureRuntime: CaptureRuntime,
+    private val earAdjustmentStore: EarAdjustmentStoreSeam,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Initialising)
@@ -99,6 +104,75 @@ class MainViewModel @Inject constructor(
         val styles = PARTY_STYLE_ORDER
         val styleIndex = shuffledIndex(slot, partyRerollGeneration, styles.size, STYLE_SEED)
         return styles[styleIndex]
+    }
+
+    private val _earAdjustment = MutableStateFlow(EarAdjustment.DEFAULT)
+
+    /** Current ear fit; applied live by the camera layer on every placement computation. */
+    val earAdjustment: StateFlow<EarAdjustment> = _earAdjustment.asStateFlow()
+
+    private val _fitPanelVisible = MutableStateFlow(false)
+    val fitPanelVisible: StateFlow<Boolean> = _fitPanelVisible.asStateFlow()
+
+    private val _fitStatusMessage = MutableStateFlow<String?>(null)
+
+    /** Transient banner message for fit changes; cleared via [onFitStatusShown]. */
+    val fitStatusMessage: StateFlow<String?> = _fitStatusMessage.asStateFlow()
+
+    private var adjustmentAtPanelOpen = EarAdjustment.DEFAULT
+
+    init {
+        // Load once: this app is the only writer, and continuous collection could echo a
+        // just-persisted value over a newer in-flight slider position.
+        persist { _earAdjustment.value = earAdjustmentStore.adjustment.first() }
+    }
+
+    // UNDISPATCHED so a store that completes without suspending (as in tests) finishes
+    // synchronously; a real DataStore write suspends and continues on the scope dispatcher.
+    private fun persist(block: suspend () -> Unit) {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) { block() }
+    }
+
+    /** Opens/closes the fit panel; closing persists the adjustment and confirms a change. */
+    fun onToggleFitPanel() {
+        if (_fitPanelVisible.value) closeFitPanel() else openFitPanel()
+    }
+
+    private fun openFitPanel() {
+        adjustmentAtPanelOpen = _earAdjustment.value
+        _fitPanelVisible.value = true
+    }
+
+    private fun closeFitPanel() {
+        _fitPanelVisible.value = false
+        val current = _earAdjustment.value
+        if (current != adjustmentAtPanelOpen && current.isCustom) {
+            _fitStatusMessage.value = "Custom ear fit applied"
+        }
+        persist { earAdjustmentStore.save(current) }
+    }
+
+    /** Live slider movement: updates the fit immediately without touching persistence. */
+    fun onAdjustmentChanged(adjustment: EarAdjustment) {
+        _earAdjustment.value = adjustment.coerced()
+    }
+
+    /** Slider released: persists the current fit. */
+    fun onAdjustmentCommitted() {
+        persist { earAdjustmentStore.save(_earAdjustment.value) }
+    }
+
+    /** Returns to the auto-fit default and clears the stored adjustment. */
+    fun onAdjustmentReset() {
+        _earAdjustment.value = EarAdjustment.DEFAULT
+        adjustmentAtPanelOpen = EarAdjustment.DEFAULT
+        _fitStatusMessage.value = "Ear fit reset to auto"
+        persist { earAdjustmentStore.reset() }
+    }
+
+    /** The transient fit banner has been displayed; clear it. */
+    fun onFitStatusShown() {
+        _fitStatusMessage.value = null
     }
 
     private val _captureState = MutableStateFlow<CaptureState>(CaptureState.Idle)
