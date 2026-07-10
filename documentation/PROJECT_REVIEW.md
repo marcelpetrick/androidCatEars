@@ -43,7 +43,7 @@ but it does not replace final device validation.
 
 | Area | Tooling | State |
 |------|---------|-------|
-| Build | Gradle 9.5.1 (Kotlin DSL), AGP 9.2.1, version catalog, config cache | ✅ solid |
+| Build | Gradle 9.6.1 (Kotlin DSL), AGP 9.2.1, version catalog, config cache | ✅ solid |
 | Versioning | `version.properties` SSOT, auto patch-bump hook, SemVer | ✅ |
 | Formatting | Spotless 8.6.0 (ktlint) | ✅ |
 | Static analysis | detekt 1.23.8 + Android Lint (warnings-as-errors) | ✅ |

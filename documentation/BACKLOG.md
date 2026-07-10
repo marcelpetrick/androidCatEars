@@ -48,7 +48,7 @@ user decision before proceeding).
 | 2.0 | DONE | Formatter (ktlint/spotless) | Format tooling wired into Gradle; `spotlessApply` formats; `spotlessCheck` passes on existing code. |
 | 2.1 | DONE | Static analysis (detekt) | detekt with a committed config; `./gradlew detekt` passes clean. |
 | 2.2 | DONE | Android Lint + aggregation | Lint configured; `spotlessCheck`/`detekt`/`lint` aggregated under `check`; README documents commands. |
-| 2.3 | TODO | Upgrade SDK/Kotlin/JUnit when available | Remove suppressed lint rules from `lint.xml`: upgrade compileSdk/targetSdk to 37 (needs `platforms;android-37` via sdkmanager), Kotlin 2.3.21→2.4.0 + matching KSP, JUnit 5.11.4→6.x. Re-enable `OldTargetApi`, `GradleDependency`, `NewerVersionAvailable` in lint.xml after upgrade. |
+| 2.3 | DONE | Upgrade SDK/Kotlin/JUnit when available | compileSdk/targetSdk raised to 37 (`platforms;android-37.0`/`37.1` installed after updating cmdline-tools to 15641748), Kotlin 2.3.21→2.4.0 with KSP 2.3.10, JUnit on 6.1.1. `OldTargetApi`, `GradleDependency`, `NewerVersionAvailable` re-enabled in lint.xml; lint passes clean. Full quality gate green. |
 
 ### WP 3 — Testing & coverage harness
 
@@ -377,6 +377,22 @@ and Kotlin→Hilt-metadata rejected with recorded blockers).
 | `github/codeql-action` | v3 | v4 | ✅ Integrated | — |
 | `androidx.core:core-ktx` | 1.18.0 | 1.19.0 | ❌ Rejected | `checkDebugAarMetadata` fails: 1.19.0 requires `compileSdk ≥ 37`; we target 36. Unblock by upgrading to API 37 SDK. |
 | `org.jetbrains.kotlin` | 2.3.21 | 2.4.0 | ❌ Rejected | `hiltJavaCompileDebug` fails: Hilt's `kotlin-metadata-jvm` library supports metadata up to v2.3.0 only; 2.4.0 is rejected at annotation-processing time. Unblock by upgrading Hilt 2.59.2 → a release that bumps its `kotlin-metadata-jvm` upper bound. |
+
+**Sweep results (2026-07-10):**
+
+| Bump | From | To | Result | Blocker |
+|------|------|----|--------|---------|
+| Gradle wrapper | 9.5.1 | 9.6.1 | ✅ Integrated | — (clears `AndroidGradlePluginVersion` lint error) |
+| compileSdk / targetSdk | 36 | 37 | ✅ Integrated | Unblocked by cmdline-tools 15641748 (reads repo XML v4); `platforms;android-37.0`/`37.1` installed |
+| `androidx.core:core-ktx` | 1.18.0 | 1.19.0 | ✅ Integrated | Unblocked by compileSdk 37 |
+| `org.jetbrains.kotlin` + KSP | 2.3.21 / 2.3.9 | 2.4.0 / 2.3.10 | ✅ Integrated | Unblocked by Hilt 2.60.1 (raises `kotlin-metadata-jvm` bound) |
+| `com.google.dagger:hilt` | 2.59.2 | 2.60.1 | ✅ Integrated | — |
+| `androidx.hilt:hilt-navigation-compose` | 1.3.0 | 1.4.0 | ✅ Integrated | — |
+| `androidx.lifecycle` | 2.10.0 | 2.11.0 | ✅ Integrated | — |
+| Compose BOM | 2026.05.01 | 2026.06.01 | ✅ Integrated | — |
+| JUnit (jupiter + platform-launcher) | 6.1.0 | 6.1.1 | ✅ Integrated | — |
+| Spotless | 8.6.0 | 8.8.0 | ✅ Integrated | — |
+| AGP, CameraX, ML Kit, activity-compose, mockk, turbine, coroutines, detekt, kover, CycloneDX | — | — | ✅ Already latest stable | — |
 
 ---
 

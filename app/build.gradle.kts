@@ -58,12 +58,12 @@ val hasReleaseSigning =
 
 android {
     namespace = "it.marcelpetrick.catears"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "it.marcelpetrick.catears"
         minSdk = 34
-        targetSdk = 36
+        targetSdk = 37
         versionCode = rootProject.extra["appVersionCode"] as Int
         versionName = rootProject.extra["appVersionName"] as String
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommitHash\"")

@@ -11,20 +11,10 @@
     <issue id="ObsoleteSdkInt" severity="ignore" />
 
     <!--
-      OldTargetApi / GradleDependency (compileSdk):
-      Android API 37 is not yet available via sdkmanager (repository XML v4
-      incompatibility with current cmdline-tools 14742923). Suppressed until
-      API 37 platform is installable. Re-enable when sdkmanager can download it.
+      OldTargetApi / GradleDependency / NewerVersionAvailable were suppressed
+      while API 37 was not installable via sdkmanager and Kotlin 2.4.0 was
+      blocked by Hilt's kotlin-metadata-jvm upper bound. Both blockers are
+      resolved (cmdline-tools 15641748 + platforms;android-37.x, Hilt 2.60.1),
+      so the checks are active again.
     -->
-    <issue id="OldTargetApi" severity="ignore" />
-    <issue id="GradleDependency" severity="ignore" />
-
-    <!--
-      NewerVersionAvailable:
-      - Kotlin 2.4.0: blocked by Hilt 2.59.2 — its kotlin-metadata-jvm only
-        supports metadata up to 2.3.0. Upgrade Kotlin + Hilt together.
-      - core-ktx 1.19.0: blocked by compileSdk — requires SDK 37, not yet
-        installed. Upgrade after sdkmanager provides platforms;android-37.
-    -->
-    <issue id="NewerVersionAvailable" severity="ignore" />
 </lint>

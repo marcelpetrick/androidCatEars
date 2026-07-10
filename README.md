@@ -101,15 +101,15 @@ just a short clip ready to send.
 
 | Concern | Technology |
 |---------|------------|
-| Language | Kotlin 2.3.21 |
-| UI | Jetpack Compose (BOM 2026.05.01) |
+| Language | Kotlin 2.4.0 |
+| UI | Jetpack Compose (BOM 2026.06.01) |
 | Camera | CameraX 1.6.1 |
 | Video overlay | `camera-effects:1.6.1` — `OverlayEffect` bakes ears into frames at record time |
 | Face detection | ML Kit Face Detection 16.1.7 — fully on-device, no network |
-| DI | Hilt 2.59.2 |
-| Build | Gradle 9.5.1 (Kotlin DSL) |
+| DI | Hilt 2.60.1 |
+| Build | Gradle 9.6.1 (Kotlin DSL) |
 | Min SDK | Android 14 (API 34) |
-| Target SDK | Android 16 (API 36) |
+| Target SDK | API 37 |
 | Drawing | Transparent PNG sprite assets with transform-only live/capture rendering |
 
 ## Module structure and testability
@@ -140,7 +140,7 @@ full module map and MVVM wiring.
 git clone https://github.com/marcelpetrick/androidCatEars
 cd androidCatEars
 ./gradlew installHooks   # required once per clone — installs the pre-commit version bumper
-./gradlew assembleDebug  # downloads Gradle 9.5.1 and all deps on first run
+./gradlew assembleDebug  # downloads Gradle 9.6.1 and all deps on first run
 ./gradlew installDebug   # push to a connected device or running emulator
 ```
 
@@ -216,17 +216,17 @@ distributed under the same licence.
 
 ## Prerequisites
 
-- **JDK 21+** (JDK 17 is the compile-time minimum but Gradle 9.5 recommends
+- **JDK 21+** (JDK 17 is the compile-time minimum but Gradle 9.6 recommends
   JDK 21+; using JDK 17 is unsupported and may produce unexpected errors)
 - **Android SDK** — set `sdk.dir` in `local.properties` (not committed):
   ```properties
   sdk.dir=/path/to/Android/Sdk
   ```
-  Required SDK components: `platforms;android-36`, `build-tools;36.0.0`.
+  Required SDK components: `platforms;android-37.0`, `build-tools;36.0.0`.
   ```bash
-  sdkmanager "platforms;android-36" "build-tools;36.0.0"
+  sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
   ```
-- `./gradlew` downloads Gradle 9.5.1 automatically on first run.
+- `./gradlew` downloads Gradle 9.6.1 automatically on first run.
 
 > **Why Android 14 (API 34) minimum?** The `CameraEffect` / `OverlayEffect`
 > API used to bake the overlay into recorded video frames was introduced in
