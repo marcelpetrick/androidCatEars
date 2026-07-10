@@ -302,6 +302,105 @@ class OverlayPlacementTest {
         assertEquals(p, result.first())
     }
 
+    // ---- computeOverlayPlacement — user ear adjustment ----
+
+    @Test
+    fun `default adjustment matches unadjusted placement`() {
+        val plain = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        val adjusted = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment.DEFAULT,
+        )
+        assertEquals(plain, adjusted)
+    }
+
+    @Test
+    fun `vertical offset shifts both ears by a face-height fraction`() {
+        val plain = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        val adjusted = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment(verticalOffset = 0.1f),
+        )
+        val expectedShift = box.height * 0.1f
+        assertEquals(plain.leftEar.y + expectedShift, adjusted.leftEar.y, DELTA)
+        assertEquals(plain.rightEar.y + expectedShift, adjusted.rightEar.y, DELTA)
+        assertEquals(plain.leftEar.x, adjusted.leftEar.x, DELTA)
+        assertEquals(plain.rightEar.x, adjusted.rightEar.x, DELTA)
+    }
+
+    @Test
+    fun `negative vertical offset moves ears up`() {
+        val plain = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        val adjusted = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment(verticalOffset = -0.2f),
+        )
+        assertTrue(adjusted.leftEar.y < plain.leftEar.y)
+    }
+
+    @Test
+    fun `spread offset widens the ear spacing symmetrically`() {
+        val plain = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        val adjusted = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment(spreadOffset = 0.5f),
+        )
+        val plainSpacing = plain.rightEar.x - plain.leftEar.x
+        val adjustedSpacing = adjusted.rightEar.x - adjusted.leftEar.x
+        assertEquals(plainSpacing * 1.5f, adjustedSpacing, DELTA)
+        // Still symmetric about the face centre.
+        assertEquals(box.centerX, (adjusted.leftEar.x + adjusted.rightEar.x) / 2f, DELTA)
+        // Vertical placement untouched.
+        assertEquals(plain.leftEar.y, adjusted.leftEar.y, DELTA)
+    }
+
+    @Test
+    fun `negative spread offset narrows the ear spacing`() {
+        val plain = computeOverlayPlacement(viewBox = box, headEulerAngleZ = 0f)
+        val adjusted = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment(spreadOffset = -0.5f),
+        )
+        val plainSpacing = plain.rightEar.x - plain.leftEar.x
+        val adjustedSpacing = adjusted.rightEar.x - adjusted.leftEar.x
+        assertEquals(plainSpacing * 0.5f, adjustedSpacing, DELTA)
+    }
+
+    @Test
+    fun `adjustment scales with face box size`() {
+        val smallBox = BoundingBox(left = 0f, top = 0f, right = 100f, bottom = 100f)
+        val largeBox = BoundingBox(left = 0f, top = 0f, right = 200f, bottom = 200f)
+        val adjustment = EarAdjustment(verticalOffset = 0.1f)
+        val smallShift = computeOverlayPlacement(smallBox, 0f, adjustment = adjustment).leftEar.y -
+            computeOverlayPlacement(smallBox, 0f).leftEar.y
+        val largeShift = computeOverlayPlacement(largeBox, 0f, adjustment = adjustment).leftEar.y -
+            computeOverlayPlacement(largeBox, 0f).leftEar.y
+        assertEquals(smallShift * 2f, largeShift, DELTA)
+    }
+
+    @Test
+    fun `out-of-range adjustment is clamped before use`() {
+        val extreme = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment(verticalOffset = 99f, spreadOffset = 99f),
+        )
+        val atLimit = computeOverlayPlacement(
+            viewBox = box,
+            headEulerAngleZ = 0f,
+            adjustment = EarAdjustment(
+                verticalOffset = EarAdjustment.MAX_VERTICAL_OFFSET,
+                spreadOffset = EarAdjustment.MAX_SPREAD_OFFSET,
+            ),
+        )
+        assertEquals(atLimit, extreme)
+    }
+
     // ---- helpers ----
 
     private fun makePlacement(

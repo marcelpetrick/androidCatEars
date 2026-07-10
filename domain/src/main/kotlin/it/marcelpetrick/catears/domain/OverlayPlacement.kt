@@ -65,6 +65,8 @@ data class OverlayPlacement(
  * @param leftEyeOpenness Left eye-open probability [0..1]; falls back to [eyeOpennessMean].
  * @param rightEyeOpenness Right eye-open probability [0..1]; falls back to [eyeOpennessMean].
  * @param trackingId Stable face-tracking ID for Compose keying; null when unavailable.
+ * @param adjustment User fine-tuning applied on top of the auto-fit; face-box-relative,
+ *   so it scales with face size. Clamped via [EarAdjustment.coerced].
  */
 fun computeOverlayPlacement(
     viewBox: BoundingBox,
@@ -79,15 +81,17 @@ fun computeOverlayPlacement(
     leftEyeOpenness: Float = eyeOpennessMean,
     rightEyeOpenness: Float = eyeOpennessMean,
     trackingId: Int? = null,
+    adjustment: EarAdjustment = EarAdjustment.DEFAULT,
 ): OverlayPlacement {
+    val fit = adjustment.coerced()
     val earSize = viewBox.width * widthRatio
     // Positive yaw (head turning right) → right ear nearer, left ear farther.
     val yawFraction = (headEulerAngleY / MAX_YAW_DEGREES).coerceIn(-1f, 1f)
     val leftXScale = (1f - yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
     val rightXScale = (1f + yawFraction * PERSPECTIVE_STRENGTH).coerceIn(MIN_SCALE, MAX_SCALE)
     val earBottomY = computeEarBottomY(viewBox, leftEyeAnchor, rightEyeAnchor, earHeightRatio)
-    val topY = earBottomY - earSize
-    val halfSpacing = earSize * EAR_HALF_SPACING_RATIO
+    val topY = earBottomY - earSize + viewBox.height * fit.verticalOffset
+    val halfSpacing = earSize * EAR_HALF_SPACING_RATIO * (1f + fit.spreadOffset)
     return OverlayPlacement(
         leftEar = EarAnchor(
             x = viewBox.centerX - halfSpacing,
