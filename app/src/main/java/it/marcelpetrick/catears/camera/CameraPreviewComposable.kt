@@ -146,9 +146,12 @@ fun CameraPreview(
                 val newWidth = (right - left).coerceAtLeast(1)
                 val newHeight = (bottom - top).coerceAtLeast(1)
                 val newRotation = previewView.displayRotation()
-                val changed = previewWidthRef.getAndSet(newWidth) != newWidth ||
-                    previewHeightRef.getAndSet(newHeight) != newHeight ||
-                    previewRotationRef.getAndSet(newRotation) != newRotation
+                // Update all refs before combining: `||` would short-circuit past the
+                // remaining getAndSet calls and leave stale dimensions behind.
+                val widthChanged = previewWidthRef.getAndSet(newWidth) != newWidth
+                val heightChanged = previewHeightRef.getAndSet(newHeight) != newHeight
+                val rotationChanged = previewRotationRef.getAndSet(newRotation) != newRotation
+                val changed = widthChanged || heightChanged || rotationChanged
                 if (changed) {
                     smoother.reset()
                     onFaceDetected(emptyList())
