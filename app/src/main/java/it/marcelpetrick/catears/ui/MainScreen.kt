@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -357,6 +359,7 @@ private fun CameraContent(
             onStopRecording = { controller.stopVideoRecording() },
             onShareVideo = onShareVideo,
             onToggleFitPanel = onToggleFitPanel,
+            customFitActive = earAdjustment.isCustom,
         )
         if (fitPanelVisible) {
             EarFitPanel(
@@ -390,6 +393,7 @@ private fun CameraFabRow(
     onStopRecording: () -> Unit,
     onShareVideo: (() -> Unit)?,
     onToggleFitPanel: () -> Unit,
+    customFitActive: Boolean,
 ) {
     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         Column(
@@ -397,9 +401,7 @@ private fun CameraFabRow(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            SmallFloatingActionButton(onClick = onToggleFitPanel) {
-                Icon(Icons.Filled.Tune, contentDescription = "Adjust ear fit")
-            }
+            FitButton(customFitActive, onToggleFitPanel)
             RecordButton(recordingState, onRecordTap, onStopRecording)
             SmallFloatingActionButton(
                 onClick = onTogglePartyMode,
@@ -444,6 +446,28 @@ private fun CameraFabRow(
             onShareVideo = onShareVideo,
             modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
         )
+    }
+}
+
+/**
+ * Opens the ear-fit panel. A badge dot marks that a custom (non-default) fit is stored,
+ * so the deviation from auto-fit stays visible even when the panel is closed.
+ */
+@Composable
+private fun FitButton(customFitActive: Boolean, onToggleFitPanel: () -> Unit) {
+    SmallFloatingActionButton(onClick = onToggleFitPanel) {
+        BadgedBox(
+            badge = {
+                if (customFitActive) {
+                    Badge(containerColor = MaterialTheme.colorScheme.tertiary)
+                }
+            },
+        ) {
+            Icon(
+                Icons.Filled.Tune,
+                contentDescription = if (customFitActive) "Adjust ear fit — custom fit active" else "Adjust ear fit",
+            )
+        }
     }
 }
 

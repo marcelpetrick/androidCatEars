@@ -63,6 +63,14 @@ class MainActivity : ComponentActivity() {
         val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
         val earAdjustment by viewModel.earAdjustment.collectAsStateWithLifecycle()
         val fitPanelVisible by viewModel.fitPanelVisible.collectAsStateWithLifecycle()
+        val fitStatus by viewModel.fitStatusMessage.collectAsStateWithLifecycle()
+
+        LaunchedEffect(fitStatus) {
+            if (fitStatus != null) {
+                kotlinx.coroutines.delay(FIT_STATUS_DISPLAY_MS)
+                viewModel.onFitStatusShown()
+            }
+        }
 
         val permissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
@@ -108,7 +116,7 @@ class MainActivity : ComponentActivity() {
                 is CaptureState.Saved -> "Photo saved to gallery · tap share"
                 CaptureState.Failed -> "Capture failed — please try again"
                 else -> null
-            },
+            } ?: fitStatus,
             recordingState = recordingState,
             onRecordTap = viewModel::onRecordTap,
             onRecordingSaved = viewModel::onRecordingSaved,
@@ -133,5 +141,10 @@ class MainActivity : ComponentActivity() {
             android.net.Uri.fromParts("package", packageName, null),
         )
         startActivity(intent)
+    }
+
+    private companion object {
+        /** How long the transient ear-fit banner stays visible. */
+        const val FIT_STATUS_DISPLAY_MS = 2_500L
     }
 }
