@@ -61,6 +61,8 @@ class MainActivity : ComponentActivity() {
         val earStyle by viewModel.earStyle.collectAsStateWithLifecycle()
         val partyModeEnabled by viewModel.partyModeEnabled.collectAsStateWithLifecycle()
         val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
+        val earAdjustment by viewModel.earAdjustment.collectAsStateWithLifecycle()
+        val fitPanelVisible by viewModel.fitPanelVisible.collectAsStateWithLifecycle()
 
         val permissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
@@ -116,6 +118,12 @@ class MainActivity : ComponentActivity() {
                     viewModel.onRecordingConsumed()
                 }
             },
+            earAdjustment = earAdjustment,
+            fitPanelVisible = fitPanelVisible,
+            onToggleFitPanel = viewModel::onToggleFitPanel,
+            onAdjustmentChanged = viewModel::onAdjustmentChanged,
+            onAdjustmentCommitted = viewModel::onAdjustmentCommitted,
+            onAdjustmentReset = viewModel::onAdjustmentReset,
         )
     }
 

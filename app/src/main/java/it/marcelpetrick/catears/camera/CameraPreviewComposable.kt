@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import it.marcelpetrick.catears.capture.OverlayCompositor
+import it.marcelpetrick.catears.domain.EarAdjustment
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.MultiFaceSmoother
 import it.marcelpetrick.catears.domain.OverlayPlacement
@@ -75,6 +76,7 @@ fun CameraPreview(
     recordingRequested: Boolean = false,
     onRecordingSaved: (String?) -> Unit = {},
     onCameraError: () -> Unit = {},
+    earAdjustment: EarAdjustment = EarAdjustment.DEFAULT,
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -89,8 +91,9 @@ fun CameraPreview(
     val previewHeightRef = remember { AtomicInteger(1) }
     val previewRotationRef = remember { AtomicInteger(Surface.ROTATION_0) }
     val transformDebugKeyRef = remember { AtomicReference<String?>(null) }
-    // Stable reference so the factory-block closure always reads the current lens.
+    // Stable references so the factory-block closure always reads the current values.
     val currentLens by rememberUpdatedState(lens)
+    val currentAdjustment = rememberUpdatedState(earAdjustment)
     val soundPlayer = remember {
         MediaActionSound().also {
             it.load(MediaActionSound.SHUTTER_CLICK)
@@ -197,6 +200,7 @@ fun CameraPreview(
                                     faces = faces,
                                     imageToViewMatrix = imageToViewMatrix,
                                     smoother = smoother,
+                                    adjustment = currentAdjustment.value,
                                 ),
                             )
                         }
@@ -273,6 +277,7 @@ private fun facePlacements(
     faces: List<it.marcelpetrick.catears.domain.FaceModel>,
     imageToViewMatrix: Matrix,
     smoother: MultiFaceSmoother,
+    adjustment: EarAdjustment,
 ): List<OverlayPlacement> {
     if (faces.isEmpty()) {
         smoother.reset()
@@ -297,6 +302,7 @@ private fun facePlacements(
             leftEyeOpenness = leftEyeOpenness,
             rightEyeOpenness = rightEyeOpenness,
             trackingId = face.trackingId,
+            adjustment = adjustment,
         )
         Pair(face.trackingId, placement)
     }

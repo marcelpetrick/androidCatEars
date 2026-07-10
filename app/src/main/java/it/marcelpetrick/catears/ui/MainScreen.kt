@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import it.marcelpetrick.catears.BuildConfig
 import it.marcelpetrick.catears.camera.CameraPreview
 import it.marcelpetrick.catears.camera.CameraXControllerImpl
+import it.marcelpetrick.catears.domain.EarAdjustment
 import it.marcelpetrick.catears.domain.EarStyle
 import it.marcelpetrick.catears.domain.LensSelector
 import it.marcelpetrick.catears.domain.OverlayPlacement
@@ -97,6 +99,12 @@ fun MainScreen(
     onRecordTap: () -> Unit = {},
     onRecordingSaved: (String?) -> Unit = {},
     onShareVideo: (() -> Unit)? = null,
+    earAdjustment: EarAdjustment = EarAdjustment.DEFAULT,
+    fitPanelVisible: Boolean = false,
+    onToggleFitPanel: () -> Unit = {},
+    onAdjustmentChanged: (EarAdjustment) -> Unit = {},
+    onAdjustmentCommitted: () -> Unit = {},
+    onAdjustmentReset: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -131,6 +139,12 @@ fun MainScreen(
                     onRecordTap = onRecordTap,
                     onRecordingSaved = onRecordingSaved,
                     onShareVideo = onShareVideo,
+                    earAdjustment = earAdjustment,
+                    fitPanelVisible = fitPanelVisible,
+                    onToggleFitPanel = onToggleFitPanel,
+                    onAdjustmentChanged = onAdjustmentChanged,
+                    onAdjustmentCommitted = onAdjustmentCommitted,
+                    onAdjustmentReset = onAdjustmentReset,
                 )
             }
             AppTitleBar(
@@ -297,6 +311,12 @@ private fun CameraContent(
     onRecordTap: () -> Unit,
     onRecordingSaved: (String?) -> Unit,
     onShareVideo: (() -> Unit)?,
+    earAdjustment: EarAdjustment,
+    fitPanelVisible: Boolean,
+    onToggleFitPanel: () -> Unit,
+    onAdjustmentChanged: (EarAdjustment) -> Unit,
+    onAdjustmentCommitted: () -> Unit,
+    onAdjustmentReset: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val controller = remember { cameraControllerFactory() }
@@ -318,6 +338,7 @@ private fun CameraContent(
             onCameraError = onCameraError,
             recordingRequested = recordingState is RecordingState.Recording,
             onRecordingSaved = onRecordingSaved,
+            earAdjustment = earAdjustment,
             modifier = Modifier.fillMaxSize(),
         )
         CatEarOverlay(placements = overlayPlacements)
@@ -335,7 +356,21 @@ private fun CameraContent(
             onRecordTap = onRecordTap,
             onStopRecording = { controller.stopVideoRecording() },
             onShareVideo = onShareVideo,
+            onToggleFitPanel = onToggleFitPanel,
         )
+        if (fitPanelVisible) {
+            EarFitPanel(
+                adjustment = earAdjustment,
+                onAdjustmentChanged = onAdjustmentChanged,
+                onAdjustmentCommitted = onAdjustmentCommitted,
+                onReset = onAdjustmentReset,
+                onClose = onToggleFitPanel,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 96.dp),
+            )
+        }
     }
 }
 
@@ -354,6 +389,7 @@ private fun CameraFabRow(
     onRecordTap: () -> Unit,
     onStopRecording: () -> Unit,
     onShareVideo: (() -> Unit)?,
+    onToggleFitPanel: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         Column(
@@ -361,6 +397,9 @@ private fun CameraFabRow(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
+            SmallFloatingActionButton(onClick = onToggleFitPanel) {
+                Icon(Icons.Filled.Tune, contentDescription = "Adjust ear fit")
+            }
             RecordButton(recordingState, onRecordTap, onStopRecording)
             SmallFloatingActionButton(
                 onClick = onTogglePartyMode,
