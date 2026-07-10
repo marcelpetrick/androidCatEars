@@ -73,6 +73,14 @@ the re-roll button reshuffles the group without changing face positions. It
 turns a group selfie into a tiny personality quiz: who got Lynx, who got Fox,
 who keeps re-rolling?
 
+### Ear fit you can tune yourself
+Head shapes, hairstyles, and hats make any single default imperfect, so the paw
+isn't the last word: the **Fit** button opens a panel with two sliders that move
+the ear base point up/down and the ears inward/outward — live, against your own
+face. The offsets ride on top of the auto-fit (they scale with face size and
+keep tracking), are stored locally on the device, and a badge dot on the Fit
+button shows whenever a custom fit is active. One tap resets to auto.
+
 ### Baked-in capture
 Tap the shutter to save a photo with the ears composited directly onto the
 frame. The same sprite renderer used in the live preview is applied at full
@@ -92,6 +100,7 @@ just a short clip ready to send.
 - On-device face detection via ML Kit (landmarks, head pose, per-eye expression)
 - Animated photorealistic ears — 6 sprite-backed styles, expression-reactive, tracks up to 4 faces
 - Party Mode with stable per-face style assignments and manual re-roll
+- User-tunable ear fit (height/width sliders, persisted locally, badge when custom)
 - Still photo capture with the overlay baked in at full resolution
 - Five-second MP4 recording with the overlay baked in via `CameraEffect`
 - Save to gallery and share photos/videos via the Android share sheet
@@ -126,7 +135,8 @@ The project is split into two Gradle modules:
   from `:app`.
 
 Camera, ML Kit, and I/O are hidden behind seam interfaces
-(`CameraControllerSeam`, `FaceDetectorSeam`, `CaptureRuntime`) injected via
+(`CameraControllerSeam`, `FaceDetectorSeam`, `CaptureRuntime`,
+`EarAdjustmentStoreSeam`) injected via
 Hilt, so the ViewModel and all domain logic are exercised with plain Kotlin
 test doubles. A **95% Kover line-coverage gate** on `:domain` runs in CI
 and blocks merges when it drops.
@@ -258,13 +268,18 @@ Install on a connected device or running emulator:
 4. Tap the **Party Mode** button (celebration icon) for group selfies. Each
    tracked face gets its own stable style; while Party Mode is on, tap the
    **re-roll** button to reshuffle those assignments.
-5. Tap the **switch** button (bottom-right, below the style controls) to flip
+5. Tap the **Fit** button (sliders icon) to fine-tune where the ears sit:
+   move them higher/lower or narrower/wider while watching the live preview.
+   The setting is saved on the device; a badge dot on the button (and a short
+   banner) shows that a custom fit is active. "Reset to auto" returns to the
+   default placement.
+6. Tap the **switch** button (bottom-right, below the style controls) to flip
    between front and rear cameras. Cat ears track detected faces in real time.
-6. Tap the **record** button to save a five-second MP4 clip. Tap the red stop
+7. Tap the **record** button to save a five-second MP4 clip. Tap the red stop
    button to end the clip early.
-7. Tap the **capture** button (bottom-centre) to take a photo with the ears
+8. Tap the **capture** button (bottom-centre) to take a photo with the ears
    baked in; it is saved to your gallery and a status banner confirms it.
-8. Tap the **share** buttons (bottom-left, appearing after a capture or
+9. Tap the **share** buttons (bottom-left, appearing after a capture or
    recording) to send the saved photo or video via the Android share sheet.
 
 ### Make the ears react

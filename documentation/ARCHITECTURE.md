@@ -48,6 +48,7 @@ Camera frame ──► ImageAnalysis ──► FaceDetector (ML Kit) ──► F
 | `overlay` | Compose `Canvas` that draws the ears from a placement. | No (Compose) |
 | `capture` | Overlay compositing, bitmap decode, MediaStore save. | Pure parts yes; Android glue no |
 | `share` | Share-intent construction. | Pure `ShareConfig` yes; intent no |
+| `settings` | Ear-fit persistence seam + DataStore implementation. | Seam yes; store logic yes (JVM DataStore) |
 | `di` | Hilt module wiring. | No (framework glue) |
 
 ---
@@ -68,7 +69,7 @@ reach for instrumented tests or Robolectric, we split every such feature in two:
    Kover** with a documented reason in `app/build.gradle.kts`.
 
 Device-dependent collaborators sit behind **seam interfaces**
-(`CameraControllerSeam`, `FaceDetectorSeam`) so the ViewModel and tests depend
+(`CameraControllerSeam`, `FaceDetectorSeam`, `EarAdjustmentStoreSeam`) so the ViewModel and tests depend
 on an abstraction, and the real CameraX/ML Kit classes are swapped in via Hilt.
 
 **Consequence:** the coverage gate measures the part that actually contains

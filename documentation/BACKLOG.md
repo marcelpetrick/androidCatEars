@@ -576,6 +576,24 @@ mirroring, so landscape could map a correct face box to the wrong screen positio
 
 ---
 
+### WP 40 — User-adjustable ear base point
+
+Let the user fine-tune where the ears attach — base point up/down, spread
+inward/outward — on top of the auto-fit, persisted locally, with a visible
+indicator while a custom fit is active. Full design in
+[`base_point_adjustments.md`](base_point_adjustments.md).
+
+| ID | Status | Task | Acceptance criteria |
+|----|--------|------|---------------------|
+| 40.0 | DONE | Domain: `EarAdjustment` + placement math | Face-box-relative vertical/spread offsets applied inside `computeOverlayPlacement()` with clamping; default parameter keeps existing callers; domain tests cover default no-op, extremes, clamping, box-size scaling. |
+| 40.1 | DONE | Persistence: DataStore behind `EarAdjustmentStoreSeam` | Preferences DataStore (`ear_fit`) with two float keys; reads clamped via `coerced()`; JVM tests over a temp-file DataStore cover round-trip, clamping, reset. |
+| 40.2 | DONE | ViewModel wiring | `earAdjustment`/`fitPanelVisible`/`fitStatusMessage` flows; live change without persist, persist on commit/panel close, reset intent; store loaded once at init (single-writer echo avoidance); Turbine/fake-seam tests. |
+| 40.3 | DONE | Fit panel UI | Fit button opens a panel over the live preview with Height/Lower–Higher and Width/Narrower–Wider sliders, percent readout, reset-to-auto; drags update ears live, release persists; state hoisted to the ViewModel so it survives rotation. |
+| 40.4 | DONE | Custom-fit indicator | Badge dot on the Fit button while `isCustom`; TalkBack description switches accordingly; transient banners on apply ('Custom ear fit applied') and reset ('Ear fit reset to auto') reuse the capture banner slot. |
+| 40.5 | TODO | Real-device pass | Verify photo + video bake the adjusted ears, adjustment survives rotation and app restart, range constants (±25 % height / ±50 % spread) feel right, multi-face/party mode applies the global fit to all faces. |
+
+---
+
 ### Future backlog (not yet broken down)
 
 Extra filters (glasses, hats) · custom AI models (ONNX/TFLite) ·

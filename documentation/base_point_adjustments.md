@@ -1,5 +1,12 @@
 # Plan: User-Adjustable Ear Base-Point (2026-07-10)
 
+> **Status (2026-07-10): implemented** — WP A–E landed (see BACKLOG WP 40); the
+> real-device pass (40.5) is still open. Two deviations from the plan below:
+> persistence commits on slider release / panel close instead of a debounced
+> write (deterministic and fewer writes), and the adjustment state lives in
+> dedicated `MainViewModel` flows rather than `MainUiState`, which is a sealed
+> permission/camera phase interface, not a data holder.
+
 ## Goal
 
 Let the user fine-tune where the ears attach to their head — shift the base point
