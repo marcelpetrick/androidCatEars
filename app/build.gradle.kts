@@ -128,8 +128,8 @@ android {
         abortOnError = true
         warningsAsErrors = true
         checkDependencies = true
-        htmlReport = true
-        xmlReport = false
+        // htmlReport / xmlReport removed: AGP 9.3+ always generates lint reports
+        // and deprecated both setters. The HTML report CI uploads is still produced.
     }
 }
 
