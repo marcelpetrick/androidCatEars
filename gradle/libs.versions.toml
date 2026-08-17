@@ -11,7 +11,7 @@ activity-compose                 = "1.13.0"
 datastore                        = "1.2.1"
 
 # Compose (managed via BOM — no individual versions needed)
-compose-bom                      = "2026.06.01"
+compose-bom                      = "2026.08.00"
 
 # Camera
 camerax                          = "1.6.1"
