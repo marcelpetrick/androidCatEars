@@ -33,7 +33,7 @@ kotlinx-coroutines               = "1.11.0"
 detekt                           = "1.23.8"
 spotless                         = "8.9.0"
 kover                            = "0.9.9"
-cyclonedx                        = "3.4.0"
+cyclonedx                        = "3.4.1"
 
 [libraries]
 # AndroidX core
