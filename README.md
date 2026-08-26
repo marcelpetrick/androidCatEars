@@ -11,9 +11,9 @@
 
 **Author: Marcel Petrick <mail@marcelpetrick.it>**
 
-**Note: project is generated with AI.**
-
 **License: GPLv3 or later. See `LICENSE`.**
+
+**Note: project is generated with AI.**
 
 This project is developed using agentic AI workflows — autonomous coding agents
 that plan, implement, test, and iterate across the full development cycle.
