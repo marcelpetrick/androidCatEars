@@ -1,6 +1,6 @@
 [versions]
 # Build toolchain
-agp                              = "9.3.1"
+agp                              = "9.3.2"
 kotlin                           = "2.4.10"
 ksp                              = "2.3.11"
 
@@ -11,10 +11,10 @@ activity-compose                 = "1.13.0"
 datastore                        = "1.2.1"
 
 # Compose (managed via BOM — no individual versions needed)
-compose-bom                      = "2026.06.01"
+compose-bom                      = "2026.08.00"
 
 # Camera
-camerax                          = "1.6.1"
+camerax                          = "1.6.2"
 
 # ML Kit
 mlkit-face-detection             = "16.1.7"
@@ -31,9 +31,9 @@ kotlinx-coroutines               = "1.11.0"
 
 # Quality
 detekt                           = "1.23.8"
-spotless                         = "8.9.0"
+spotless                         = "8.10.0"
 kover                            = "0.9.9"
-cyclonedx                        = "3.4.0"
+cyclonedx                        = "3.4.1"
 
 [libraries]
 # AndroidX core
