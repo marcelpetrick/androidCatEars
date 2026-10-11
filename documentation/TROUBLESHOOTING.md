@@ -32,9 +32,12 @@ to force it, run `./gradlew --no-configuration-cache <task>` once, or delete
 
 **Lint fails the build on warnings.**
 Lint runs with `warningsAsErrors = true`. Fix the warning, or — only with a
-documented reason — suppress the specific rule in `app/lint.xml`. A few rules
-(`OldTargetApi`, `GradleDependency`, `NewerVersionAvailable`) are intentionally
-suppressed pending the SDK 37 toolchain upgrade (backlog task 2.3).
+documented reason — suppress the specific rule in `app/lint.xml`. The
+version-freshness rules (`NewerVersionAvailable`, `GradleDependency`,
+`AndroidGradlePluginVersion`) are deliberately `informational`: they compare
+against whatever upstream has published at the moment lint runs, so as errors
+they made the gate fail for an unchanged commit whenever anything was released.
+Dependabot keeps dependencies fresh instead. They still appear in the lint report.
 
 **detekt `MagicNumber` on theme colours.**
 The colour palette (`ui/theme/Color.kt`) is excluded from `MagicNumber` in

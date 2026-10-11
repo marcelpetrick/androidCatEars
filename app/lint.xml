@@ -11,10 +11,23 @@
     <issue id="ObsoleteSdkInt" severity="ignore" />
 
     <!--
-      OldTargetApi / GradleDependency / NewerVersionAvailable were suppressed
-      while API 37 was not installable via sdkmanager and Kotlin 2.4.0 was
-      blocked by Hilt's kotlin-metadata-jvm upper bound. Both blockers are
-      resolved (cmdline-tools 15641748 + platforms;android-37.x, Hilt 2.60.1),
-      so the checks are active again.
+      Version-freshness checks are informational, not gate failures.
+
+      NewerVersionAvailable, GradleDependency and AndroidGradlePluginVersion
+      compare the pinned versions against whatever the remote repositories
+      (Maven Central, Google Maven, Gradle releases) publish at the moment lint
+      runs. With warningsAsErrors = true that turned every upstream release into
+      a red build: the same commit passed one day and failed the next, and every
+      single-dependency Dependabot PR failed because some *other* dependency had
+      meanwhile become outdated. A quality gate must be reproducible for a given
+      commit, so these checks report as "informational" (not promoted by
+      warningsAsErrors). Freshness is handled by Dependabot
+      (.github/dependabot.yml), which opens a PR for each new release.
+
+      OldTargetApi stays active: it depends only on the installed SDK, not on
+      the network, and therefore is deterministic.
     -->
+    <issue id="NewerVersionAvailable" severity="informational" />
+    <issue id="GradleDependency" severity="informational" />
+    <issue id="AndroidGradlePluginVersion" severity="informational" />
 </lint>
