@@ -1,17 +1,17 @@
 [versions]
 # Build toolchain
-agp                              = "9.3.2"
-kotlin                           = "2.4.10"
-ksp                              = "2.3.11"
+agp                              = "9.4.1"
+kotlin                           = "2.4.21"
+ksp                              = "2.3.12"
 
 # AndroidX core
-core-ktx                         = "1.19.0"
+core-ktx                         = "1.19.1"
 lifecycle                        = "2.11.0"
 activity-compose                 = "1.13.0"
 datastore                        = "1.2.1"
 
 # Compose (managed via BOM — no individual versions needed)
-compose-bom                      = "2026.08.00"
+compose-bom                      = "2026.09.00"
 
 # Camera
 camerax                          = "1.6.2"
@@ -31,9 +31,9 @@ kotlinx-coroutines               = "1.11.0"
 
 # Quality
 detekt                           = "1.23.8"
-spotless                         = "8.10.0"
-kover                            = "0.9.9"
-cyclonedx                        = "3.4.1"
+spotless                         = "8.10.4"
+kover                            = "0.9.11"
+cyclonedx                        = "3.5.1"
 
 [libraries]
 # AndroidX core

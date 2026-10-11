@@ -52,7 +52,7 @@ One deployable unit: a single Android APK.
 │  androidCatEars.apk                                          │
 │  Package: it.marcelpetrick.catears                           │
 │  Min SDK: 34 (Android 14)  Compile SDK: 36 (Android 16)     │
-│  Language: Kotlin 2.4.0   UI: Jetpack Compose (BOM 2026.06) │
+│  Language: Kotlin 2.4.21  UI: Jetpack Compose (BOM 2026.09) │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  UI Layer  (it.marcelpetrick.catears.ui.*)           │   │
@@ -279,12 +279,12 @@ Front camera images are delivered by CameraX with the left/right axis flipped re
 
 | Concern | Library | Version |
 |---------|---------|---------|
-| Language | Kotlin | 2.4.0 |
-| UI | Jetpack Compose BOM | 2026.06.01 |
-| Camera | CameraX | 1.6.1 |
+| Language | Kotlin | 2.4.21 |
+| UI | Jetpack Compose BOM | 2026.09.00 |
+| Camera | CameraX | 1.6.2 |
 | Face detection | ML Kit Face Detection | 16.1.7 |
 | Dependency injection | Hilt | 2.60.1 |
-| Build system | Gradle (Kotlin DSL) | 9.6.1 |
+| Build system | Gradle (Kotlin DSL) | 9.8.1 |
 | Android min SDK | API 34 (Android 14) | — |
 | Android compile SDK | API 36 (Android 16) | — |
 | License | GPLv3 | — |

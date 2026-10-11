@@ -394,6 +394,26 @@ and Kotlin→Hilt-metadata rejected with recorded blockers).
 | Spotless | 8.6.0 | 8.8.0 | ✅ Integrated | — |
 | AGP, CameraX, ML Kit, activity-compose, mockk, turbine, coroutines, detekt, kover, CycloneDX | — | — | ✅ Already latest stable | — |
 
+**Sweep results (2026-10-11):** Dependabot PRs #23–#30 were all red because Android Lint's
+`NewerVersionAvailable` failed the gate on *other*, unrelated outdated dependencies. The
+version-freshness lint rules are now `informational` (see `app/lint.xml`); everything was
+moved to latest stable in one sweep instead of PR-by-PR.
+
+| Bump | From | To | Result | Blocker |
+|------|------|----|--------|---------|
+| Gradle wrapper | 9.7.1 | 9.8.1 | ✅ Integrated (now with `distributionSha256Sum`) | — |
+| AGP | 9.3.2 | 9.4.1 | ✅ Integrated | — |
+| Kotlin / KSP | 2.4.10 / 2.3.11 | 2.4.21 / 2.3.12 | ✅ Integrated | — |
+| `androidx.core:core-ktx` | 1.19.0 | 1.19.1 | ✅ Integrated | — |
+| Compose BOM | 2026.08.00 | 2026.09.00 | ✅ Integrated | — |
+| Spotless | 8.10.0 | 8.10.4 | ✅ Integrated | — |
+| Kover | 0.9.9 | 0.9.11 | ✅ Integrated | — |
+| CycloneDX | 3.4.1 | 3.5.1 | ✅ Integrated | — |
+| `actions/checkout` | v6 | v7 | ✅ Integrated | — |
+| `actions/setup-java` | v5 | v6 | ✅ Integrated | — |
+| `github/codeql-action`, `gradle/actions` | v4, v6 | v4, v6 (floating major tags) | ✅ Already latest (resolve to v4.38.3 / v6.4.0) | — |
+| CameraX, ML Kit, lifecycle, activity-compose, datastore, Hilt, hilt-navigation-compose, JUnit, mockk, turbine, coroutines, detekt | — | — | ✅ Already latest stable | detekt 2.0 still pre-release |
+
 ---
 
 ### WP 29 — Five-second video clip with ears (shareable)

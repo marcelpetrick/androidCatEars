@@ -88,7 +88,7 @@ resolution — what you see is exactly what you get. Share via any Android app
 with one more tap.
 
 For video, five-second MP4 clips are recorded with the overlay baked into
-every frame at record time via CameraX `OverlayEffect` (`camera-effects:1.6.1`).
+every frame at record time via CameraX `OverlayEffect` (`camera-effects:1.6.2`).
 The ears are drawn directly into the video buffer — no post-processing step,
 just a short clip ready to send.
 
@@ -110,13 +110,13 @@ just a short clip ready to send.
 
 | Concern | Technology |
 |---------|------------|
-| Language | Kotlin 2.4.0 |
-| UI | Jetpack Compose (BOM 2026.06.01) |
-| Camera | CameraX 1.6.1 |
-| Video overlay | `camera-effects:1.6.1` — `OverlayEffect` bakes ears into frames at record time |
+| Language | Kotlin 2.4.21 |
+| UI | Jetpack Compose (BOM 2026.09.00) |
+| Camera | CameraX 1.6.2 |
+| Video overlay | `camera-effects:1.6.2` — `OverlayEffect` bakes ears into frames at record time |
 | Face detection | ML Kit Face Detection 16.1.7 — fully on-device, no network |
 | DI | Hilt 2.60.1 |
-| Build | Gradle 9.6.1 (Kotlin DSL) |
+| Build | Gradle 9.8.1 (Kotlin DSL) |
 | Min SDK | Android 14 (API 34) |
 | Target SDK | API 37 |
 | Drawing | Transparent PNG sprite assets with transform-only live/capture rendering |
@@ -150,7 +150,7 @@ full module map and MVVM wiring.
 git clone https://github.com/marcelpetrick/androidCatEars
 cd androidCatEars
 ./gradlew installHooks   # required once per clone — installs the pre-commit version bumper
-./gradlew assembleDebug  # downloads Gradle 9.6.1 and all deps on first run
+./gradlew assembleDebug  # downloads Gradle 9.8.1 and all deps on first run
 ./gradlew installDebug   # push to a connected device or running emulator
 ```
 
@@ -236,7 +236,7 @@ distributed under the same licence.
   ```bash
   sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
   ```
-- `./gradlew` downloads Gradle 9.6.1 automatically on first run.
+- `./gradlew` downloads Gradle 9.8.1 automatically on first run.
 
 > **Why Android 14 (API 34) minimum?** The `CameraEffect` / `OverlayEffect`
 > API used to bake the overlay into recorded video frames was introduced in
